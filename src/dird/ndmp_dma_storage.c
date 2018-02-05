@@ -51,7 +51,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    NIS *nis = (NIS *)sess->param->log.ctx;
    JCR *jcr = nis->ua->jcr;
 
-   if (!ndmp_deviceinfo) {
+   if (!jcr->res.wstore->ndmp_deviceinfo) {
       jcr->res.wstore->ndmp_deviceinfo = New(alist(10, owned_by_alist));
 
    } else {

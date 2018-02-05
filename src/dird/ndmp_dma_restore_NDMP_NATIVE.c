@@ -298,8 +298,6 @@ static bool do_ndmp_native_restore(JCR *jcr)
    //ndmp_job.tape_device = lookup_ndmp_drive(jcr->res.rstore, drive);
    ndmp_job.tape_device = (char*) jcr->res.rstore->device->first();
    int drive = lookup_ndmp_drivenumber_by_name(jcr->res.rstore, ndmp_job.tape_device);
-
-   ndmp_job.tape_device = (char*)jcr->res.rstore->device->first();
    if (!ndmp_build_client_and_storage_job(jcr, jcr->res.rstore, jcr->res.client,
             true, /* init_tape */
             true, /* init_robot */

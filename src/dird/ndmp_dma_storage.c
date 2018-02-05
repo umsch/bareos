@@ -139,8 +139,10 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
       }
 
       char *deviceinfo = NULL;
-      foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-         Dmsg1(100, "before: %s\n", deviceinfo);
+      if (store->ndmp_deviceinfo) {
+         foreach_alist(deviceinfo, store->ndmp_deviceinfo){
+            Dmsg1(100, "before: %s\n", deviceinfo);
+         }
       }
       struct ndmca_query_callbacks query_callbacks;
       query_callbacks.get_tape_info = get_tape_info;

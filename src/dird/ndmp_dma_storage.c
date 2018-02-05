@@ -46,7 +46,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    const char *what = "tape";
 
 	for (i = 0; i < n_info; i++) {
-      Dmsg2(100, "  %s %s", what, info[i].model);
+      Dmsg2(100, "  %s %s\n", what, info[i].model);
 		for (j = 0; j < info[i].caplist.caplist_len; j++) {
 			ndmp9_device_capability *dc;
 			uint32_t attr;
@@ -54,44 +54,44 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 			dc = &info[i].caplist.caplist_val[j];
 
 			Dmsg1(100, "    device     %s", dc->device);
-			if (!strcmp(what, "tape")) {
+			if (!strcmp(what, "tape\n")) {
 #ifndef NDMOS_OPTION_NO_NDMP3
 			    if (sess->plumb.tape->protocol_version == 3) {
 				attr = dc->v3attr.value;
-				Dmsg1(100, "      attr       0x%lx",
+				Dmsg1(100, "      attr       0x%lx\n",
 					   attr);
 				if (attr & NDMP3_TAPE_ATTR_REWIND)
-				    Dmsg0(100, "        REWIND");
+				    Dmsg0(100, "        REWIND\n");
 				if (attr & NDMP3_TAPE_ATTR_UNLOAD)
-				    Dmsg0(100, "        UNLOAD");
+				    Dmsg0(100, "        UNLOAD\n");
 			    }
 #endif /* !NDMOS_OPTION_NO_NDMP3 */
 #ifndef NDMOS_OPTION_NO_NDMP4
 			    if (sess->plumb.tape->protocol_version == 4) {
 				attr = dc->v4attr.value;
-				Dmsg1(100, "      attr       0x%lx",
+				Dmsg1(100, "      attr       0x%lx\n",
 					   attr);
 				if (attr & NDMP4_TAPE_ATTR_REWIND)
-				    Dmsg0(100, "        REWIND");
+				    Dmsg0(100, "        REWIND\n");
 				if (attr & NDMP4_TAPE_ATTR_UNLOAD)
-				    Dmsg0(100, "        UNLOAD");
+				    Dmsg0(100, "        UNLOAD\n");
 			    }
 #endif /* !NDMOS_OPTION_NO_NDMP4 */
 			}
 			for (k = 0; k < dc->capability.capability_len; k++) {
-				Dmsg2(100, "      set        %s=%s",
+				Dmsg2(100, "      set        %s=%s\n",
 				    dc->capability.capability_val[k].name,
 				    dc->capability.capability_val[k].value);
 			}
 			if (k == 0)
-				Dmsg0(100, "      empty capabilities");
+				Dmsg0(100, "      empty capabilities\n");
 		}
 		if (j == 0)
-			Dmsg0(100, "    empty caplist");
-		Dmsg0(100, "");
+			Dmsg0(100, "    empty caplist\n");
+		Dmsg0(100, "\n");
 	}
 	if (i == 0)
-		Dmsg1(100, "  Empty %s info", what);
+		Dmsg1(100, "  Empty %s info\n", what);
 
 	return 0;
 }

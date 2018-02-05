@@ -50,7 +50,6 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
    NIS *nis = (NIS *)sess->param->log.ctx;
    JCR *jcr = nis->ua->jcr;
-   alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
 
    if (!ndmp_deviceinfo) {
       jcr->res.wstore->ndmp_deviceinfo = New(alist(10, owned_by_alist));
@@ -58,6 +57,8 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    } else {
       jcr->res.wstore->ndmp_deviceinfo->empty();
    }
+
+   alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);

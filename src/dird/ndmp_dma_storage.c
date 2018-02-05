@@ -55,6 +55,10 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
       jcr->res.wstore->ndmp_deviceinfo = New(alist(10, owned_by_alist));
 
    } else {
+      char* info = NULL;
+      foreach_alist(info, jcr->res.wstore->ndmp_deviceinfo) {
+         free (info);
+      }
       jcr->res.wstore->ndmp_deviceinfo->empty();
    }
 
@@ -147,8 +151,13 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
       ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
       char *deviceinfo = NULL;
-      foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-         ua->info_msg("%s\n", deviceinfo);
+      ua->info_msg("INFO for device storage %s:\n", store->name());
+      if (store->ndmp_deviceinfo) {
+         foreach_alist(deviceinfo, store->ndmp_deviceinfo){
+            ua->info_msg("%s\n", deviceinfo);
+         }
+      } else {
+            ua->info_msg("deviceinfo for storage %s empty!\n", store->name());
       }
    }
 }

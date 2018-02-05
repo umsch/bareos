@@ -211,8 +211,9 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    status = 0;
    STORERES *store = jcr->res.wstore;
 
-   ndmp_job.tape_device = ((DEVICERES*)(store->device->first()))->name();
-   int drive = lookup_ndmp_drivenumber_by_name(store, ndmp_job.tape_device);
+   ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
+   //ndmp_job.tape_device = ((DEVICERES*)(store->device->first()))->name();
+   //int drive = lookup_ndmp_drivenumber_by_name(store, ndmp_job.tape_device);
 
    /*
     * Initialize the ndmp backup job. We build the generic job only once
@@ -248,7 +249,6 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
     * Set the remote tape drive to use.
     */
    ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
-   ndmp_job.tape_device = ((DEVICERES*)(store->device->first()))->name();
 
    Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);
    Jmsg(jcr, M_INFO, 0, _("Using Tape  host:device  %s:%s\n"), ndmp_job.tape_agent.host, ndmp_job.tape_device);

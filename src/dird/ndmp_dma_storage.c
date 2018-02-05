@@ -53,9 +53,10 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
 
    if (!ndmp_deviceinfo) {
-      ndmp_deviceinfo = New(alist(10, owned_by_alist));
+      jcr->res.wstore->ndmp_deviceinfo = New(alist(10, owned_by_alist));
+
    } else {
-      ndmp_deviceinfo->empty();
+      jcr->res.wstore->ndmp_deviceinfo->empty();
    }
 
    for (i = 0; i < n_info; i++) {

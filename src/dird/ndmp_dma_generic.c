@@ -400,7 +400,6 @@ bool ndmp_build_storage_job(JCR *jcr,
 
    job->operation = operation;
    job->bu_type = jcr->backup_format;
-   jcr->res.wstore = store;
 
    if (!fill_ndmp_agent_config(jcr, &job->data_agent, store->Protocol,
                                store->AuthType, store->address,

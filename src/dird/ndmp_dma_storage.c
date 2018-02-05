@@ -54,6 +54,8 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
    if (!ndmp_deviceinfo) {
       ndmp_deviceinfo = New(alist(10, owned_by_alist));
+   } else {
+      ndmp_deviceinfo->empty();
    }
 
    for (i = 0; i < n_info; i++) {
@@ -135,11 +137,20 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
                                   &ndmp_job)) {
          return;
       }
+
+      char *deviceinfo = NULL;
+      foreach_alist(deviceinfo, store->ndmp_deviceinfo){
+         Dmsg1(100, "before: %s\n", deviceinfo);
+      }
       struct ndmca_query_callbacks query_callbacks;
       query_callbacks.get_tape_info = get_tape_info;
 
       ndmca_query_callbacks *query_cbs = &query_callbacks;
       ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
+
+      foreach_alist(deviceinfo, store->ndmp_deviceinfo){
+         Dmsg2(100, "%s\n", deviceinfo);
+      }
    }
 }
 

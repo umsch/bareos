@@ -157,10 +157,11 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
       ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
       ndmp_deviceinfo *deviceinfo = NULL;
-      ua->info_msg("INFO for device storage %s:\n", store->name());
+      ua->info_msg("Devices for storage %s:\n", store->name());
+      int i=0;
       if (store->ndmp_deviceinfo) {
          foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-            ua->info_msg("Device: %s Model: %s\n", deviceinfo->device, deviceinfo->model );
+            ua->info_msg("%d: Device: %s Model: %s\n", i++, deviceinfo->device, deviceinfo->model );
          }
       } else {
             ua->info_msg("deviceinfo for storage %s empty!\n", store->name());

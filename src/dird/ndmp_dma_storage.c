@@ -49,7 +49,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    const char *what = "tape";
 
    NIS *nis = (NIS *)sess->param->log.ctx;
-   JCR *jcr = nis->jcr;
+   JCR *jcr = nis->ua->jcr;
    alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
 
    if (!ndmp_deviceinfo) {
@@ -211,6 +211,7 @@ static bool ndmp_run_storage_job(JCR *jcr, STORERES *store, struct ndm_session *
    ndmp_sess->param->log_level = native_to_ndmp_loglevel(me->ndmp_loglevel, debug_level, nis);
    ndmp_sess->param->log.ctx = nis;
    ndmp_sess->param->log_tag = bstrdup("DIR-NDMP");
+   nis->jcr = jcr;
 
    /*
     * Initialize the session structure.

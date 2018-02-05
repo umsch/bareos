@@ -53,7 +53,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
 			dc = &info[i].caplist.caplist_val[j];
 
-			Dmsg1(100, "    device     %s", dc->device);
+			Dmsg1(100, "    device     %s\n", dc->device);
 			if (!strcmp(what, "tape\n")) {
 #ifndef NDMOS_OPTION_NO_NDMP3
 			    if (sess->plumb.tape->protocol_version == 3) {

@@ -60,6 +60,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
+      jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 		for (j = 0; j < info[i].caplist.caplist_len; j++) {
 			ndmp9_device_capability *dc;
 			uint32_t attr;
@@ -70,7 +71,6 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
 
 			if (!strcmp(what, "tape\n")) {
-            jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 #ifndef NDMOS_OPTION_NO_NDMP3
 			    if (sess->plumb.tape->protocol_version == 3) {
 				attr = dc->v3attr.value;
@@ -589,7 +589,7 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
 /**
  * Update the mapping table from logical to physical storage addresses.
  */
-bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store) 
+bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store)
 {
    struct ndm_session *ndmp_sess;
 
@@ -602,8 +602,8 @@ bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store)
    cleanup_ndmp_session(ndmp_sess);
 
    return true;
-   
-} 
+
+}
 
 /**
  * Update the mapping table from logical to physical storage addresses.

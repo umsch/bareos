@@ -58,8 +58,6 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
       jcr->res.wstore->ndmp_deviceinfo->empty();
    }
 
-   //alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
-
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
 		for (j = 0; j < info[i].caplist.caplist_len; j++) {
@@ -70,9 +68,9 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
 			Dmsg1(100, "    device     %s\n", dc->device);
 
-         jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 
 			if (!strcmp(what, "tape\n")) {
+            jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 #ifndef NDMOS_OPTION_NO_NDMP3
 			    if (sess->plumb.tape->protocol_version == 3) {
 				attr = dc->v3attr.value;
@@ -142,18 +140,13 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
          return;
       }
 
-      char *deviceinfo = NULL;
-      if (store->ndmp_deviceinfo) {
-         foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-            Dmsg1(100, "before: %s\n", deviceinfo);
-         }
-      }
       struct ndmca_query_callbacks query_callbacks;
       query_callbacks.get_tape_info = get_tape_info;
 
       ndmca_query_callbacks *query_cbs = &query_callbacks;
       ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
+      char *deviceinfo = NULL;
       foreach_alist(deviceinfo, store->ndmp_deviceinfo){
          Dmsg1(100, "%s\n", deviceinfo);
       }

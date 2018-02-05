@@ -60,7 +60,6 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
-      jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 		for (j = 0; j < info[i].caplist.caplist_len; j++) {
 			ndmp9_device_capability *dc;
 			uint32_t attr;
@@ -68,6 +67,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 			dc = &info[i].caplist.caplist_val[j];
 
 			Dmsg1(100, "    device     %s\n", dc->device);
+         jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 
 
 			if (!strcmp(what, "tape\n")) {

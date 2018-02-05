@@ -982,7 +982,7 @@ bool ndmp_send_label_request(UAContext *ua, STORERES *store, MEDIA_DBR *mr,
    /*
     * Set the remote tape drive to use.
     */
-   ndmp_job.tape_device = (char*)store->device->first();
+   ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
    if (!ndmp_job.tape_device) {
       actuallyfree(ndmp_job.robot_target);
    }

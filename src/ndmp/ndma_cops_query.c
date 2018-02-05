@@ -851,7 +851,7 @@ ndmca_opq_get_tape_info (struct ndm_session *sess, struct ndmconn *conn)
 		reply->config_info.tape_info.tape_info_len,
 		"tape");
 
-/* execute callback if exists */ 
+/* execute callback if exists */
    if (sess->query_cbs && sess->query_cbs->get_tape_info) {
       rc = sess->query_cbs->get_tape_info(sess,
             reply->config_info.tape_info.tape_info_val,

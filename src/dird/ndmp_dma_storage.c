@@ -131,6 +131,8 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
    } else {
       struct ndm_job_param ndmp_job;
 
+      ua->jcr->res.wstore = store;
+
       if (!ndmp_build_storage_job(ua->jcr,
                                   store,
                                   true, /* Query Tape Agent */

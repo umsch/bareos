@@ -149,7 +149,7 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
       ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
       foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-         Dmsg2(100, "%s\n", deviceinfo);
+         Dmsg1(100, "%s\n", deviceinfo);
       }
    }
 }

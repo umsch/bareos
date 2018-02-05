@@ -789,9 +789,9 @@ bool ndmp_transfer_volume(UAContext *ua, STORERES *store,
 }
 
 /**
- * Lookup the name of a drive in a NDMP autochanger.
+ * Lookup the drive device name by drive number in a NDMP autochanger.
  */
-char *lookup_ndmp_drive(STORERES *store, drive_number_t drivenumber)
+char *lookup_ndmp_drivename_by_number(STORERES *store, drive_number_t drivenumber)
 {
    int cnt = 0;
    char *tapedevice;
@@ -808,6 +808,25 @@ char *lookup_ndmp_drive(STORERES *store, drive_number_t drivenumber)
    }
 
    return NULL;
+}
+
+/**
+ * Lookup the drive number by device name in a NDMP autochanger.
+ */
+int lookup_ndmp_drivenumber_by_name(STORERES *store, char *drivename)
+{
+   int cnt = 0;
+   ndmp_deviceinfo *devinfo = NULL;
+
+   if (store->ndmp_deviceinfo) {
+      foreach_alist(devinfo, store->ndmp_deviceinfo) {
+         if (bstrcmp(drivename, devinfo->device)) {
+            return cnt;
+         }
+         cnt++;
+      }
+   }
+   return -1;
 }
 
 /**
@@ -963,7 +982,7 @@ bool ndmp_send_label_request(UAContext *ua, STORERES *store, MEDIA_DBR *mr,
    /*
     * Set the remote tape drive to use.
     */
-   ndmp_job.tape_device = lookup_ndmp_drive(store, drive);
+   ndmp_job.tape_device = (char*)store->device->first();
    if (!ndmp_job.tape_device) {
       actuallyfree(ndmp_job.robot_target);
    }

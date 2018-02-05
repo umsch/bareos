@@ -295,8 +295,11 @@ static bool do_ndmp_native_restore(JCR *jcr)
    ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
 
 
-   int drive=0;
-   ndmp_job.tape_device = lookup_ndmp_drive(jcr->res.rstore, drive);
+   //ndmp_job.tape_device = lookup_ndmp_drive(jcr->res.rstore, drive);
+   ndmp_job.tape_device = (char*) jcr->res.rstore->device->first();
+   int drive = lookup_ndmp_drivenumber_by_name(jcr->res.rstore, ndmp_job.tape_device);
+
+   ndmp_job.tape_device = (char*)jcr->res.rstore->device->first();
    if (!ndmp_build_client_and_storage_job(jcr, jcr->res.rstore, jcr->res.client,
             true, /* init_tape */
             true, /* init_robot */
@@ -325,7 +328,8 @@ static bool do_ndmp_native_restore(JCR *jcr)
       goto cleanup_ndmp;
    }
 
-   ndmp_job.tape_device = lookup_ndmp_drive(jcr->res.rstore, drive);
+   ndmp_job.tape_device = (char*)jcr->res.rstore->device->first();
+   // ndmp_job.tape_device = lookup_ndmp_drive(jcr->res.rstore, drive);
    ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
    Jmsg(jcr, M_INFO, 0, _("Record size is %d\n"), ndmp_job.record_size);
 

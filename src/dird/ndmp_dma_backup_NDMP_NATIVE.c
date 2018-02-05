@@ -210,7 +210,9 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
 
    status = 0;
    STORERES *store = jcr->res.wstore;
-   int drive = 0;
+
+   ndmp_job.tape_device = (char*) store->device->first();
+   int drive = lookup_ndmp_drivenumber_by_name(store, ndmp_job.tape_device);
 
    /*
     * Initialize the ndmp backup job. We build the generic job only once
@@ -245,7 +247,6 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    /*
     * Set the remote tape drive to use.
     */
-   ndmp_job.tape_device = lookup_ndmp_drive(store, drive);
    ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
 
    Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);

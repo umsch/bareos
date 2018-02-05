@@ -64,14 +64,19 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
-		for (j = 0; j < info[i].caplist.caplist_len; j++) {
-			ndmp9_device_capability *dc;
-			uint32_t attr;
+      ndmp_deviceinfo *devinfo = new(ndmp_deviceinfo);
+      ndmp9_device_capability *info_dc;
+      info_dc = info[i].caplist.caplist_val;
+      devinfo->model = bstrdup(info[i].model);
+      devinfo->device = bstrdup(info_dc->device);
+      jcr->res.wstore->ndmp_deviceinfo->append(devinfo);
 
-			dc = &info[i].caplist.caplist_val[j];
+      for (j = 0; j < info[i].caplist.caplist_len; j++) {
+         ndmp9_device_capability *dc;
+         uint32_t attr;
+         dc = &info[i].caplist.caplist_val[j];
+         Dmsg1(100, "    device     %s\n", dc->device);
 
-			Dmsg1(100, "    device     %s\n", dc->device);
-         jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 
 
 			if (!strcmp(what, "tape\n")) {
@@ -150,11 +155,11 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
       ndmca_query_callbacks *query_cbs = &query_callbacks;
       ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
-      char *deviceinfo = NULL;
+      ndmp_deviceinfo *deviceinfo = NULL;
       ua->info_msg("INFO for device storage %s:\n", store->name());
       if (store->ndmp_deviceinfo) {
          foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-            ua->info_msg("%s\n", deviceinfo);
+            ua->info_msg("%s(%s)\n", deviceinfo->device, deviceinfo->model );
          }
       } else {
             ua->info_msg("deviceinfo for storage %s empty!\n", store->name());

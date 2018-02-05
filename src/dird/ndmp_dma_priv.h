@@ -88,6 +88,11 @@ struct ndmp_backup_format_option {
    bool needs_namelist;
 };
 
+struct ndmp_deviceinfo {
+   char *device;
+   char *model;
+};
+
 /**
  * Internal structure to keep track of private data.
  */

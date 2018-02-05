@@ -211,7 +211,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    status = 0;
    STORERES *store = jcr->res.wstore;
 
-   ndmp_job.tape_device = (char*) store->device->first();
+   ndmp_job.tape_device = ((DEVICERES*)(store->device->first()))->name();
    int drive = lookup_ndmp_drivenumber_by_name(store, ndmp_job.tape_device);
 
    /*

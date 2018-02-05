@@ -326,8 +326,7 @@ static bool do_ndmp_native_restore(JCR *jcr)
       goto cleanup_ndmp;
    }
 
-   ndmp_job.tape_device = (char*)jcr->res.rstore->device->first();
-   // ndmp_job.tape_device = lookup_ndmp_drive(jcr->res.rstore, drive);
+   ndmp_job.tape_device = ((DEVICERES*)(jcr->res.rstore->device->first()))->name();
    ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
    Jmsg(jcr, M_INFO, 0, _("Record size is %d\n"), ndmp_job.record_size);
 

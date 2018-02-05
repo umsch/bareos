@@ -148,7 +148,7 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
 
       char *deviceinfo = NULL;
       foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-         Dmsg1(100, "%s\n", deviceinfo);
+         ua->info_msg("%s\n", deviceinfo);
       }
    }
 }

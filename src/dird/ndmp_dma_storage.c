@@ -58,7 +58,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
       jcr->res.wstore->ndmp_deviceinfo->empty();
    }
 
-   alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
+   //alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
@@ -70,7 +70,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 
 			Dmsg1(100, "    device     %s\n", dc->device);
 
-         ndmp_deviceinfo->append(bstrdup(dc->device));
+         jcr->res.wstore->ndmp_deviceinfo->append(bstrdup(dc->device));
 
 			if (!strcmp(what, "tape\n")) {
 #ifndef NDMOS_OPTION_NO_NDMP3

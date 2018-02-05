@@ -248,6 +248,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
     * Set the remote tape drive to use.
     */
    ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
+   ndmp_job.tape_device = ((DEVICERES*)(store->device->first()))->name();
 
    Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);
    Jmsg(jcr, M_INFO, 0, _("Using Tape  host:device  %s:%s\n"), ndmp_job.tape_agent.host, ndmp_job.tape_device);

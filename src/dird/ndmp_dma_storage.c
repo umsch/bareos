@@ -39,6 +39,13 @@
 
 /* Forward referenced functions */
 
+int get_tape_info(struct ndm_session *, ndmp9_device_info *info, unsigned n_info) {   
+   Dmsg0(100, "Get tape info called\n");
+   return 0;
+}
+
+
+
 /**
  * Output the status of a storage daemon when its a normal storage
  * daemon accessed via the NDMP protocol or query the TAPE and ROBOT
@@ -62,8 +69,11 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
                                   &ndmp_job)) {
          return;
       }
+      struct ndmca_query_callbacks query_callbacks;
+      query_callbacks.get_tape_info = get_tape_info;
 
-      ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel);
+      ndmca_query_callbacks *query_cbs = &query_callbacks;
+      ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
    }
 }
 

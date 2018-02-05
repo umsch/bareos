@@ -576,7 +576,7 @@ extern "C" void ndmp_client_status_handler(struct ndmlog *log, char *tag, int le
  * operation. Callback is the above ndmp_client_status_handler which prints
  * the data to the user context.
  */
-void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel)
+void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndmca_query_callbacks* query_cbs)
 {
    NIS *nis;
    struct ndm_session ndmp_sess;
@@ -597,6 +597,12 @@ void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel)
    nis->ua = ua;
    ndmp_sess.param->log.ctx = nis;
    ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
+
+
+   /* 
+    * Register the query callbacks that give us the query results
+    */
+   ndmca_query_register_callbacks(&ndmp_sess, query_cbs);
 
    /*
     * Initialize the session structure.
@@ -676,9 +682,11 @@ void do_ndmp_client_status(UAContext *ua, CLIENTRES *client, char *cmd)
       return;
    }
 
+   ndmca_query_callbacks *query_cbs = NULL;
+
    ndmp_do_query(ua, &ndmp_job,
                  (client->ndmp_loglevel > me->ndmp_loglevel) ? client->ndmp_loglevel :
-                                                               me->ndmp_loglevel);
+                                                               me->ndmp_loglevel, query_cbs);
 }
 #else
 void do_ndmp_client_status(UAContext *ua, CLIENTRES *client, char *cmd)

@@ -39,13 +39,24 @@
 
 /* Forward referenced functions */
 
+
+/** ndmp query callback
+ */
 int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_info)
 {
    Dmsg0(100, "Get tape info called\n");
 	unsigned int	i, j, k;
    const char *what = "tape";
 
-	for (i = 0; i < n_info; i++) {
+   NIS *nis = (NIS *)sess->param->log.ctx;
+   JCR *jcr = nis->jcr;
+   alist *ndmp_deviceinfo = jcr->res.wstore->ndmp_deviceinfo;
+
+   if (!ndmp_deviceinfo) {
+      ndmp_deviceinfo = New(alist(10, owned_by_alist));
+   }
+
+   for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
 		for (j = 0; j < info[i].caplist.caplist_len; j++) {
 			ndmp9_device_capability *dc;
@@ -54,6 +65,9 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 			dc = &info[i].caplist.caplist_val[j];
 
 			Dmsg1(100, "    device     %s\n", dc->device);
+
+         ndmp_deviceinfo->append(bstrdup(dc->device));
+
 			if (!strcmp(what, "tape\n")) {
 #ifndef NDMOS_OPTION_NO_NDMP3
 			    if (sess->plumb.tape->protocol_version == 3) {
@@ -148,7 +162,7 @@ extern "C" void ndmp_robot_status_handler(struct ndmlog *log, char *tag, int lev
 }
 
 /**
- * Generic cleanup function that can be used after a successfull or failed NDMP Job ran.
+ * Generic cleanup function that can be used after a successful or failed NDMP Job ran.
  */
 static void cleanup_ndmp_session(struct ndm_session *ndmp_sess)
 {

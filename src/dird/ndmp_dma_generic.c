@@ -556,7 +556,7 @@ extern "C" void ndmp_loghandler(struct ndmlog *log, char *tag, int level, char *
 /**
  * Interface function which glues the logging infra of the NDMP lib with the user context.
  */
-extern "C" void ndmp_client_status_handler(struct ndmlog *log, char *tag, int lev, char *msg)
+extern "C" void ndmp_status_handler(struct ndmlog *log, char *tag, int lev, char *msg)
 {
    NIS *nis;
 
@@ -573,7 +573,7 @@ extern "C" void ndmp_client_status_handler(struct ndmlog *log, char *tag, int le
 
 /**
  * Generic function to query the NDMP server using the NDM_JOB_OP_QUERY_AGENTS
- * operation. Callback is the above ndmp_client_status_handler which prints
+ * operation. Callback is the above ndmp_status_handler which prints
  * the data to the user context.
  */
 void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndmca_query_callbacks* query_cbs)
@@ -590,7 +590,7 @@ void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndm
 
    ndmp_sess.param = (struct ndm_session_param *)malloc(sizeof(struct ndm_session_param));
    memset(ndmp_sess.param, 0, sizeof(struct ndm_session_param));
-   ndmp_sess.param->log.deliver = ndmp_client_status_handler;
+   ndmp_sess.param->log.deliver = ndmp_status_handler;
    nis = (NIS *)malloc(sizeof(NIS));
    memset(nis, 0, sizeof(NIS));
    ndmp_sess.param->log_level = native_to_ndmp_loglevel(NdmpLoglevel, debug_level, nis);
@@ -599,7 +599,7 @@ void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndm
    ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
 
 
-   /* 
+   /*
     * Register the query callbacks that give us the query results
     */
    ndmca_query_register_callbacks(&ndmp_sess, query_cbs);
@@ -651,6 +651,7 @@ cleanup:
 
 bail_out:
 
+   ndmca_query_unregister_callbacks(&ndmp_sess);
    /*
     * Free the param block.
     */

@@ -355,7 +355,7 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
    struct smc_ctrl_block *smc;
    struct smc_element_descriptor *edp;
 
-   store->rss->storage_mappings = New(dlist(mapping, &mapping->link));
+   store->rss->storage_mappings = new(std::forward_list<storage_mapping_t>);
 
    /*
     * Loop over the robot element status and add each element to
@@ -387,7 +387,8 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
       }
       mapping->Index = edp->element_address;
 
-      store->rss->storage_mappings->binary_insert(mapping, compare_storage_mapping);
+      store->rss->storage_mappings->push_front(*mapping);
+         //->binary_insert(mapping, compare_storage_mapping);
    }
 
    /*
@@ -404,7 +405,8 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
     * - first do the normal slots
     * - second the I/E slots so that they are always at the end
     */
-   foreach_dlist(mapping, store->rss->storage_mappings) {
+   //foreach_dlist(mapping, store->rss->storage_mappings) {
+   for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
       switch (mapping->Type) {
       case slot_type_picker:
          mapping->Slot = picker++;
@@ -659,7 +661,8 @@ slot_number_t ndmp_get_num_slots(UAContext *ua, STORERES *store)
    /*
     * Walk over all mappings and count the number of slots.
     */
-   foreach_dlist(mapping, store->rss->storage_mappings) {
+   for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
+   //foreach_dlist(mapping, store->rss->storage_mappings) {
       switch (mapping->Type) {
       case slot_type_normal:
       case slot_type_import:
@@ -693,7 +696,8 @@ drive_number_t ndmp_get_num_drives(UAContext *ua, STORERES *store)
    /*
     * Walk over all mappings and count the number of drives.
     */
-   foreach_dlist(mapping, store->rss->storage_mappings) {
+   for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
+   //foreach_dlist(mapping, store->rss->storage_mappings) {
       switch (mapping->Type) {
       case slot_type_drive:
          drives++;

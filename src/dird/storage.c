@@ -900,27 +900,24 @@ slot_number_t lookup_storage_mapping(STORERES *store, slot_type slot_type,
    storage_mapping_t *mapping;
 
    if (store->rss->storage_mappings) {
-      mapping = (storage_mapping_t *)store->rss->storage_mappings->first();
-      while (mapping) {
+      for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
          switch (type) {
-         case LOGICAL_TO_PHYSICAL:
-            if (mapping->Type == slot_type && mapping->Slot == slot) {
-               retval = mapping->Index;
+            case LOGICAL_TO_PHYSICAL:
+               if (mapping->Type == slot_type && mapping->Slot == slot) {
+                  retval = mapping->Index;
+                  break;
+               }
                break;
-            }
-            break;
-         case PHYSICAL_TO_LOGICAL:
-            if (mapping->Type == slot_type && mapping->Index == slot) {
-               retval = mapping->Slot;
+            case PHYSICAL_TO_LOGICAL:
+               if (mapping->Type == slot_type && mapping->Index == slot) {
+                  retval = mapping->Slot;
+                  break;
+               }
                break;
-            }
-            break;
-         default:
-            break;
+            default:
+               break;
          }
-         mapping = (storage_mapping_t *)store->rss->storage_mappings->next(mapping);
       }
    }
-
    return retval;
 }

@@ -261,8 +261,8 @@ bool ndmp_autochanger_volume_operation(UAContext *ua, STORERES *store, const cha
 bool ndmp_send_label_request(UAContext *ua, STORERES *store, MEDIA_DBR *mr,
                              MEDIA_DBR *omr, POOL_DBR *pr, bool relabel,
                              drive_number_t drive, slot_number_t slot);
-int lookup_ndmp_drivenumber_by_name(STORERES *store, char *drivename);
-char *lookup_ndmp_drivename_by_number(STORERES *store, drive_number_t drivenumber);
+int lookup_ndmp_driveindex_by_name(STORERES *store, char *drivename);
+char *lookup_ndmp_drivename_by_index(STORERES *store, drive_number_t driveindex);
 bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store);
 
 /* next_vol.c */

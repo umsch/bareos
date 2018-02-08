@@ -811,9 +811,9 @@ char *lookup_ndmp_drivename_by_number(STORERES *store, drive_number_t drivenumbe
 }
 
 /**
- * Lookup the drive number by device name in a NDMP autochanger.
+ * Lookup the drive index by device name in a NDMP autochanger.
  */
-int lookup_ndmp_drivenumber_by_name(STORERES *store, char *drivename)
+int lookup_ndmp_driveindex_by_name(STORERES *store, char *drivename)
 {
    int cnt = 0;
    ndmp_deviceinfo *devinfo = NULL;

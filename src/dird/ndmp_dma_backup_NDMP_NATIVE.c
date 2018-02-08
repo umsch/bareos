@@ -162,6 +162,9 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    bool retval = false;
    int NdmpLoglevel;
 
+   int driveindex;
+   slot_number_t driveaddress;
+
    if (jcr->res.client->ndmp_loglevel > me->ndmp_loglevel) {
       NdmpLoglevel = jcr->res.client->ndmp_loglevel;
    } else {
@@ -249,6 +252,26 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
     */
    ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
    ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
+
+   driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
+   if (driveindex == -1) {
+      Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s, run status storage first!\n"), ndmp_job.tape_device);
+      return retval;
+   } else {
+      Jmsg(jcr, M_INFO, 0, _("driveindex of drive %s is %d\n"), ndmp_job.tape_device, driveindex);
+   }
+
+   driveaddress = lookup_storage_mapping(store, slot_type_drive, LOGICAL_TO_PHYSICAL, driveindex);
+   if (driveaddress == -1) {
+      Jmsg(jcr, M_ERROR, 0, _("Could not lookup driveaddress for driveindex %d, run update slots first!\n"),
+            driveaddress);
+      return retval;
+   } else {
+      Jmsg(jcr, M_INFO, 0, _("Driveaddress for driveindex %d is %d\n"), driveindex, driveaddress);
+   }
+
+   ndmp_job.drive_addr = driveaddress;
+   ndmp_job.drive_addr_given = 1;
 
    Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);
    Jmsg(jcr, M_INFO, 0, _("Using Tape  host:device  %s:%s\n"), ndmp_job.tape_agent.host, ndmp_job.tape_device);

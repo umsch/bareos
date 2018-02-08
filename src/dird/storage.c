@@ -900,7 +900,9 @@ slot_number_t lookup_storage_mapping(STORERES *store, slot_type slot_type,
    storage_mapping_t *mapping;
 
    if (store->rss->storage_mappings) {
-      for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
+      for (auto mapping = store->rss->storage_mappings->begin();
+            mapping != store->rss->storage_mappings->end();
+            mapping ++) {
          switch (type) {
             case LOGICAL_TO_PHYSICAL:
                if (mapping->Type == slot_type && mapping->Slot == slot) {

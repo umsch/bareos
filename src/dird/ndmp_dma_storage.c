@@ -355,8 +355,9 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
    struct smc_ctrl_block *smc;
    struct smc_element_descriptor *edp;
 
-   store->rss->storage_mappings = new(std::forward_list<storage_mapping_t>);
-
+   if (!store->rss->storage_mappings) {
+      store->rss->storage_mappings = new(std::list<storage_mapping_t>);
+   }
    /*
     * Loop over the robot element status and add each element to
     * the mapping table. We first add each element without a logical
@@ -365,8 +366,10 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
     */
    smc = ndmp_sess->control_acb->smc_cb;
    for (edp = smc->elem_desc; edp; edp = edp->next) {
-      mapping = (storage_mapping_t *)malloc(sizeof(storage_mapping_t));
-      memset(mapping, 0, sizeof(storage_mapping_t));
+      /* mapping = (storage_mapping_t *)malloc(sizeof(storage_mapping_t)); */
+      /* memset(mapping, 0, sizeof(storage_mapping_t)); */
+
+      mapping = new(storage_mapping_t);
 
       switch (edp->element_type_code) {
       case SMC_ELEM_TYPE_MTE:
@@ -387,8 +390,7 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
       }
       mapping->Index = edp->element_address;
 
-      store->rss->storage_mappings->push_front(*mapping);
-         //->binary_insert(mapping, compare_storage_mapping);
+     store->rss->storage_mappings->push_back(*mapping);
    }
 
    /*
@@ -405,7 +407,6 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
     * - first do the normal slots
     * - second the I/E slots so that they are always at the end
     */
-   //foreach_dlist(mapping, store->rss->storage_mappings) {
    for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
       switch (mapping->Type) {
       case slot_type_picker:
@@ -422,7 +423,6 @@ static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp
          break;
       }
    }
-
 }
 
 /**

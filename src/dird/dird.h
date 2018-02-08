@@ -43,7 +43,6 @@
 #include "bsr.h"
 #include "ua.h"
 #include "jobq.h"
-#include <forward_list>
 
 /* Globals that dird.c exports */
 extern DIRRES *me;                   /**< Our Global resource */
@@ -162,7 +161,7 @@ struct runtime_storage_status_t {
    int32_t NumConcurrentReadJobs; /**< Number of jobs reading */
    drive_number_t drives;         /**< Number of drives in autochanger */
    slot_number_t slots;           /**< Number of slots in autochanger */
-   std::forward_list<storage_mapping_t> *storage_mappings;    /**< Mappings from logical to physical storage address */
+   std::list<storage_mapping_t> *storage_mappings;    /**< Mappings from logical to physical storage address */
    changer_vol_list_t *vol_list;  /**< Cached content of autochanger */
    pthread_mutex_t changer_lock;  /**< Any access to the autochanger is controlled by this lock */
 };

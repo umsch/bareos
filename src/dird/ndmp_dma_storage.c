@@ -51,16 +51,16 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    NIS *nis = (NIS *)sess->param->log.ctx;
    JCR *jcr = nis->ua->jcr;
 
-   if (!jcr->res.wstore->ndmp_deviceinfo) {
-      jcr->res.wstore->ndmp_deviceinfo = New(alist(10, owned_by_alist));
-
-   } else {
+   if (jcr->res.wstore->ndmp_deviceinfo) {
       char* info = NULL;
       foreach_alist(info, jcr->res.wstore->ndmp_deviceinfo) {
-         free (info);
+         delete(info);
+         info = NULL;
       }
-      jcr->res.wstore->ndmp_deviceinfo->empty();
+      jcr->res.wstore->ndmp_deviceinfo->destroy();
+      jcr->res.wstore->ndmp_deviceinfo = NULL;
    }
+   jcr->res.wstore->ndmp_deviceinfo = New(alist(10, not_owned_by_alist));
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);

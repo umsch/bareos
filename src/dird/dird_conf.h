@@ -307,7 +307,6 @@ public:
    runtime_storage_status_t *rss;     /**< Runtime Storage Status */
    STORERES *paired_storage;          /**< Paired storage configuration item for protocols like NDMP */
    tls_t tls;                         /**< TLS structure */
-   alist *ndmp_deviceinfo;            /**< NDMP device info for devices in this Storage */
 
    /* Methods */
    char *dev_name() const;

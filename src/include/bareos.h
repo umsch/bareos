@@ -184,6 +184,7 @@ extern "C" {
  * Local Bareos includes. Be sure to put all the system includes before these.
  */
 #define _GLIBCXX_GTHREAD_USE_WEAK 0
+#include <string>
 #include <list>
 
 

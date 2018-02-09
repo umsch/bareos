@@ -52,26 +52,21 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    NIS *nis = (NIS *)sess->param->log.ctx;
    JCR *jcr = nis->ua->jcr;
 
-   if (jcr->res.wstore->ndmp_deviceinfo) {
-      char* info = NULL;
-      foreach_alist(info, jcr->res.wstore->ndmp_deviceinfo) {
-         delete(info);
-         info = NULL;
-      }
-      jcr->res.wstore->ndmp_deviceinfo->destroy();
-      jcr->res.wstore->ndmp_deviceinfo = NULL;
+   if (jcr->res.wstore->rss->ndmp_deviceinfo) {
+      delete(jcr->res.wstore->rss->ndmp_deviceinfo);
+      jcr->res.wstore->rss->ndmp_deviceinfo = NULL;
    }
-   jcr->res.wstore->ndmp_deviceinfo = New(alist(10, not_owned_by_alist));
+   jcr->res.wstore->rss->ndmp_deviceinfo = new(std::list<ndmp_deviceinfo_t>);
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
 
-      ndmp_deviceinfo *devinfo = new(ndmp_deviceinfo);
+      ndmp_deviceinfo_t *devinfo = new(ndmp_deviceinfo_t);
       ndmp9_device_capability *info_dc;
       info_dc = info[i].caplist.caplist_val;
       devinfo->model = bstrdup(info[i].model);
       devinfo->device = bstrdup(info_dc->device);
-      jcr->res.wstore->ndmp_deviceinfo->append(devinfo);
+      jcr->res.wstore->rss->ndmp_deviceinfo->push_back(*devinfo);
 
       for (j = 0; j < info[i].caplist.caplist_len; j++) {
          ndmp9_device_capability *dc;
@@ -140,7 +135,7 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
             NDM_JOB_OP_QUERY_AGENTS,
             &ndmp_job)) {
 
-      ua->info_msg("ld_storage_job failed\n");
+      ua->info_msg("build_storage_job failed\n");
       return;
    }
 
@@ -150,18 +145,16 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
 
    ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
-   ndmp_deviceinfo *deviceinfo = NULL;
+   ndmp_deviceinfo_t *deviceinfo = NULL;
 
    ua->info_msg("Devices for storage %s:(%s)\n", store->name(), store->rss->smc_ident);
 
    /* debug output */
    int i=0;
-   if (store->ndmp_deviceinfo) {
-      foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-         ua->info_msg("Device %d:  %s Model: %s\n", i++, deviceinfo->device, deviceinfo->model );
-      }
-   } else {
-      ua->info_msg("deviceinfo for storage %s empty!\n", store->name());
+   for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
+         devinfo != store->rss->ndmp_deviceinfo->end();
+         devinfo++)  {
+      ua->info_msg("Device %d:  %s Model: %s\n", i++, &devinfo->device, &devinfo->model );
    }
 }
 
@@ -737,16 +730,15 @@ char *lookup_ndmp_drivename_by_number(STORERES *store, drive_number_t drivenumbe
 int lookup_ndmp_driveindex_by_name(STORERES *store, char *drivename)
 {
    int cnt = 0;
-   ndmp_deviceinfo *devinfo = NULL;
-
-   if (store->ndmp_deviceinfo) {
-      foreach_alist(devinfo, store->ndmp_deviceinfo) {
-         if (bstrcmp(drivename, devinfo->device)) {
+   for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
+         devinfo != store->rss->ndmp_deviceinfo->end();
+         devinfo++)  {
+         //if (bstrcmp(drivename, devinfo->device.c_str())) {
+         if ((drivename == devinfo->device)) {
             return cnt;
          }
          cnt++;
       }
-   }
    return -1;
 }
 

@@ -44,6 +44,7 @@
 #include "ua.h"
 #include "jobq.h"
 
+
 /* Globals that dird.c exports */
 extern DIRRES *me;                   /**< Our Global resource */
 extern CONFIG *my_config;            /**< Our Global config */
@@ -168,6 +169,12 @@ struct smc_elem_aa {
 
 };
 
+#if HAVE_NDMP
+struct ndmp_deviceinfo_t {
+   std::string device;
+   std::string model;
+};
+#endif
 
 struct runtime_storage_status_t {
    int32_t NumConcurrentJobs;     /**< Number of concurrent jobs running */
@@ -178,6 +185,7 @@ struct runtime_storage_status_t {
    unsigned char	smc_ident[32];  /**< smc ident info = changer name */
    smc_elem_aa storage_mapping;   /**< smc element assignment */
    changer_vol_list_t *vol_list;  /**< Cached content of autochanger */
+   std::list<ndmp_deviceinfo_t> *ndmp_deviceinfo; /**< NDMP device info for devices in this Storage */
 };
 
 struct runtime_client_status_t {

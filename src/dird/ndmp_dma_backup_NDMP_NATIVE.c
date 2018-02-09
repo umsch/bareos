@@ -122,7 +122,7 @@ int ndmp_load_next(struct ndm_session *sess) {
          goto bail_out;
       }
 
-      slot_number_t slotnumber = lookup_storage_mapping(store, slot_type_normal, LOGICAL_TO_PHYSICAL, mr.Slot);
+      slot_number_t slotnumber = get_element_address_by_index(store, slot_type_storage, mr.Slot);
       /*
        * check if lookup_storage_mapping was successful
        */
@@ -257,13 +257,14 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    if (driveindex == -1) {
       Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s, run status storage first!\n"), ndmp_job.tape_device);
       return retval;
+   }
 
-   driveaddress = lookup_storage_mapping(store, slot_type_drive, LOGICAL_TO_PHYSICAL, driveindex);
+   driveaddress = get_element_address_by_index(store, slot_type_drive, driveindex);
    if (driveaddress == -1) {
       Jmsg(jcr, M_ERROR, 0, _("Could not lookup driveaddress for driveindex %d, run update slots first!\n"),
             driveaddress);
       return retval;
-
+   }
    ndmp_job.drive_addr = driveaddress;
    ndmp_job.drive_addr_given = 1;
 
@@ -585,8 +586,7 @@ static inline bool extract_post_backup_stats_ndmp_native(JCR *jcr,
        * translate Physical to Logical Slot before storing into database
        */
 
-      media->slot_addr = lookup_storage_mapping(jcr->res.wstore, slot_type_normal,
-                                                  PHYSICAL_TO_LOGICAL, media->slot_addr);
+      media->slot_addr = get_index_by_element_address (jcr->res.wstore, slot_type_storage, media->slot_addr);
 #if 0
       Jmsg(jcr, M_INFO, 0, _("Physical Slot is %d\n"), media->slot_addr);
       Jmsg(jcr, M_INFO, 0, _("Logical slot is : %d\n"), media->slot_addr);

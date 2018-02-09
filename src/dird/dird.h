@@ -110,7 +110,7 @@ typedef enum {
 typedef enum {
    slot_type_unknown,             /**< Unknown slot type */
    slot_type_drive,               /**< Drive slot */
-   slot_type_normal,              /**< Normal slot */
+   slot_type_storage,             /**< Storage slot */
    slot_type_import,              /**< Import/export slot */
    slot_type_picker               /**< Robotics */
 } slot_type;
@@ -147,23 +147,37 @@ struct changer_vol_list_t {
    dlist *contents;               /**< Contents of autochanger */
 };
 
-/*
- * Mapping from logical to physical storage address
+
+/**
+ * same as smc_element_address_assignment
+ * from ndmp/smc.h
  */
-struct storage_mapping_t {
-   slot_type Type;               /**< See slot_type_* */
-   slot_number_t Index;          /**< Unique index */
-   slot_number_t Slot;           /**< Drive number when slot_type_drive or actual slot number */
+struct smc_elem_aa {
+
+	unsigned	mte_addr;   /* media transport element */
+	unsigned	mte_count;
+
+	unsigned	se_addr;    /* storage element */
+	unsigned	se_count;
+
+	unsigned	iee_addr;	/* import/export element */
+	unsigned	iee_count;
+
+	unsigned	dte_addr;	/* data transfer element */
+	unsigned	dte_count;
+
 };
+
 
 struct runtime_storage_status_t {
    int32_t NumConcurrentJobs;     /**< Number of concurrent jobs running */
    int32_t NumConcurrentReadJobs; /**< Number of jobs reading */
    drive_number_t drives;         /**< Number of drives in autochanger */
    slot_number_t slots;           /**< Number of slots in autochanger */
-   std::list<storage_mapping_t> *storage_mappings;    /**< Mappings from logical to physical storage address */
-   changer_vol_list_t *vol_list;  /**< Cached content of autochanger */
    pthread_mutex_t changer_lock;  /**< Any access to the autochanger is controlled by this lock */
+   unsigned char	smc_ident[32];  /**< smc ident info = changer name */
+   smc_elem_aa storage_mapping;   /**< smc element assignment */
+   changer_vol_list_t *vol_list;  /**< Cached content of autochanger */
 };
 
 struct runtime_client_status_t {

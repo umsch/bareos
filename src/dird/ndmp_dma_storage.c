@@ -40,7 +40,8 @@
 /* Forward referenced functions */
 
 
-/** ndmp query callback
+/**
+ * ndmp query callback
  */
 int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_info)
 {
@@ -138,6 +139,8 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
             true, /* Query Robot Agent */
             NDM_JOB_OP_QUERY_AGENTS,
             &ndmp_job)) {
+
+      ua->info_msg("ld_storage_job failed\n");
       return;
    }
 
@@ -149,7 +152,7 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
 
    ndmp_deviceinfo *deviceinfo = NULL;
 
-   ua->info_msg("Devices for storage %s:\n", store->name());
+   ua->info_msg("Devices for storage %s:(%s)\n", store->name(), store->rss->smc_ident);
 
    /* debug output */
    int i=0;
@@ -346,92 +349,30 @@ static void fill_volume_name(vol_list_t *vl, struct smc_element_descriptor *edp)
 }
 
 /**
- * Fill the mapping table from logical to physical storage addresses.
+ * Get the information to map logical addresses (index) to
+ * physical address (scsi element address)
  *
- * The robot mapping table is used when we need to map from a logical
- * number to a physical storage address and for things like counting
- * the number of slots or drives. Caching this mapping data is no problem
- * as its only a physical mapping which won't change much (if at all) over
- * the time the daemon runs. We don't capture anything like volumes and
- * the fact if things are full or empty as that data is kind of volatile
- * and you should use a vol_list for that.
+ * Everything that is needed for that is stored in the
+ * smc smc_element_address_assignment.
+ *
+ * For each type of  element a start address and the
+ * number of entries (count) is stored there.
  */
 static void ndmp_fill_storage_mappings(STORERES *store, struct ndm_session *ndmp_sess)
 {
    drive_number_t drive;
    slot_number_t slot,
                  picker;
-   storage_mapping_t *mapping = NULL;
    struct smc_ctrl_block *smc;
-   struct smc_element_descriptor *edp;
 
-   if (!store->rss->storage_mappings) {
-      store->rss->storage_mappings = new(std::list<storage_mapping_t>);
-   }
-   /*
-    * Loop over the robot element status and add each element to
-    * the mapping table. We first add each element without a logical
-    * slot number so things are inserted based on their Physical address
-    * into the linked list using binary insert on the Index field.
-    */
    smc = ndmp_sess->control_acb->smc_cb;
-   for (edp = smc->elem_desc; edp; edp = edp->next) {
-      /* mapping = (storage_mapping_t *)malloc(sizeof(storage_mapping_t)); */
-      /* memset(mapping, 0, sizeof(storage_mapping_t)); */
+   memcpy(store->rss->smc_ident, smc->ident, sizeof(store->rss->smc_ident));
 
-      mapping = new(storage_mapping_t);
+   if (smc->valid_elem_aa) {
+      memcpy(&store->rss->storage_mapping, &smc->elem_aa, sizeof(store->rss->storage_mapping));
 
-      switch (edp->element_type_code) {
-      case SMC_ELEM_TYPE_MTE:
-         mapping->Type = slot_type_picker;
-         break;
-      case SMC_ELEM_TYPE_SE:
-         mapping->Type = slot_type_normal;
-         break;
-      case SMC_ELEM_TYPE_IEE:
-         mapping->Type = slot_type_import;
-         break;
-      case SMC_ELEM_TYPE_DTE:
-         mapping->Type = slot_type_drive;
-         break;
-      default:
-         mapping->Type = slot_type_unknown;
-         break;
-      }
-      mapping->Index = edp->element_address;
-
-     store->rss->storage_mappings->push_back(*mapping);
-   }
-
-   /*
-    * Pickers and Drives start counting at 0 slots at 1.
-    */
-   picker = 0;
-   drive = 0;
-   slot = 1;
-
-   /*
-    * Loop over each mapping entry ordered by the Index field and assign a
-    * logical number to it.
-    * For the slots,
-    * - first do the normal slots
-    * - second the I/E slots so that they are always at the end
-    */
-   for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
-      switch (mapping->Type) {
-      case slot_type_picker:
-         mapping->Slot = picker++;
-         break;
-      case slot_type_drive:
-         mapping->Slot = drive++;
-         break;
-      case slot_type_normal:
-      case slot_type_import:
-         mapping->Slot = slot++;
-         break;
-      default:
-         break;
-      }
+   } else {
+      Dmsg0(0,"Warning, smc does not have valid elem_aa info\n");
    }
 }
 
@@ -454,9 +395,9 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
    /*
     * If we have no storage mappings create them now from the data we just retrieved.
     */
-   if (!store->rss->storage_mappings) {
+   /* if (!store->rss->storage_mappings) { */
       ndmp_fill_storage_mappings(store, ndmp_sess);
-   }
+   /* } */
 
    /*
     * Start with an empty dlist().
@@ -480,7 +421,7 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
             /*
              * Normal slot
              */
-            vl->Type = slot_type_normal;
+            vl->Type = slot_type_storage;
             if (edp->Full) {
                vl->Content = slot_content_full;
                fill_volume_name(vl, edp);
@@ -502,7 +443,7 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
             /*
              * Normal slot
              */
-            vl->Type = slot_type_normal;
+            vl->Type = slot_type_storage;
             vl->Index = edp->element_address;
             if (!edp->Full) {
                free(vl);
@@ -531,7 +472,7 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
             /*
              * Normal slot
              */
-            vl->Type = slot_type_normal;
+            vl->Type = slot_type_storage;
             vl->Index = edp->element_address;
             if (edp->Full) {
                vl->Content = slot_content_full;
@@ -574,7 +515,7 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
                slot_number_t slot_mapping;
 
                vl->Content = slot_content_full;
-               slot_mapping = lookup_storage_mapping(store, slot_type_normal, PHYSICAL_TO_LOGICAL, edp->src_se_addr);
+               slot_mapping = get_index_by_element_address(store, slot_type_storage, edp->src_se_addr);
                vl->Loaded = slot_mapping;
                fill_volume_name(vl, edp);
             } else {
@@ -591,7 +532,7 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
       /*
        * Map physical storage address to logical one using the storage mappings.
        */
-      vl->Slot = lookup_storage_mapping(store, vl->Type, PHYSICAL_TO_LOGICAL, vl->Index);
+      vl->Slot = get_index_by_element_address(store, slot_type_storage, edp->src_se_addr);
 
       if (vl->VolName) {
          Dmsg6(100, "Add index = %hd slot=%hd loaded=%hd type=%hd content=%hd Vol=%s to SD list.\n",
@@ -657,33 +598,15 @@ bool ndmp_update_storage_mappings(UAContext *ua, STORERES *store)
 slot_number_t ndmp_get_num_slots(UAContext *ua, STORERES *store)
 {
    slot_number_t slots = 0;
-   storage_mapping_t *mapping;
 
    /*
     * See if the mappings are already determined.
     */
-   if (!store->rss->storage_mappings) {
       if (!ndmp_update_storage_mappings(ua, store)) {
          return slots;
-      }
    }
 
-   /*
-    * Walk over all mappings and count the number of slots.
-    */
-   for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
-   //foreach_dlist(mapping, store->rss->storage_mappings) {
-      switch (mapping->Type) {
-      case slot_type_normal:
-      case slot_type_import:
-         slots++;
-         break;
-      default:
-         break;
-      }
-   }
-
-   return slots;
+   return store->rss->storage_mapping.se_count;
 }
 
 /**
@@ -692,32 +615,15 @@ slot_number_t ndmp_get_num_slots(UAContext *ua, STORERES *store)
 drive_number_t ndmp_get_num_drives(UAContext *ua, STORERES *store)
 {
    drive_number_t drives = 0;
-   storage_mapping_t *mapping;
 
    /*
     * See if the mappings are already determined.
     */
-   if (!store->rss->storage_mappings) {
       if (!ndmp_update_storage_mappings(ua, store)) {
          return drives;
-      }
    }
 
-   /*
-    * Walk over all mappings and count the number of drives.
-    */
-   for (auto mapping = store->rss->storage_mappings->begin(); mapping != store->rss->storage_mappings->end(); mapping ++) {
-   //foreach_dlist(mapping, store->rss->storage_mappings) {
-      switch (mapping->Type) {
-      case slot_type_drive:
-         drives++;
-         break;
-      default:
-         break;
-      }
-   }
-
-   return drives;
+   return store->rss->storage_mapping.dte_count;
 }
 
 /**
@@ -753,7 +659,8 @@ bool ndmp_transfer_volume(UAContext *ua, STORERES *store,
     * As the upper level functions work with logical slot numbers convert them
     * to physical slot numbers for the actual NDMP operation.
     */
-   slot_mapping = lookup_storage_mapping(store, slot_type_normal, LOGICAL_TO_PHYSICAL, src_slot);
+   /* slot_mapping = lookup_storage_mapping(store, slot_type_storage, LOGICAL_TO_PHYSICAL, src_slot); */
+   slot_mapping = get_element_address_by_index(store, slot_type_storage, src_slot);
    if (slot_mapping == -1) {
       ua->error_msg("No slot mapping for slot %hd\n", src_slot);
       return retval;
@@ -761,7 +668,7 @@ bool ndmp_transfer_volume(UAContext *ua, STORERES *store,
    ndmp_job.from_addr = slot_mapping;
    ndmp_job.from_addr_given = 1;
 
-   slot_mapping = lookup_storage_mapping(store, slot_type_normal, LOGICAL_TO_PHYSICAL, dst_slot);
+   slot_mapping = get_element_address_by_index(store, slot_type_storage, dst_slot);
    if (slot_mapping == -1) {
       ua->error_msg("No slot mapping for slot %hd\n", dst_slot);
       return retval;
@@ -885,11 +792,9 @@ bool ndmp_autochanger_volume_operation(UAContext *ua, STORERES *store, const cha
    /*
     * See if the mappings are already determined.
     */
-   if (!store->rss->storage_mappings) {
       if (!ndmp_update_storage_mappings(ua, store)) {
          return false;
       }
-   }
 
    if (slot >= 0) {
       slot_number_t slot_mapping;
@@ -897,7 +802,7 @@ bool ndmp_autochanger_volume_operation(UAContext *ua, STORERES *store, const cha
       /*
        * Map the logical address to a physical one.
        */
-      slot_mapping = lookup_storage_mapping(store, slot_type_normal, LOGICAL_TO_PHYSICAL, slot);
+      slot_mapping = get_element_address_by_index(store, slot_type_storage, slot);
       if (slot_mapping == -1) {
          ua->error_msg("No slot mapping for slot %hd\n", slot);
          return retval;
@@ -909,7 +814,7 @@ bool ndmp_autochanger_volume_operation(UAContext *ua, STORERES *store, const cha
    /*
     * Map the logical address to a physical one.
     */
-   drive_mapping = lookup_storage_mapping(store, slot_type_drive, PHYSICAL_TO_LOGICAL, slot);
+   drive_mapping = get_element_address_by_index(store, slot_type_drive, slot);
    if (drive_mapping == -1) {
       ua->error_msg("No slot mapping for drive %hd\n", drive);
       return retval;
@@ -1007,7 +912,7 @@ bool ndmp_send_label_request(UAContext *ua, STORERES *store, MEDIA_DBR *mr,
    if (slot > 0) {
       slot_number_t slot_mapping;
 
-      slot_mapping = lookup_storage_mapping(store, slot_type_normal, LOGICAL_TO_PHYSICAL, slot);
+      slot_mapping = get_element_address_by_index(store, slot_type_storage, slot);
       if (slot_mapping == -1) {
          ua->error_msg("No slot mapping for slot %hd\n", slot);
          return retval;

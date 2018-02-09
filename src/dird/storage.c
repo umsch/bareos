@@ -480,7 +480,7 @@ bool select_next_rstore(JCR *jcr, bootstrap_info &info)
    jcr->setJobStatus(JS_WaitSD);
 
    /*
-    * Wait for up to 6 hours to increment read stoage counter
+    * Wait for up to 6 hours to increment read storage counter
     */
    for (int i = 0; i < MAX_TRIES; i++) {
       /*
@@ -870,56 +870,53 @@ void invalidate_vol_list(STORERES *store)
 }
 
 /**
- * Simple comparison function for binary insert of storage_mapping_t
+ * calculate the element address for given index and slot_type
  */
-int compare_storage_mapping(void *e1, void *e2)
+slot_number_t get_element_address_by_index(STORERES *store, slot_type slot_type, slot_number_t index)
 {
-   storage_mapping_t *m1, *m2;
+   if (slot_type == slot_type_storage) {
+      return (store->rss->storage_mapping.se_addr + index);
 
-   m1 = (storage_mapping_t *)e1;
-   m2 = (storage_mapping_t *)e2;
+   } else if(slot_type == slot_type_import) {
+      return (store->rss->storage_mapping.iee_addr + index);
 
-   ASSERT(m1);
-   ASSERT(m2);
+   } else if (slot_type == slot_type_picker) {
+      return (store->rss->storage_mapping.mte_addr + index);
 
-   if (m1->Index == m2->Index) {
-      return 0;
+   } else if (slot_type == slot_type_drive) {
+      return (store->rss->storage_mapping.dte_addr + index);
+
+   } else if (slot_type == slot_type_unknown){
+      return -1;
+
    } else {
-      return (m1->Index < m2->Index) ? -1 : 1;
+      return -1;
    }
 }
 
 /**
- * Map a slotnr from Logical to Physical or the other way around based on
- * the s_mapping_type type given.
+ * calculate the index for element address and slot_type
  */
-slot_number_t lookup_storage_mapping(STORERES *store, slot_type slot_type,
-                                     s_mapping_type type, slot_number_t slot)
+slot_number_t get_index_by_element_address(STORERES *store, slot_type slot_type, slot_number_t element_addr)
 {
-   slot_number_t retval = -1;
-   storage_mapping_t *mapping;
+   if (slot_type == slot_type_storage) {
+      return (element_addr - store->rss->storage_mapping.se_addr);
 
-   if (store->rss->storage_mappings) {
-      for (auto mapping = store->rss->storage_mappings->begin();
-            mapping != store->rss->storage_mappings->end();
-            mapping ++) {
-         switch (type) {
-            case LOGICAL_TO_PHYSICAL:
-               if (mapping->Type == slot_type && mapping->Slot == slot) {
-                  retval = mapping->Index;
-                  break;
-               }
-               break;
-            case PHYSICAL_TO_LOGICAL:
-               if (mapping->Type == slot_type && mapping->Index == slot) {
-                  retval = mapping->Slot;
-                  break;
-               }
-               break;
-            default:
-               break;
-         }
-      }
+   } else if(slot_type == slot_type_import) {
+      return (element_addr - store->rss->storage_mapping.iee_addr);
+
+   } else if (slot_type == slot_type_picker) {
+      return (element_addr - store->rss->storage_mapping.mte_addr);
+
+   } else if (slot_type == slot_type_drive) {
+      return (element_addr - store->rss->storage_mapping.dte_addr);
+
+   } else if (slot_type == slot_type_unknown){
+      return -1;
+
+   } else {
+      return -1;
    }
-   return retval;
+
 }
+

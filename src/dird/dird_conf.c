@@ -2614,10 +2614,9 @@ void free_resource(RES *sres, int type)
       if (res->res_store.device) {
          delete res->res_store.device;
       }
+
+
       if (res->res_store.rss) {
-         if (res->res_store.rss->storage_mappings) {
-            delete res->res_store.rss->storage_mappings;
-         }
          if (res->res_store.rss->vol_list) {
             if (res->res_store.rss->vol_list->contents) {
                vol_list_t *vl;
@@ -2635,6 +2634,8 @@ void free_resource(RES *sres, int type)
          pthread_mutex_destroy(&res->res_store.rss->changer_lock);
          free(res->res_store.rss);
       }
+
+
       free_tls_t(res->res_store.tls);
       break;
    case R_CATALOG:

@@ -1280,7 +1280,7 @@ void update_slots_from_vol_list(UAContext *ua, STORERES *store, changer_vol_list
        * We are only interested in normal slots.
        */
       switch (vl->Type) {
-      case slot_type_normal:
+      case slot_type_storage:
          break;
       default:
          continue;
@@ -1385,7 +1385,7 @@ void update_inchanger_for_export(UAContext *ua, STORERES *store, changer_vol_lis
        * We are only interested in normal slots.
        */
       switch (vl->Type) {
-      case slot_type_normal:
+      case slot_type_storage:
          break;
       default:
          continue;

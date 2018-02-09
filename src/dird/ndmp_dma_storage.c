@@ -64,8 +64,8 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
       ndmp_deviceinfo_t *devinfo = new(ndmp_deviceinfo_t);
       ndmp9_device_capability *info_dc;
       info_dc = info[i].caplist.caplist_val;
-      devinfo->model = bstrdup(info[i].model);
-      devinfo->device = bstrdup(info_dc->device);
+      devinfo->model = info[i].model;
+      devinfo->device = info_dc->device;
       jcr->res.wstore->rss->ndmp_deviceinfo->push_back(*devinfo);
 
       for (j = 0; j < info[i].caplist.caplist_len; j++) {
@@ -154,7 +154,7 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
    for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
          devinfo != store->rss->ndmp_deviceinfo->end();
          devinfo++)  {
-      ua->info_msg("Device %d:  %s Model: %s\n", i++, &devinfo->device, &devinfo->model );
+      ua->info_msg("Device %d:  %s Model: %s\n", i++, devinfo->device.c_str(), devinfo->model.c_str() );
    }
 }
 
@@ -730,15 +730,17 @@ char *lookup_ndmp_drivename_by_number(STORERES *store, drive_number_t drivenumbe
 int lookup_ndmp_driveindex_by_name(STORERES *store, char *drivename)
 {
    int cnt = 0;
-   for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
-         devinfo != store->rss->ndmp_deviceinfo->end();
-         devinfo++)  {
+   if (store->rss->ndmp_deviceinfo) {
+      for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
+            devinfo != store->rss->ndmp_deviceinfo->end();
+            devinfo++)  {
          //if (bstrcmp(drivename, devinfo->device.c_str())) {
          if ((drivename == devinfo->device)) {
             return cnt;
          }
          cnt++;
       }
+   }
    return -1;
 }
 

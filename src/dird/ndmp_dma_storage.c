@@ -122,7 +122,45 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 	return 0;
 }
 
+/**
+ * get status of a NDMP Native storage and store the information
+ * coming in via the NDMP protocol
+ */
+void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
+{
+   struct ndm_job_param ndmp_job;
 
+   ua->jcr->res.wstore = store;
+
+   if (!ndmp_build_storage_job(ua->jcr,
+            store,
+            true, /* Query Tape Agent */
+            true, /* Query Robot Agent */
+            NDM_JOB_OP_QUERY_AGENTS,
+            &ndmp_job)) {
+      return;
+   }
+
+   struct ndmca_query_callbacks query_callbacks;
+   query_callbacks.get_tape_info = get_tape_info;
+   ndmca_query_callbacks *query_cbs = &query_callbacks;
+
+   ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
+
+   ndmp_deviceinfo *deviceinfo = NULL;
+
+   ua->info_msg("Devices for storage %s:\n", store->name());
+
+   /* debug output */
+   int i=0;
+   if (store->ndmp_deviceinfo) {
+      foreach_alist(deviceinfo, store->ndmp_deviceinfo){
+         ua->info_msg("Device %d:  %s Model: %s\n", i++, deviceinfo->device, deviceinfo->model );
+      }
+   } else {
+      ua->info_msg("deviceinfo for storage %s empty!\n", store->name());
+   }
+}
 
 /**
  * Output the status of a storage daemon when its a normal storage
@@ -137,35 +175,7 @@ void do_ndmp_storage_status(UAContext *ua, STORERES *store, char *cmd)
    if (store->paired_storage) {
       do_native_storage_status(ua, store->paired_storage, cmd);
    } else {
-      struct ndm_job_param ndmp_job;
-
-      ua->jcr->res.wstore = store;
-
-      if (!ndmp_build_storage_job(ua->jcr,
-                                  store,
-                                  true, /* Query Tape Agent */
-                                  true, /* Query Robot Agent */
-                                  NDM_JOB_OP_QUERY_AGENTS,
-                                  &ndmp_job)) {
-         return;
-      }
-
-      struct ndmca_query_callbacks query_callbacks;
-      query_callbacks.get_tape_info = get_tape_info;
-
-      ndmca_query_callbacks *query_cbs = &query_callbacks;
-      ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
-
-      ndmp_deviceinfo *deviceinfo = NULL;
-      ua->info_msg("Devices for storage %s:\n", store->name());
-      int i=0;
-      if (store->ndmp_deviceinfo) {
-         foreach_alist(deviceinfo, store->ndmp_deviceinfo){
-            ua->info_msg("Device %d:  %s Model: %s\n", i++, deviceinfo->device, deviceinfo->model );
-         }
-      } else {
-            ua->info_msg("deviceinfo for storage %s empty!\n", store->name());
-      }
+      do_ndmp_native_storage_status(ua, store, cmd);
    }
 }
 

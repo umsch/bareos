@@ -48,9 +48,16 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
    Dmsg0(100, "Get tape info called\n");
 	unsigned int	i, j, k;
    const char *what = "tape";
+   JCR *jcr = NULL;
 
    NIS *nis = (NIS *)sess->param->log.ctx;
-   JCR *jcr = nis->ua->jcr;
+   if (nis->jcr) {
+      jcr = nis->jcr;
+   } else if ( nis->ua && nis->ua->jcr ){
+      jcr = nis->ua->jcr;
+   } else {
+     return -1;
+   }
 
    if (jcr->res.wstore->rss->ndmp_deviceinfo) {
       delete(jcr->res.wstore->rss->ndmp_deviceinfo);
@@ -114,8 +121,45 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 	}
 	if (i == 0)
 		Dmsg1(100, "  Empty %s info\n", what);
-
 	return 0;
+}
+
+/**
+ *  execute NDMP_QUERY_AGENTS on Tape and Robot
+ */
+bool do_ndmp_native_query_tape_and_robot_agents (JCR *jcr) {
+
+   struct ndm_job_param ndmp_job;
+
+   if (!ndmp_build_storage_job(jcr,
+             jcr->res.wstore,
+            true, /* Query Tape Agent */
+            true, /* Query Robot Agent */
+            NDM_JOB_OP_QUERY_AGENTS,
+            &ndmp_job)) {
+
+      Dmsg0(100, "error in ndmp_build_storage_job");
+      return false;
+   }
+
+   struct ndmca_query_callbacks query_callbacks;
+   query_callbacks.get_tape_info = get_tape_info;
+   ndmca_query_callbacks *query_cbs = &query_callbacks;
+
+   ndmp_do_query(NULL, jcr, &ndmp_job, me->ndmp_loglevel, query_cbs);
+
+   /*
+    *
+    */
+
+   STORERES *store = jcr->res.wstore;
+   int i=0;
+   for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
+         devinfo != store->rss->ndmp_deviceinfo->end();
+         devinfo++)  {
+      Jmsg(jcr, M_INFO, 0, "Device %d:  %s Model: %s\n", i++, devinfo->device.c_str(), devinfo->model.c_str() );
+   }
+   return true;
 }
 
 /**
@@ -143,7 +187,7 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
    query_callbacks.get_tape_info = get_tape_info;
    ndmca_query_callbacks *query_cbs = &query_callbacks;
 
-   ndmp_do_query(ua, &ndmp_job, me->ndmp_loglevel, query_cbs);
+   ndmp_do_query(ua, NULL, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
    ndmp_deviceinfo_t *deviceinfo = NULL;
 
@@ -548,10 +592,12 @@ dlist *ndmp_get_vol_list(UAContext *ua, STORERES *store, bool listall, bool scan
    return vol_list;
 }
 
+
+
 /**
  * Update the mapping table from logical to physical storage addresses.
  */
-bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store)
+bool ndmp_update_storage_mappings(JCR *jcr, STORERES *store)
 {
    struct ndm_session *ndmp_sess;
 
@@ -564,8 +610,8 @@ bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store)
    cleanup_ndmp_session(ndmp_sess);
 
    return true;
-
 }
+
 
 /**
  * Update the mapping table from logical to physical storage addresses.
@@ -734,7 +780,6 @@ int lookup_ndmp_driveindex_by_name(STORERES *store, char *drivename)
       for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
             devinfo != store->rss->ndmp_deviceinfo->end();
             devinfo++)  {
-         //if (bstrcmp(drivename, devinfo->device.c_str())) {
          if ((drivename == devinfo->device)) {
             return cnt;
          }

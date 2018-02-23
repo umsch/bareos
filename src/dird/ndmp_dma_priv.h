@@ -121,7 +121,7 @@ bool ndmp_build_client_and_storage_job(JCR *jcr, STORERES *store, CLIENTRES *cli
                            bool init_tape, bool init_robot, int operation, struct ndm_job_param *job);
 
 extern "C" void ndmp_loghandler(struct ndmlog *log, char *tag, int level, char *msg);
-void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndmca_query_callbacks* query_cbs);
+void ndmp_do_query(UAContext *ua, JCR* jcr, ndm_job_param *ndmp_job, int NdmpLoglevel, ndmca_query_callbacks* query_cbs);
 
 /*
  * NDMP FHDB specific helpers.

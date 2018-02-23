@@ -554,9 +554,27 @@ extern "C" void ndmp_loghandler(struct ndmlog *log, char *tag, int level, char *
 }
 
 /**
- * Interface function which glues the logging infra of the NDMP lib with the user context.
+ * Interface function which glues the logging infra of the NDMP lib to Jmsg output
  */
-extern "C" void ndmp_status_handler(struct ndmlog *log, char *tag, int lev, char *msg)
+extern "C" void ndmp_log_delivery_cb_to_jmsg(struct ndmlog *log, char *tag, int lev, char *msg)
+{
+   NIS *nis;
+
+   /*
+    * Make sure if the logging system was setup properly.
+    */
+   nis = (NIS *)log->ctx;
+   if (!nis || !nis->jcr){
+      return;
+   }
+
+   Jmsg(nis->jcr, M_INFO, 0,  "%s\n", msg);
+}
+
+/**
+ * Interface function which glues the logging infra of the NDMP lib with the user agent
+ */
+extern "C" void ndmp_log_delivery_cb_to_ua(struct ndmlog *log, char *tag, int lev, char *msg)
 {
    NIS *nis;
 
@@ -573,14 +591,14 @@ extern "C" void ndmp_status_handler(struct ndmlog *log, char *tag, int lev, char
 
 /**
  * Generic function to query the NDMP server using the NDM_JOB_OP_QUERY_AGENTS
- * operation. Callback is the above ndmp_status_handler which prints
- * the data to the user context.
+ * if UA is set, we log to the user context,
+ * if JCR is set, we log to the JobLog
  */
-void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndmca_query_callbacks* query_cbs)
+void ndmp_do_query(UAContext *ua, JCR *jcr, ndm_job_param *ndmp_job, int NdmpLoglevel, ndmca_query_callbacks* query_cbs)
 {
    NIS *nis;
    struct ndm_session ndmp_sess;
-
+   JCR *local_jcr = NULL;
    /*
     * Initialize a new NDMP session
     */
@@ -590,15 +608,28 @@ void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndm
 
    ndmp_sess.param = (struct ndm_session_param *)malloc(sizeof(struct ndm_session_param));
    memset(ndmp_sess.param, 0, sizeof(struct ndm_session_param));
-   ndmp_sess.param->log.deliver = ndmp_status_handler;
+
    nis = (NIS *)malloc(sizeof(NIS));
    memset(nis, 0, sizeof(NIS));
+
+   ndmp_sess.param->log.ctx = nis;
    ndmp_sess.param->log_level = native_to_ndmp_loglevel(NdmpLoglevel, debug_level, nis);
-   nis->ua = ua;
    ndmp_sess.param->log.ctx = nis;
    ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
 
+   if (ua) {
+      nis->ua = ua;
+      local_jcr = ua->jcr;
+      ndmp_sess.param->log.deliver = ndmp_log_delivery_cb_to_ua;
 
+   } else if (jcr) {
+      local_jcr = jcr;
+      nis->jcr = jcr;
+      ndmp_sess.param->log.deliver = ndmp_log_delivery_cb_to_jmsg;
+
+   } else  {
+      goto bail_out;
+   }
    /*
     * Register the query callbacks that give us the query results
     */
@@ -615,7 +646,7 @@ void ndmp_do_query(UAContext *ua, ndm_job_param *ndmp_job, int NdmpLoglevel, ndm
     * Copy the actual job to perform.
     */
    memcpy(&ndmp_sess.control_acb->job, ndmp_job, sizeof(struct ndm_job_param));
-   if (!ndmp_validate_job(ua->jcr, &ndmp_sess.control_acb->job)) {
+   if (!ndmp_validate_job(local_jcr, &ndmp_sess.control_acb->job)) {
       goto cleanup;
    }
 
@@ -685,7 +716,7 @@ void do_ndmp_client_status(UAContext *ua, CLIENTRES *client, char *cmd)
 
    ndmca_query_callbacks *query_cbs = NULL;
 
-   ndmp_do_query(ua, &ndmp_job,
+   ndmp_do_query(ua, NULL, &ndmp_job,
                  (client->ndmp_loglevel > me->ndmp_loglevel) ? client->ndmp_loglevel :
                                                                me->ndmp_loglevel, query_cbs);
 }

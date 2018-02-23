@@ -253,6 +253,13 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
    ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
 
+   /*
+    * update storage status
+    */
+   do_ndmp_native_query_tape_and_robot_agents(jcr);
+   ndmp_update_storage_mappings(jcr, store );
+
+
    driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
    if (driveindex == -1) {
       Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s, run status storage first!\n"), ndmp_job.tape_device);

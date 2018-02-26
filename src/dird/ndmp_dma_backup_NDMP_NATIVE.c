@@ -214,14 +214,6 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    status = 0;
    STORERES *store = jcr->res.wstore;
 
-   //ndmp_job.tape_device = ((DEVICERES*)(store->device->first()))->name();
-   //int drive = lookup_ndmp_drivenumber_by_name(store, ndmp_job.tape_device);
-
-   /*
-    * Initialize the ndmp backup job. We build the generic job only once
-    * and reuse the job definition for each separate sub-backup we perform as
-    * part of the whole job. We only free the env_table between every sub-backup.
-    */
    if (!ndmp_build_client_and_storage_job(jcr, jcr->res.wstore, jcr->res.client,
             true, /* init_tape */
             true, /* init_robot */
@@ -256,19 +248,19 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    /*
     * update storage status
     */
-   do_ndmp_native_query_tape_and_robot_agents(jcr);
-   ndmp_update_storage_mappings(jcr, store );
+   do_ndmp_native_query_tape_and_robot_agents(jcr, store);
+   ndmp_update_storage_mappings(jcr, store);
 
 
    driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
    if (driveindex == -1) {
-      Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s, run status storage first!\n"), ndmp_job.tape_device);
+      Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s\n"), ndmp_job.tape_device);
       return retval;
    }
 
    driveaddress = get_element_address_by_index(store, slot_type_drive, driveindex);
    if (driveaddress == -1) {
-      Jmsg(jcr, M_ERROR, 0, _("Could not lookup driveaddress for driveindex %d, run update slots first!\n"),
+      Jmsg(jcr, M_ERROR, 0, _("Could not lookup driveaddress for driveindex %d\n"),
             driveaddress);
       return retval;
    }

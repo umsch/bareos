@@ -49,8 +49,9 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 	unsigned int	i, j, k;
    const char *what = "tape";
    JCR *jcr = NULL;
-
+   STORERES *store = NULL;
    NIS *nis = (NIS *)sess->param->log.ctx;
+
    if (nis->jcr) {
       jcr = nis->jcr;
    } else if ( nis->ua && nis->ua->jcr ){
@@ -59,11 +60,21 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
      return -1;
    }
 
-   if (jcr->res.wstore->rss->ndmp_deviceinfo) {
-      delete(jcr->res.wstore->rss->ndmp_deviceinfo);
-      jcr->res.wstore->rss->ndmp_deviceinfo = NULL;
+   if (jcr->is_JobType(JT_BACKUP)) {
+      store = jcr->res.wstore;
+
+   } else if (jcr->is_JobType(JT_RESTORE)) {
+      store = jcr->res.rstore;
+
+   } else {
+     return -1;
    }
-   jcr->res.wstore->rss->ndmp_deviceinfo = new(std::list<ndmp_deviceinfo_t>);
+
+   if (store->rss->ndmp_deviceinfo) {
+      delete(store->rss->ndmp_deviceinfo);
+      store->rss->ndmp_deviceinfo = NULL;
+   }
+   store->rss->ndmp_deviceinfo = new(std::list<ndmp_deviceinfo_t>);
 
    for (i = 0; i < n_info; i++) {
       Dmsg2(100, "  %s %s\n", what, info[i].model);
@@ -73,7 +84,7 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
       info_dc = info[i].caplist.caplist_val;
       devinfo->model = info[i].model;
       devinfo->device = info_dc->device;
-      jcr->res.wstore->rss->ndmp_deviceinfo->push_back(*devinfo);
+      store->rss->ndmp_deviceinfo->push_back(*devinfo);
 
       for (j = 0; j < info[i].caplist.caplist_len; j++) {
          ndmp9_device_capability *dc;
@@ -127,12 +138,12 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
 /**
  *  execute NDMP_QUERY_AGENTS on Tape and Robot
  */
-bool do_ndmp_native_query_tape_and_robot_agents (JCR *jcr) {
+bool do_ndmp_native_query_tape_and_robot_agents(JCR *jcr, STORERES *store) {
 
    struct ndm_job_param ndmp_job;
 
    if (!ndmp_build_storage_job(jcr,
-             jcr->res.wstore,
+            store,
             true, /* Query Tape Agent */
             true, /* Query Robot Agent */
             NDM_JOB_OP_QUERY_AGENTS,
@@ -152,7 +163,6 @@ bool do_ndmp_native_query_tape_and_robot_agents (JCR *jcr) {
     *
     */
 
-   STORERES *store = jcr->res.wstore;
    int i=0;
    for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
          devinfo != store->rss->ndmp_deviceinfo->end();
@@ -776,6 +786,11 @@ char *lookup_ndmp_drivename_by_number(STORERES *store, drive_number_t drivenumbe
 int lookup_ndmp_driveindex_by_name(STORERES *store, char *drivename)
 {
    int cnt = 0;
+
+   if (!drivename) {
+      return -1;
+   }
+
    if (store->rss->ndmp_deviceinfo) {
       for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
             devinfo != store->rss->ndmp_deviceinfo->end();

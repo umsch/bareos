@@ -264,6 +264,15 @@ static bool do_ndmp_native_restore(JCR *jcr)
    char mediabuf[100];
    ndmmedia *media;
    slot_number_t ndmp_slot;
+   STORERES *store = NULL;
+   int driveaddress, driveindex;
+
+   store = jcr->res.rstore;
+
+   memset(&ndmp_sess, 0, sizeof(ndmp_sess));
+
+   nis = (NIS *)malloc(sizeof(NIS));
+   memset(nis, 0, sizeof(NIS));
 
    if (jcr->res.client->ndmp_loglevel > me->ndmp_loglevel) {
       NdmpLoglevel = jcr->res.client->ndmp_loglevel;
@@ -271,17 +280,99 @@ static bool do_ndmp_native_restore(JCR *jcr)
       NdmpLoglevel = me->ndmp_loglevel;
    }
 
+   if (!ndmp_build_client_and_storage_job(jcr, store, jcr->res.client,
+            true, /* init_tape */
+            true, /* init_robot */
+            NDM_JOB_OP_EXTRACT, &ndmp_job)) {
+      goto cleanup;
+   }
 
-   nis = (NIS *)malloc(sizeof(NIS));
-   memset(nis, 0, sizeof(NIS));
+   ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
+   ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
+
+   Jmsg(jcr, M_INFO, 0, _("Record size is %d\n"), ndmp_job.record_size);
+
+   /*
+    * update storage status
+    */
+   do_ndmp_native_query_tape_and_robot_agents(jcr, store);
+   ndmp_update_storage_mappings(jcr, store);
+
+
+   driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
+   if (driveindex == -1) {
+      Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s!\n"), ndmp_job.tape_device);
+      return retval;
+   }
+
+   driveaddress = get_element_address_by_index(store, slot_type_drive, driveindex);
+   if (driveaddress == -1) {
+      Jmsg(jcr, M_ERROR, 0, _("Could not lookup driveaddress for driveindex %d!\n"),
+            driveaddress);
+      return retval;
+   }
+   ndmp_job.drive_addr = driveaddress;
+   ndmp_job.drive_addr_given = 1;
+
+   /*
+    * Set the robot to use
+    */
+   ndmp_job.robot_target = (struct ndmscsi_target *)actuallymalloc(sizeof(struct ndmscsi_target));
+   if (ndmscsi_target_from_str(ndmp_job.robot_target, store->ndmp_changer_device) != 0) {
+      actuallyfree(ndmp_job.robot_target);
+      Dmsg0(100,"no robot to use\n");
+      goto bail_out;
+   }
+   ndmp_job.have_robot = 1;
 
 
 
-   memset(&ndmp_sess, 0, sizeof(ndmp_sess));
-   ndmp_sess.conn_snooping = (me->ndmp_snooping) ? 1 : 0;
-   ndmp_sess.control_agent_enabled = 1;
 
-   ndmp_sess.dump_media_info = 1; // for debugging
+   /* ndmp_job.tape_device = (char*) store->device->first(); */
+   /* int drive = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device); */
+
+
+
+   get_ndmmedia_info_from_database(&ndmp_job.media_tab, jcr);
+  //get_ndmmedia_info_from_database(&ndmp_sess.control_acb->job.media_tab, jcr);
+
+   for (ndmmedia *media = ndmp_job.media_tab.head; media; media = media->next) {
+      ndmmedia_to_str(media, mediabuf);
+      Jmsg(jcr, M_INFO, 0, _("Media: %s\n"), mediabuf);
+   }
+
+   for (ndmmedia *media = ndmp_job.media_tab.head; media; media = media->next) {
+
+      /* if (!ndmp_update_storage_mappings(jcr, store )){ */
+      /*    Jmsg(jcr, M_ERROR, 0, _("ERROR in ndmp_update_storage_mappings\n")); */
+      /* } */
+      /*
+       * convert slot from database to ndmp slot
+       */
+      Jmsg(jcr, M_INFO, 0, _("Logical slot for volume %s is %d\n"), media->label, media->slot_addr);
+
+      /* ndmp_slot = lookup_storage_mapping(store, slot_type_normal, LOGICAL_TO_PHYSICAL, media->slot_addr); */
+      ndmp_slot = get_element_address_by_index(store, slot_type_storage, media->slot_addr);
+      media->slot_addr = ndmp_slot;
+
+      Jmsg(jcr, M_INFO, 0, _("Physical(NDMP) slot for volume %s is %d\n"), media->label, media->slot_addr);
+      Jmsg(jcr, M_INFO, 0, _("Media Index of volume %s is %d\n"), media->label, media->index);
+
+   }
+
+
+   if (!ndmp_validate_job(jcr, &ndmp_job)) {
+      Jmsg(jcr, M_ERROR, 0, _("ERROR in ndmp_validate_job\n"));
+      goto cleanup_ndmp;
+   }
+
+   Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);
+   Jmsg(jcr, M_INFO, 0, _("Using Tape  host:device:address  %s:%s:@%d\n"),
+                                              ndmp_job.tape_agent.host, ndmp_job.tape_device, ndmp_job.drive_addr);
+   Jmsg(jcr, M_INFO, 0, _("Using Robot host:device  %s:%s\n"), ndmp_job.robot_agent.host, ndmp_job.robot_target);
+   Jmsg(jcr, M_INFO, 0, _("Using Tape record size %d\n"), ndmp_job.record_size);
+
+
 
    /*
     * session initialize
@@ -294,20 +385,12 @@ static bool do_ndmp_native_restore(JCR *jcr)
    ndmp_sess.param->log.ctx = nis;
    ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
 
+   ndmp_sess.conn_snooping = (me->ndmp_snooping) ? 1 : 0;
+   ndmp_sess.control_agent_enabled = 1;
 
-   //ndmp_job.tape_device = lookup_ndmp_drive(jcr->res.rstore, drive);
-   ndmp_job.tape_device = (char*) jcr->res.rstore->device->first();
-   int drive = lookup_ndmp_driveindex_by_name(jcr->res.rstore, ndmp_job.tape_device);
-   if (!ndmp_build_client_and_storage_job(jcr, jcr->res.rstore, jcr->res.client,
-            true, /* init_tape */
-            true, /* init_robot */
-            NDM_JOB_OP_EXTRACT, &ndmp_job)) {
-      goto cleanup;
-   }
-
+   ndmp_sess.dump_media_info = 1; // for debugging
 
    jcr->setJobStatus(JS_Running);
-
 
    /*
     * Initialize the session structure.
@@ -317,64 +400,19 @@ static bool do_ndmp_native_restore(JCR *jcr)
    }
    session_initialized = true;
 
+   ndmca_media_calculate_offsets(&ndmp_sess);
+
+   /*
+    * copy our prepared ndmp_job into the session
+    */
    memcpy(&ndmp_sess.control_acb->job, &ndmp_job, sizeof(struct ndm_job_param));
+
+
 
    if (!fill_restore_environment_ndmp_native(jcr,
             current_fi,
             &ndmp_sess.control_acb->job)) {
       Jmsg(jcr, M_ERROR, 0, _("ERROR in fill_restore_environment\n"));
-      goto cleanup_ndmp;
-   }
-
-   ndmp_job.tape_device = ((DEVICERES*)(jcr->res.rstore->device->first()))->name();
-   ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
-   Jmsg(jcr, M_INFO, 0, _("Record size is %d\n"), ndmp_job.record_size);
-
-   ndmp_sess.control_acb->job.tape_device = ndmp_job.tape_device;
-   ndmp_sess.control_acb->job.record_size = ndmp_job.record_size;
-
-
-   get_ndmmedia_info_from_database(&ndmp_sess.control_acb->job.media_tab, jcr);
-
-   for (ndmmedia *media = ndmp_sess.control_acb->job.media_tab.head; media; media = media->next) {
-      ndmmedia_to_str(media, mediabuf);
-      Jmsg(jcr, M_INFO, 0, _("Media: %s\n"), mediabuf);
-   }
-
-   for (ndmmedia *media = ndmp_sess.control_acb->job.media_tab.head; media; media = media->next) {
-
-      if (!ndmp_update_storage_mappings(jcr, jcr->res.rstore )){
-         Jmsg(jcr, M_ERROR, 0, _("ERROR in ndmp_update_storage_mappings\n"));
-      }
-      /*
-       * convert slot from database to ndmp slot
-       */
-      Jmsg(jcr, M_INFO, 0, _("Logical slot for volume %s is %d\n"), media->label, media->slot_addr);
-
-      /* ndmp_slot = lookup_storage_mapping(jcr->res.rstore, slot_type_normal, LOGICAL_TO_PHYSICAL, media->slot_addr); */
-      ndmp_slot = get_element_address_by_index(jcr->res.rstore, slot_type_storage, media->slot_addr);
-      media->slot_addr = ndmp_slot;
-
-      Jmsg(jcr, M_INFO, 0, _("Physical(NDMP) slot for volume %s is %d\n"), media->label, media->slot_addr);
-      Jmsg(jcr, M_INFO, 0, _("Media Index of volume %s is %d\n"), media->label, media->index);
-
-   }
-
-   ndmca_media_calculate_offsets(&ndmp_sess);
-
-   /*
-    * Set the robot to use
-    */
-   ndmp_sess.control_acb->job.robot_target = (struct ndmscsi_target *)actuallymalloc(sizeof(struct ndmscsi_target));
-   if (ndmscsi_target_from_str(ndmp_sess.control_acb->job.robot_target, jcr->res.rstore->ndmp_changer_device) != 0) {
-      actuallyfree(ndmp_sess.control_acb->job.robot_target);
-      Dmsg0(100,"no robot to use\n");
-      goto bail_out;
-   }
-   ndmp_sess.control_acb->job.have_robot = 1;
-
-   if (!ndmp_validate_job(jcr, &ndmp_sess.control_acb->job)) {
-      Jmsg(jcr, M_ERROR, 0, _("ERROR in ndmp_validate_job\n"));
       goto cleanup_ndmp;
    }
 
@@ -464,10 +502,11 @@ cleanup_ndmp:
    }
 
    if (ndmp_sess.param) {
-      free(ndmp_sess.param->log_tag);
+      if (ndmp_sess.param->log_tag) {
+         free(ndmp_sess.param->log_tag);
+      }
       free(ndmp_sess.param);
    }
-
 cleanup:
    free(nis);
 

@@ -164,6 +164,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
 
    int driveindex;
    slot_number_t driveaddress;
+   char *item;
 
    if (jcr->res.client->ndmp_loglevel > me->ndmp_loglevel) {
       NdmpLoglevel = jcr->res.client->ndmp_loglevel;
@@ -213,6 +214,8 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
 
    status = 0;
    STORERES *store = jcr->res.wstore;
+   POOL_MEM virtual_filename(PM_FNAME);
+   INCEXE *ie;
 
    if (!ndmp_build_client_and_storage_job(jcr, jcr->res.wstore, jcr->res.client,
             true, /* init_tape */
@@ -284,161 +287,168 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    memset(nis, 0, sizeof(NIS));
 
    /*
-    * Loop over each include set of the fileset and fire off a NDMP backup of the included fileset.
+    * Only one include set of the fileset  is allowed in NATIVE mode as
+    * in NDMP also per job only one filesystem can be backed up
     */
    cnt = 0;
    fileset = jcr->res.fileset;
-   for (i = 0; i < fileset->num_includes; i++) {
-      int j;
-      char *item;
-      INCEXE *ie = fileset->include_items[i];
-      POOL_MEM virtual_filename(PM_FNAME);
 
-      /*
-       * Loop over each file = entry of the fileset.
-       */
-      for (j = 0; j < ie->name_list.size(); j++) {
-         item = (char *)ie->name_list.get(j);
-
-         /*
-          * Perform the actual NDMP job.
-          * Initialize a new NDMP session
-          */
-         memset(&ndmp_sess, 0, sizeof(ndmp_sess));
-         ndmp_sess.conn_snooping = (me->ndmp_snooping) ? 1 : 0;
-         ndmp_sess.control_agent_enabled = 1;
-
-         ndmp_sess.param = (struct ndm_session_param *)malloc(sizeof(struct ndm_session_param));
-         memset(ndmp_sess.param, 0, sizeof(struct ndm_session_param));
-         ndmp_sess.param->log.deliver = ndmp_loghandler;
-         ndmp_sess.param->log_level = native_to_ndmp_loglevel(NdmpLoglevel, debug_level, nis);
-         nis->filesystem = item;
-         nis->FileIndex = cnt + 1;
-         nis->jcr = jcr;
-         nis->save_filehist = jcr->res.job->SaveFileHist;
-         nis->filehist_size = jcr->res.job->FileHistSize;
-
-         ndmp_sess.param->log.ctx = nis;
-         ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
-         ndmp_sess.dump_media_info = 1;
-
-         /*
-          * Initialize the session structure.
-          */
-         if (ndma_session_initialize(&ndmp_sess)) {
-            goto cleanup;
-         }
-         session_initialized = true;
-
-         /*
-          * Copy the actual job to perform.
-          */
-         memcpy(&ndmp_sess.control_acb->job, &ndmp_job, sizeof(struct ndm_job_param));
-
-         /*
-          * We can use the same private pointer used in the logging with the JCR in
-          * the file index generation. We don't setup a index_log.deliver
-          * function as we catch the index information via callbacks.
-          */
-         ndmp_sess.control_acb->job.index_log.ctx = ndmp_sess.param->log.ctx;
-
-         if (!fill_backup_environment(jcr,
-                  ie,
-                  nis->filesystem,
-                  &ndmp_sess.control_acb->job)) {
-            goto cleanup;
-         }
-         /* register the callbacks */
-         ndmca_media_register_callbacks (&ndmp_sess, &media_callbacks);
-
-         /*
-          * The full ndmp archive has a virtual filename, we need it to hardlink the individual
-          * file records to it. So we allocate it here once so its available during the whole
-          * NDMP session.
-          */
-         if (bstrcasecmp(jcr->backup_format, "dump")) {
-            Mmsg(virtual_filename, "/@NDMP%s%%%d", nis->filesystem, jcr->DumpLevel);
-         } else {
-            Mmsg(virtual_filename, "/@NDMP%s", nis->filesystem);
-         }
-
-         if (nis->virtual_filename) {
-            free(nis->virtual_filename);
-         }
-         nis->virtual_filename = bstrdup(virtual_filename.c_str());
-
-         // FIXME: disabled because of "missing media entry" error
-         //if (!ndmp_validate_job(jcr, &ndmp_sess.control_acb->job)) {
-         //   goto cleanup;
-         //}
-
-         /*
-          * Commission the session for a run.
-          */
-         if (ndma_session_commission(&ndmp_sess)) {
-            goto cleanup;
-         }
-
-         /*
-          * Setup the DMA.
-          */
-         if (ndmca_connect_control_agent(&ndmp_sess)) {
-            goto cleanup;
-         }
-
-         ndmp_sess.conn_open = 1;
-         ndmp_sess.conn_authorized = 1;
-
-         register_callback_hooks(&ndmp_sess.control_acb->job.index_log);
-
-         /*
-          * Let the DMA perform its magic.
-          */
-         if (ndmca_control_agent(&ndmp_sess) != 0) {
-            goto cleanup;
-         }
-
-         /*
-          * See if there were any errors during the backup.
-          */
-         jcr->jr.FileIndex = cnt + 1;
-         if (!extract_post_backup_stats_ndmp_native(jcr, item, &ndmp_sess)) {
-            goto cleanup;
-         }
-         unregister_callback_hooks(&ndmp_sess.control_acb->job.index_log);
-
-         /*
-          * Reset the NDMP session states.
-          */
-         ndma_session_decommission(&ndmp_sess);
-
-         /*
-          * Cleanup the job after it has run.
-          */
-         ndma_destroy_env_list(&ndmp_sess.control_acb->job.env_tab);
-         ndma_destroy_env_list(&ndmp_sess.control_acb->job.result_env_tab);
-         ndma_destroy_nlist(&ndmp_sess.control_acb->job.nlist_tab);
-
-         /*
-          * Destroy the session.
-          */
-         ndma_session_destroy(&ndmp_sess);
-
-         /*
-          * Free the param block.
-          */
-         free(ndmp_sess.param->log_tag);
-         free(ndmp_sess.param);
-         ndmp_sess.param = NULL;
-
-         /*
-          * Reset the initialized state so we don't try to cleanup again.
-          */
-         session_initialized = false;
-
-         cnt++;
-      }
+   if (fileset->num_includes > 1) {
+      Jmsg(jcr, M_ERROR, 0, "Exactly one include set is supported in NDMP NATIVE mode\n");
+      return retval;
    }
+
+   ie = fileset->include_items[0];
+
+   /*
+    * only one file = entry is allowed
+    * and it is the ndmp filesystem to be backed up
+    */
+   if (ie->name_list.size() != 1) {
+      Jmsg(jcr, M_ERROR, 0, "Exactly one  File specification is supported in NDMP NATIVE mode\n");
+      return retval;
+   }
+
+   item = (char *)ie->name_list.first();
+
+   /*
+    * Perform the actual NDMP job.
+    * Initialize a new NDMP session
+    */
+   memset(&ndmp_sess, 0, sizeof(ndmp_sess));
+   ndmp_sess.conn_snooping = (me->ndmp_snooping) ? 1 : 0;
+   ndmp_sess.control_agent_enabled = 1;
+
+   ndmp_sess.param = (struct ndm_session_param *)malloc(sizeof(struct ndm_session_param));
+   memset(ndmp_sess.param, 0, sizeof(struct ndm_session_param));
+   ndmp_sess.param->log.deliver = ndmp_loghandler;
+   ndmp_sess.param->log_level = native_to_ndmp_loglevel(NdmpLoglevel, debug_level, nis);
+   nis->filesystem = item;
+   nis->FileIndex = cnt + 1;
+   nis->jcr = jcr;
+   nis->save_filehist = jcr->res.job->SaveFileHist;
+   nis->filehist_size = jcr->res.job->FileHistSize;
+
+   ndmp_sess.param->log.ctx = nis;
+   ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
+   ndmp_sess.dump_media_info = 1;
+
+   /*
+    * Initialize the session structure.
+    */
+   if (ndma_session_initialize(&ndmp_sess)) {
+      goto cleanup;
+   }
+   session_initialized = true;
+
+   /*
+    * Copy the actual job to perform.
+    */
+   memcpy(&ndmp_sess.control_acb->job, &ndmp_job, sizeof(struct ndm_job_param));
+
+   /*
+    * We can use the same private pointer used in the logging with the JCR in
+    * the file index generation. We don't setup a index_log.deliver
+    * function as we catch the index information via callbacks.
+    */
+   ndmp_sess.control_acb->job.index_log.ctx = ndmp_sess.param->log.ctx;
+
+   if (!fill_backup_environment(jcr,
+            ie,
+            nis->filesystem,
+            &ndmp_sess.control_acb->job)) {
+      goto cleanup;
+   }
+   /* register the callbacks */
+   ndmca_media_register_callbacks (&ndmp_sess, &media_callbacks);
+
+   /*
+    * The full ndmp archive has a virtual filename, we need it to hardlink the individual
+    * file records to it. So we allocate it here once so its available during the whole
+    * NDMP session.
+    */
+   if (bstrcasecmp(jcr->backup_format, "dump")) {
+      Mmsg(virtual_filename, "/@NDMP%s%%%d", nis->filesystem, jcr->DumpLevel);
+   } else {
+      Mmsg(virtual_filename, "/@NDMP%s", nis->filesystem);
+   }
+
+   if (nis->virtual_filename) {
+      free(nis->virtual_filename);
+   }
+   nis->virtual_filename = bstrdup(virtual_filename.c_str());
+
+   // FIXME: disabled because of "missing media entry" error
+   //if (!ndmp_validate_job(jcr, &ndmp_sess.control_acb->job)) {
+   //   goto cleanup;
+   //}
+
+   /*
+    * Commission the session for a run.
+    */
+   if (ndma_session_commission(&ndmp_sess)) {
+      goto cleanup;
+   }
+
+   /*
+    * Setup the DMA.
+    */
+   if (ndmca_connect_control_agent(&ndmp_sess)) {
+      goto cleanup;
+   }
+
+   ndmp_sess.conn_open = 1;
+   ndmp_sess.conn_authorized = 1;
+
+   register_callback_hooks(&ndmp_sess.control_acb->job.index_log);
+
+   /*
+    * Let the DMA perform its magic.
+    */
+   if (ndmca_control_agent(&ndmp_sess) != 0) {
+      goto cleanup;
+   }
+
+   /*
+    * See if there were any errors during the backup.
+    */
+   jcr->jr.FileIndex = cnt + 1;
+   if (!extract_post_backup_stats_ndmp_native(jcr, item, &ndmp_sess)) {
+      goto cleanup;
+   }
+   unregister_callback_hooks(&ndmp_sess.control_acb->job.index_log);
+
+   /*
+    * Reset the NDMP session states.
+    */
+   ndma_session_decommission(&ndmp_sess);
+
+   /*
+    * Cleanup the job after it has run.
+    */
+   ndma_destroy_env_list(&ndmp_sess.control_acb->job.env_tab);
+   ndma_destroy_env_list(&ndmp_sess.control_acb->job.result_env_tab);
+   ndma_destroy_nlist(&ndmp_sess.control_acb->job.nlist_tab);
+
+   /*
+    * Destroy the session.
+    */
+   ndma_session_destroy(&ndmp_sess);
+
+   /*
+    * Free the param block.
+    */
+   free(ndmp_sess.param->log_tag);
+   free(ndmp_sess.param);
+   ndmp_sess.param = NULL;
+
+   /*
+    * Reset the initialized state so we don't try to cleanup again.
+    */
+   session_initialized = false;
+
+   cnt++;
+
 
    status = JS_Terminated;
    retval = true;

@@ -770,7 +770,7 @@ bool ndmp_transfer_volume(UAContext *ua, STORERES *store,
   * unlock devinfo
   * return name of device that was reserved
  */
-std::string reserve_ndmp_tapedevice_drive_for_job(STORERES *store, JCR *jcr) {
+std::string reserve_ndmp_tapedevice_for_job(STORERES *store, JCR *jcr) {
    JobId_t jobid = jcr->JobId;
    std::string returnvalue;
    P(store->rss->ndmp_deviceinfo_lock);
@@ -797,7 +797,7 @@ std::string reserve_ndmp_tapedevice_drive_for_job(STORERES *store, JCR *jcr) {
 /*
  * remove job from tapedevice
  */
-bool free_ndmp_tapedevice_job(STORERES *store, JCR *jcr)
+bool unreserve_ndmp_tapedevice_for_job(STORERES *store, JCR *jcr)
 {
    JobId_t jobid = jcr->JobId;
    bool retval = false;
@@ -809,7 +809,7 @@ bool free_ndmp_tapedevice_job(STORERES *store, JCR *jcr)
          if (devinfo->JobIdUsingDevice == jobid) {
             devinfo->JobIdUsingDevice = 0;
             retval = true;
-            Jmsg(jcr, M_INFO, 0, _("successfully freed NDMP Tape Device %s for job %d\n"),
+            Jmsg(jcr, M_INFO, 0, _("removed reservation of NDMP Tape Device %s for job %d\n"),
                   devinfo->device.c_str(), jobid);
             break;
          }

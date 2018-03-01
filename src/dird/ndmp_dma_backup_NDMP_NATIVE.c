@@ -151,7 +151,6 @@ bail_out:
  */
 bool do_ndmp_backup_ndmp_native(JCR *jcr)
 {
-   unsigned int cnt;
    int i, status;
    char ed1[100];
    NIS *nis = NULL;
@@ -240,7 +239,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    ndmp_update_storage_mappings(jcr, store);
    V(store->rss->changer_lock);
 
-   tapedevice = reserve_ndmp_tapedevice_drive_for_job(store, jcr);
+   tapedevice = reserve_ndmp_tapedevice_for_job(store, jcr);
    ndmp_job.tape_device = (char*)tapedevice.c_str();
   // ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
 
@@ -273,8 +272,9 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
 
    Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);
    Jmsg(jcr, M_INFO, 0, _("Using Tape  host:device:address  %s:%s:@%d\n"),
-                                              ndmp_job.tape_agent.host, ndmp_job.tape_device, ndmp_job.drive_addr);
-   Jmsg(jcr, M_INFO, 0, _("Using Robot host:device  %s:%s\n"), ndmp_job.robot_agent.host, ndmp_job.robot_target);
+         ndmp_job.tape_agent.host, ndmp_job.tape_device, ndmp_job.drive_addr);
+   Jmsg(jcr, M_INFO, 0, _("Using Robot host:device(ident)  %s:%s(%s)\n"),
+         ndmp_job.robot_agent.host, ndmp_job.robot_target, store->rss->smc_ident);
    Jmsg(jcr, M_INFO, 0, _("Using Tape record size %d\n"), ndmp_job.record_size);
 
    if (!ndmp_job.tape_device) {
@@ -291,7 +291,6 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
     * Only one include set of the fileset  is allowed in NATIVE mode as
     * in NDMP also per job only one filesystem can be backed up
     */
-   cnt = 0;
    fileset = jcr->res.fileset;
 
    if (fileset->num_includes > 1) {
@@ -325,7 +324,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    ndmp_sess.param->log.deliver = ndmp_loghandler;
    ndmp_sess.param->log_level = native_to_ndmp_loglevel(NdmpLoglevel, debug_level, nis);
    nis->filesystem = item;
-   nis->FileIndex = cnt + 1;
+   nis->FileIndex = 1;
    nis->jcr = jcr;
    nis->save_filehist = jcr->res.job->SaveFileHist;
    nis->filehist_size = jcr->res.job->FileHistSize;
@@ -410,10 +409,15 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
       goto cleanup;
    }
 
+   if (!unreserve_ndmp_tapedevice_for_job(store, jcr)) {
+      Jmsg(jcr, M_ERROR, 0, "could not free ndmp tape device %s from job %d",
+            ndmp_job.tape_device, jcr->JobId);
+   }
+
    /*
     * See if there were any errors during the backup.
     */
-   jcr->jr.FileIndex = cnt + 1;
+   jcr->jr.FileIndex = 1;
    if (!extract_post_backup_stats_ndmp_native(jcr, item, &ndmp_sess)) {
       goto cleanup;
    }
@@ -448,19 +452,19 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
     */
    session_initialized = false;
 
-   cnt++;
 
 
    status = JS_Terminated;
    retval = true;
+
 
    /*
     * If we do incremental backups it can happen that the backup is empty if
     * nothing changed but we always write a filestream. So we use the counter
     * which counts the number of actual NDMP backup sessions we run to completion.
     */
-   if (jcr->JobFiles < cnt) {
-      jcr->JobFiles = cnt;
+   if (jcr->JobFiles = 0) {
+      jcr->JobFiles = 1;
    }
 
    /*
@@ -502,10 +506,6 @@ bail_out:
    jcr->setJobStatus(JS_ErrorTerminated);
 
 ok_out:
-   if (!free_ndmp_tapedevice_job(store, jcr)) {
-      Jmsg(jcr, M_ERROR, 0, "could not free ndmp tape device %s from job %d",
-            ndmp_job.tape_device, jcr->JobId);
-   }
    if (nis) {
       if (nis->virtual_filename) {
          free(nis->virtual_filename);

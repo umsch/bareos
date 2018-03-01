@@ -265,8 +265,10 @@ int lookup_ndmp_driveindex_by_name(STORERES *store, char *drivename);
 char *lookup_ndmp_drivename_by_index(STORERES *store, drive_number_t driveindex);
 bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store);
 bool do_ndmp_native_query_tape_and_robot_agents (JCR *jcr, STORERES *store);
+std::string reserve_ndmp_tapedevice_drive_for_job(STORERES *store, JCR *jcr);
+bool free_ndmp_tapedevice_job(STORERES *store, JCR *jcr);
 
-/* next_vol.c */
+   /* next_vol.c */
 void set_storageid_in_mr(STORERES *store, MEDIA_DBR *mr);
 int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
                                 const char *unwanted_volumes, bool create, bool purge);

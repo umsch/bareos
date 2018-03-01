@@ -70,66 +70,70 @@ int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_
      return -1;
    }
 
-   if (store->rss->ndmp_deviceinfo) {
-      delete(store->rss->ndmp_deviceinfo);
-      store->rss->ndmp_deviceinfo = NULL;
-   }
-   store->rss->ndmp_deviceinfo = new(std::list<ndmp_deviceinfo_t>);
+   /* if (store->rss->ndmp_deviceinfo) { */
+   /*    delete(store->rss->ndmp_deviceinfo); */
+   /*    store->rss->ndmp_deviceinfo = NULL; */
+   /* } */
+   if (!store->rss->ndmp_deviceinfo) {
+      store->rss->ndmp_deviceinfo = new(std::list<ndmp_deviceinfo_t>);
 
-   for (i = 0; i < n_info; i++) {
-      Dmsg2(100, "  %s %s\n", what, info[i].model);
+      for (i = 0; i < n_info; i++) {
+         Dmsg2(100, "  %s %s\n", what, info[i].model);
 
-      ndmp_deviceinfo_t *devinfo = new(ndmp_deviceinfo_t);
-      ndmp9_device_capability *info_dc;
-      info_dc = info[i].caplist.caplist_val;
-      devinfo->model = info[i].model;
-      devinfo->device = info_dc->device;
-      store->rss->ndmp_deviceinfo->push_back(*devinfo);
+         ndmp_deviceinfo_t *devinfo = new(ndmp_deviceinfo_t);
+         devinfo->JobIdUsingDevice = 0;
 
-      for (j = 0; j < info[i].caplist.caplist_len; j++) {
-         ndmp9_device_capability *dc;
-         uint32_t attr;
-         dc = &info[i].caplist.caplist_val[j];
-         Dmsg1(100, "    device     %s\n", dc->device);
+         ndmp9_device_capability *info_dc;
+         info_dc = info[i].caplist.caplist_val;
+         devinfo->model = info[i].model;
+         devinfo->device = info_dc->device;
+         store->rss->ndmp_deviceinfo->push_back(*devinfo);
+
+         for (j = 0; j < info[i].caplist.caplist_len; j++) {
+            ndmp9_device_capability *dc;
+            uint32_t attr;
+            dc = &info[i].caplist.caplist_val[j];
+            Dmsg1(100, "    device     %s\n", dc->device);
 
 
 
-			if (!strcmp(what, "tape\n")) {
+            if (!strcmp(what, "tape\n")) {
 #ifndef NDMOS_OPTION_NO_NDMP3
-			    if (sess->plumb.tape->protocol_version == 3) {
-				attr = dc->v3attr.value;
-				Dmsg1(100, "      attr       0x%lx\n",
-					   attr);
-				if (attr & NDMP3_TAPE_ATTR_REWIND)
-				    Dmsg0(100, "        REWIND\n");
-				if (attr & NDMP3_TAPE_ATTR_UNLOAD)
-				    Dmsg0(100, "        UNLOAD\n");
-			    }
+               if (sess->plumb.tape->protocol_version == 3) {
+                  attr = dc->v3attr.value;
+                  Dmsg1(100, "      attr       0x%lx\n",
+                        attr);
+                  if (attr & NDMP3_TAPE_ATTR_REWIND)
+                     Dmsg0(100, "        REWIND\n");
+                  if (attr & NDMP3_TAPE_ATTR_UNLOAD)
+                     Dmsg0(100, "        UNLOAD\n");
+               }
 #endif /* !NDMOS_OPTION_NO_NDMP3 */
 #ifndef NDMOS_OPTION_NO_NDMP4
-			    if (sess->plumb.tape->protocol_version == 4) {
-				attr = dc->v4attr.value;
-				Dmsg1(100, "      attr       0x%lx\n",
-					   attr);
-				if (attr & NDMP4_TAPE_ATTR_REWIND)
-				    Dmsg0(100, "        REWIND\n");
-				if (attr & NDMP4_TAPE_ATTR_UNLOAD)
-				    Dmsg0(100, "        UNLOAD\n");
-			    }
+               if (sess->plumb.tape->protocol_version == 4) {
+                  attr = dc->v4attr.value;
+                  Dmsg1(100, "      attr       0x%lx\n",
+                        attr);
+                  if (attr & NDMP4_TAPE_ATTR_REWIND)
+                     Dmsg0(100, "        REWIND\n");
+                  if (attr & NDMP4_TAPE_ATTR_UNLOAD)
+                     Dmsg0(100, "        UNLOAD\n");
+               }
 #endif /* !NDMOS_OPTION_NO_NDMP4 */
-			}
-			for (k = 0; k < dc->capability.capability_len; k++) {
-				Dmsg2(100, "      set        %s=%s\n",
-				    dc->capability.capability_val[k].name,
-				    dc->capability.capability_val[k].value);
-			}
-			if (k == 0)
-				Dmsg0(100, "      empty capabilities\n");
-		}
-		if (j == 0)
-			Dmsg0(100, "    empty caplist\n");
-		Dmsg0(100, "\n");
-	}
+            }
+            for (k = 0; k < dc->capability.capability_len; k++) {
+               Dmsg2(100, "      set        %s=%s\n",
+                     dc->capability.capability_val[k].name,
+                     dc->capability.capability_val[k].value);
+            }
+            if (k == 0)
+               Dmsg0(100, "      empty capabilities\n");
+         }
+         if (j == 0)
+            Dmsg0(100, "    empty caplist\n");
+         Dmsg0(100, "\n");
+      }
+   }
 	if (i == 0)
 		Dmsg1(100, "  Empty %s info\n", what);
 	return 0;
@@ -194,21 +198,21 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
    }
 
    struct ndmca_query_callbacks query_callbacks;
-   query_callbacks.get_tape_info = get_tape_info;
+   //query_callbacks.get_tape_info = get_tape_info;
+   query_callbacks.get_tape_info = NULL;
    ndmca_query_callbacks *query_cbs = &query_callbacks;
 
    ndmp_do_query(ua, NULL, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
    ndmp_deviceinfo_t *deviceinfo = NULL;
-
-   ua->info_msg("Devices for storage %s:(%s)\n", store->name(), store->rss->smc_ident);
-
-   /* debug output */
-   int i=0;
-   for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
-         devinfo != store->rss->ndmp_deviceinfo->end();
-         devinfo++)  {
-      ua->info_msg("Device %d:  %s Model: %s\n", i++, devinfo->device.c_str(), devinfo->model.c_str() );
+   int i = 0;
+   if (store->rss->ndmp_deviceinfo) {
+      ua->info_msg("NDMP Devices for storage %s:(%s)\n", store->name(), store->rss->smc_ident);
+      for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
+            devinfo != store->rss->ndmp_deviceinfo->end();
+            devinfo++)  {
+         Jmsg(ua->jcr, M_INFO, 0, "Device %d:  %s Model: %s\n", i++, devinfo->device.c_str(), devinfo->model.c_str() );
+      }
    }
 }
 
@@ -755,6 +759,63 @@ bool ndmp_transfer_volume(UAContext *ua, STORERES *store,
 
    cleanup_ndmp_session(ndmp_sess);
 
+   return retval;
+}
+
+/**
+ * reserve a NDMP Tape drive for a certain job
+  * lock the devinfo list
+  * check if any of the devices is available (deviceinfo.JobUsingDevice == 0)
+  * set the JobId into deviceinfo.JobUsingDevice
+  * unlock devinfo
+  * return name of device that was reserved
+ */
+std::string reserve_ndmp_tapedevice_drive_for_job(STORERES *store, JCR *jcr) {
+   JobId_t jobid = jcr->JobId;
+   std::string returnvalue;
+   P(store->rss->ndmp_deviceinfo_lock);
+
+   if (store->rss->ndmp_deviceinfo) {
+      for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
+           devinfo != store->rss->ndmp_deviceinfo->end(); devinfo++) {
+         if (devinfo->JobIdUsingDevice == 0) {
+            devinfo->JobIdUsingDevice = jobid;
+            returnvalue = devinfo->device;
+            Jmsg(jcr, M_INFO, 0, _("successfully reserved NDMP Tape Device %s for job %d\n"),
+                  returnvalue.c_str(), jobid);
+            break;
+         } else{
+            Jmsg(jcr, M_INFO, 0, _("NDMP Tape Device %s is reserved for for job %d\n"),
+                  devinfo->device.c_str(), devinfo->JobIdUsingDevice);
+         }
+      }
+   }
+   V(store->rss->ndmp_deviceinfo_lock);
+   return returnvalue;
+}
+
+/*
+ * remove job from tapedevice
+ */
+bool free_ndmp_tapedevice_job(STORERES *store, JCR *jcr)
+{
+   JobId_t jobid = jcr->JobId;
+   bool retval = false;
+   P(store->rss->ndmp_deviceinfo_lock);
+
+   if (store->rss->ndmp_deviceinfo) {
+      for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
+           devinfo != store->rss->ndmp_deviceinfo->end(); devinfo++) {
+         if (devinfo->JobIdUsingDevice == jobid) {
+            devinfo->JobIdUsingDevice = 0;
+            retval = true;
+            Jmsg(jcr, M_INFO, 0, _("successfully freed NDMP Tape Device %s for job %d\n"),
+                  devinfo->device.c_str(), jobid);
+            break;
+         }
+      }
+   }
+   V(store->rss->ndmp_deviceinfo_lock);
    return retval;
 }
 

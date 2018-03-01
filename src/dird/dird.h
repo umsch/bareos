@@ -173,6 +173,7 @@ struct smc_elem_aa {
 struct ndmp_deviceinfo_t {
    std::string device;
    std::string model;
+   JobId_t JobIdUsingDevice;
 };
 #endif
 
@@ -186,6 +187,7 @@ struct runtime_storage_status_t {
    smc_elem_aa storage_mapping;   /**< smc element assignment */
    changer_vol_list_t *vol_list;  /**< Cached content of autochanger */
    std::list<ndmp_deviceinfo_t> *ndmp_deviceinfo; /**< NDMP device info for devices in this Storage */
+   pthread_mutex_t ndmp_deviceinfo_lock;  /**< Any access to the list devices is controlled by this lock */
 };
 
 struct runtime_client_status_t {

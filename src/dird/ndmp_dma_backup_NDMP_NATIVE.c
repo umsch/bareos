@@ -203,16 +203,8 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
       return false;
    }
 
-   /*
-    * If we have a paired storage definition create a native connection
-    * to a Storage daemon and make it ready to receive a backup.
-    * The setup is more or less the same as for a normal non NDMP backup
-    * only the data doesn't come in from a FileDaemon but from a NDMP
-    * data mover which moves the data from the NDMP DATA AGENT to the NDMP
-    * TAPE AGENT.
-    */
-
    status = 0;
+   std::string tapedevice;
    STORERES *store = jcr->res.wstore;
    POOL_MEM virtual_filename(PM_FNAME);
    INCEXE *ie;
@@ -236,26 +228,24 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
       return retval;
    }
 
-   ndmp_job.have_robot = 1;
-   /*
-    * unload tape if tape is in drive
-    */
-   ndmp_job.auto_remedy = 1;
-
-   /*
-    * Set the remote tape drive to use.
-    */
-   ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
-   ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
 
    /*
     * update storage status
     */
+   P(store->rss->changer_lock);
    do_ndmp_native_query_tape_and_robot_agents(jcr, store);
-   ndmp_update_storage_mappings(jcr, store);
+   V(store->rss->changer_lock);
 
+   P(store->rss->changer_lock);
+   ndmp_update_storage_mappings(jcr, store);
+   V(store->rss->changer_lock);
+
+   tapedevice = reserve_ndmp_tapedevice_drive_for_job(store, jcr);
+   ndmp_job.tape_device = (char*)tapedevice.c_str();
+  // ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
 
    driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
+
    if (driveindex == -1) {
       Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s\n"), ndmp_job.tape_device);
       return retval;
@@ -267,6 +257,17 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
             driveaddress);
       return retval;
    }
+
+   ndmp_job.have_robot = 1;
+   /*
+    * unload tape if tape is in drive
+    */
+   ndmp_job.auto_remedy = 1;
+
+   /*
+    * Set the remote tape drive to use.
+    */
+   ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
    ndmp_job.drive_addr = driveaddress;
    ndmp_job.drive_addr_given = 1;
 
@@ -501,6 +502,10 @@ bail_out:
    jcr->setJobStatus(JS_ErrorTerminated);
 
 ok_out:
+   if (!free_ndmp_tapedevice_job(store, jcr)) {
+      Jmsg(jcr, M_ERROR, 0, "could not free ndmp tape device %s from job %d",
+            ndmp_job.tape_device, jcr->JobId);
+   }
    if (nis) {
       if (nis->virtual_filename) {
          free(nis->virtual_filename);

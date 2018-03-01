@@ -2632,6 +2632,7 @@ void free_resource(RES *sres, int type)
             free(res->res_store.rss->vol_list);
          }
          pthread_mutex_destroy(&res->res_store.rss->changer_lock);
+         pthread_mutex_destroy(&res->res_store.rss->ndmp_deviceinfo_lock);
          free(res->res_store.rss);
       }
 
@@ -2863,6 +2864,11 @@ static bool update_resource_pointer(int type, RES_ITEM *items)
          res->res_store.rss = (runtime_storage_status_t *)malloc(sizeof(runtime_storage_status_t));
          memset(res->res_store.rss, 0, sizeof(runtime_storage_status_t));
          if ((status = pthread_mutex_init(&res->res_store.rss->changer_lock, NULL)) != 0) {
+            berrno be;
+
+            Emsg1(M_ERROR_TERM, 0, _("pthread_mutex_init: ERR=%s\n"), be.bstrerror(status));
+         }
+         if ((status = pthread_mutex_init(&res->res_store.rss->ndmp_deviceinfo_lock, NULL)) != 0) {
             berrno be;
 
             Emsg1(M_ERROR_TERM, 0, _("pthread_mutex_init: ERR=%s\n"), be.bstrerror(status));

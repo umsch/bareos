@@ -164,14 +164,17 @@ bool do_ndmp_native_query_tape_and_robot_agents(JCR *jcr, STORERES *store) {
    ndmp_do_query(NULL, jcr, &ndmp_job, me->ndmp_loglevel, query_cbs);
 
    /*
-    *
+    * Debug output
     */
 
-   int i=0;
+   if (store->rss->ndmp_deviceinfo) {
+      Jmsg(jcr, M_INFO, 0, "NDMP Devices for storage %s:(%s)\n", store->name(), store->rss->smc_ident);
+   }
    for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
          devinfo != store->rss->ndmp_deviceinfo->end();
          devinfo++)  {
-      Jmsg(jcr, M_INFO, 0, "Device %d:  %s Model: %s\n", i++, devinfo->device.c_str(), devinfo->model.c_str() );
+      Jmsg(jcr, M_INFO, 0, " %s\n",
+            devinfo->device.c_str(), devinfo->model.c_str() );
    }
    return true;
 }
@@ -198,8 +201,7 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
    }
 
    struct ndmca_query_callbacks query_callbacks;
-   //query_callbacks.get_tape_info = get_tape_info_cb;
-   query_callbacks.get_tape_info = NULL;
+   query_callbacks.get_tape_info = get_tape_info_cb;
    ndmca_query_callbacks *query_cbs = &query_callbacks;
 
    ndmp_do_query(ua, NULL, &ndmp_job, me->ndmp_loglevel, query_cbs);
@@ -208,10 +210,13 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
    int i = 0;
    if (store->rss->ndmp_deviceinfo) {
       ua->info_msg("NDMP Devices for storage %s:(%s)\n", store->name(), store->rss->smc_ident);
+      ua->info_msg(" Index   Device   Model   (JobId)   \n");
       for (auto devinfo = store->rss->ndmp_deviceinfo->begin();
             devinfo != store->rss->ndmp_deviceinfo->end();
             devinfo++)  {
-         Jmsg(ua->jcr, M_INFO, 0, "Device %d:  %s Model: %s\n", i++, devinfo->device.c_str(), devinfo->model.c_str() );
+         ua->info_msg("   %d   %s   %s   (%d)\n",
+               i++, devinfo->device.c_str(), devinfo->model.c_str(),
+               devinfo->JobIdUsingDevice);
       }
    }
 }
@@ -785,7 +790,7 @@ std::string reserve_ndmp_tapedevice_for_job(STORERES *store, JCR *jcr) {
                   returnvalue.c_str(), jobid);
             break;
          } else{
-            Jmsg(jcr, M_INFO, 0, _("NDMP Tape Device %s is reserved for for job %d\n"),
+            Jmsg(jcr, M_INFO, 0, _("NDMP Tape Device %s is already reserved for for job %d\n"),
                   devinfo->device.c_str(), devinfo->JobIdUsingDevice);
          }
       }

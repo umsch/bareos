@@ -191,17 +191,6 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
       return false;
    }
 
-   if (check_hardquotas(jcr)) {
-      Jmsg(jcr, M_FATAL, 0, "Quota Exceeded. Job terminated.");
-      return false;
-   }
-
-   if (check_softquotas(jcr)) {
-      Dmsg0(10, "Quota exceeded\n");
-      Jmsg(jcr, M_FATAL, 0, "Soft Quota Exceeded / Grace Time expired. Job terminated.");
-      return false;
-   }
-
    status = 0;
    std::string tapedevice;
    STORERES *store = jcr->res.wstore;
@@ -465,6 +454,12 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    goto ok_out;
 
 cleanup:
+
+   if (!unreserve_ndmp_tapedevice_for_job(store, jcr)) {
+      Jmsg(jcr, M_ERROR, 0, "could not free ndmp tape device %s from job %d",
+            ndmp_job.tape_device, jcr->JobId);
+   }
+
    /*
     * Only need to cleanup when things are initialized.
     */

@@ -495,6 +495,10 @@ static bool do_ndmp_native_restore(JCR *jcr)
    goto cleanup;
 
 cleanup_ndmp:
+   if (!unreserve_ndmp_tapedevice_for_job(store, jcr)) {
+      Jmsg(jcr, M_ERROR, 0, "could not free ndmp tape device %s from job %d",
+            ndmp_job.tape_device, jcr->JobId);
+   }
    /*
     * Only need to cleanup when things are initialized.
     */

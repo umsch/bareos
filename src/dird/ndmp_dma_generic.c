@@ -554,6 +554,25 @@ extern "C" void ndmp_loghandler(struct ndmlog *log, char *tag, int level, char *
 }
 
 /**
+ * Interface function which glues the logging infra of the NDMP lib to Dmsg output
+ */
+extern "C" void ndmp_log_delivery_cb_to_dmsg(struct ndmlog *log, char *tag, int lev, char *msg)
+{
+   NIS *nis;
+
+   /*
+    * Make sure if the logging system was setup properly.
+    */
+   nis = (NIS *)log->ctx;
+   if (!nis || !nis->jcr){
+      return;
+   }
+
+   Dmsg1((int)nis->LogLevel, "%s\n", msg);
+}
+
+
+/**
  * Interface function which glues the logging infra of the NDMP lib to Jmsg output
  */
 extern "C" void ndmp_log_delivery_cb_to_jmsg(struct ndmlog *log, char *tag, int lev, char *msg)
@@ -625,7 +644,7 @@ void ndmp_do_query(UAContext *ua, JCR *jcr, ndm_job_param *ndmp_job, int NdmpLog
    } else if (jcr) {
       local_jcr = jcr;
       nis->jcr = jcr;
-      ndmp_sess.param->log.deliver = ndmp_log_delivery_cb_to_jmsg;
+      ndmp_sess.param->log.deliver = ndmp_log_delivery_cb_to_dmsg;
 
    } else  {
       goto bail_out;

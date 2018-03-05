@@ -223,7 +223,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    ndmp_job.robot_target = (struct ndmscsi_target *)actuallymalloc(sizeof(struct ndmscsi_target));
    if (ndmscsi_target_from_str(ndmp_job.robot_target, store->ndmp_changer_device) != 0) {
       actuallyfree(ndmp_job.robot_target);
-      Dmsg0(100,"ndmp_send_label_request: no robot to use\n");
+      Dmsg0(100,"no robot to use\n");
       return retval;
    }
 
@@ -241,7 +241,6 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
 
    tapedevice = reserve_ndmp_tapedevice_for_job(store, jcr);
    ndmp_job.tape_device = (char*)tapedevice.c_str();
-  // ndmp_job.tape_device = bstrdup(((DEVICERES*)(store->device->first()))->name());
 
    driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
 
@@ -276,13 +275,6 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    Jmsg(jcr, M_INFO, 0, _("Using Robot host:device(ident)  %s:%s(%s)\n"),
          ndmp_job.robot_agent.host, ndmp_job.robot_target, store->rss->smc_ident);
    Jmsg(jcr, M_INFO, 0, _("Using Tape record size %d\n"), ndmp_job.record_size);
-
-   if (!ndmp_job.tape_device) {
-      actuallyfree(ndmp_job.robot_target);
-      Dmsg0(100,"ndmp: no tape drive to use\n");
-      return retval;
-   }
-
 
    nis = (NIS *)malloc(sizeof(NIS));
    memset(nis, 0, sizeof(NIS));

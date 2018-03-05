@@ -43,7 +43,7 @@
 /**
  * ndmp query callback
  */
-int get_tape_info(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_info)
+int get_tape_info_cb(struct ndm_session *sess, ndmp9_device_info *info, unsigned n_info)
 {
    Dmsg0(100, "Get tape info called\n");
 	unsigned int	i, j, k;
@@ -158,7 +158,7 @@ bool do_ndmp_native_query_tape_and_robot_agents(JCR *jcr, STORERES *store) {
    }
 
    struct ndmca_query_callbacks query_callbacks;
-   query_callbacks.get_tape_info = get_tape_info;
+   query_callbacks.get_tape_info = get_tape_info_cb;
    ndmca_query_callbacks *query_cbs = &query_callbacks;
 
    ndmp_do_query(NULL, jcr, &ndmp_job, me->ndmp_loglevel, query_cbs);
@@ -198,7 +198,7 @@ void do_ndmp_native_storage_status(UAContext *ua, STORERES *store, char *cmd)
    }
 
    struct ndmca_query_callbacks query_callbacks;
-   //query_callbacks.get_tape_info = get_tape_info;
+   //query_callbacks.get_tape_info = get_tape_info_cb;
    query_callbacks.get_tape_info = NULL;
    ndmca_query_callbacks *query_cbs = &query_callbacks;
 

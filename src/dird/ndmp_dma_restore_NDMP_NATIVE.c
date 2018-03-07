@@ -283,7 +283,7 @@ static bool do_ndmp_native_restore(JCR *jcr)
    }
 
 
-   if ( !ndmp_native_setup_robot_and_tape_for_native_backup_job) {
+   if ( !ndmp_native_setup_robot_and_tape_for_native_backup_job(jcr, store, ndmp_job)) {
       Jmsg(jcr, M_ERROR, 0, _("ndmp_native_setup_robot_and_tape_for_native_backup_job failed\n"));
       goto cleanup;
    }

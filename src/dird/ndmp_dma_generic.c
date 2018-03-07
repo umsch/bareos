@@ -622,8 +622,6 @@ void ndmp_do_query(UAContext *ua, JCR *jcr, ndm_job_param *ndmp_job, int NdmpLog
     * Initialize a new NDMP session
     */
    memset(&ndmp_sess, 0, sizeof(ndmp_sess));
-   ndmp_sess.conn_snooping = (me->ndmp_snooping) ? 1 : 0;
-   ndmp_sess.control_agent_enabled = 1;
 
    ndmp_sess.param = (struct ndm_session_param *)malloc(sizeof(struct ndm_session_param));
    memset(ndmp_sess.param, 0, sizeof(struct ndm_session_param));
@@ -631,10 +629,11 @@ void ndmp_do_query(UAContext *ua, JCR *jcr, ndm_job_param *ndmp_job, int NdmpLog
    nis = (NIS *)malloc(sizeof(NIS));
    memset(nis, 0, sizeof(NIS));
 
-   ndmp_sess.param->log.ctx = nis;
    ndmp_sess.param->log_level = native_to_ndmp_loglevel(NdmpLoglevel, debug_level, nis);
-   ndmp_sess.param->log.ctx = nis;
    ndmp_sess.param->log_tag = bstrdup("DIR-NDMP");
+   ndmp_sess.param->log.ctx = nis;
+   ndmp_sess.conn_snooping = (me->ndmp_snooping) ? 1 : 0;
+   ndmp_sess.control_agent_enabled = 1;
 
    if (ua) {
       nis->ua = ua;

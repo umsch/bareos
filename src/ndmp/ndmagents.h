@@ -382,8 +382,9 @@ extern int	ndmca_mon_wait_for_something (struct ndm_session *sess,
 			int32_t max_delay_secs);
 
 struct ndmca_jobcontrol_callbacks {
-   int (*is_job_cancelled)(struct ndm_session *sess);
+   int (*is_job_canceled)(struct ndm_session *sess);
 };
+
 extern void ndmca_jobcontrol_register_callbacks (
       struct ndm_session *sess,
       struct ndmca_jobcontrol_callbacks *callbacks);

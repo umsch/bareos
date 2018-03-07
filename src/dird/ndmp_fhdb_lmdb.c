@@ -674,10 +674,10 @@ void ndmp_fhdb_lmdb_process_db(struct ndmlog *ixlog)
       return;
    }
 
-   Jmsg0(nis->jcr, M_INFO, 0,  "Now processing lmdb database\n");
+   Jmsg(nis->jcr, M_INFO, 0,  "Now processing lmdb database\n");
 
    process_lmdb(nis, fhdb_state);
 
-   Jmsg0(nis->jcr, M_INFO, 0,  "Processing lmdb database done\n");
+   Jmsg(nis->jcr, M_INFO, 0,  "Processing lmdb database done\n");
 }
 #endif /* HAVE_LMDB */

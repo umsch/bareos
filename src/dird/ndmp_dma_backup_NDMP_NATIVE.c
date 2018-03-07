@@ -43,6 +43,18 @@ static inline bool extract_post_backup_stats_ndmp_native(JCR *jcr,
                                              struct ndm_session *sess);
 
 
+/**
+ * callback to check if job is cancelled and NDMP should stop
+ */
+int is_job_canceled_cb(struct ndm_session *sess) {
+
+   NIS *nis = (NIS *)sess->param->log.ctx;
+   JCR *jcr = nis->jcr;
+
+   return jcr->is_canceled();
+}
+
+
 
 /**
  * Load next medium, also used as "load first" callback
@@ -171,12 +183,14 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
       NdmpLoglevel = me->ndmp_loglevel;
    }
 
-   struct ndmca_media_callbacks  media_callbacks;
+   struct ndmca_media_callbacks media_callbacks;
 
    media_callbacks.load_first = ndmp_load_next; /* we use the same callback for first and next*/
    media_callbacks.load_next = ndmp_load_next;
    media_callbacks.unload_current = NULL;
 
+   struct ndmca_jobcontrol_callbacks jobcontrol_callbacks;
+   jobcontrol_callbacks.is_job_canceled = is_job_canceled_cb;
 
    /*
     * Print Job Start message
@@ -342,6 +356,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    }
    /* register the callbacks */
    ndmca_media_register_callbacks (&ndmp_sess, &media_callbacks);
+   ndmca_jobcontrol_register_callbacks (&ndmp_sess, &jobcontrol_callbacks);
 
    /*
     * The full ndmp archive has a virtual filename, we need it to hardlink the individual

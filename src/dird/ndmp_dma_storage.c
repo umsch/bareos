@@ -54,7 +54,7 @@ int get_tape_info_cb(struct ndm_session *sess, ndmp9_device_info *info, unsigned
 
    if (nis->jcr) {
       jcr = nis->jcr;
-   } else if ( nis->ua && nis->ua->jcr ){
+   } else if (nis->ua && nis->ua->jcr) {
       jcr = nis->ua->jcr;
    } else {
      return -1;

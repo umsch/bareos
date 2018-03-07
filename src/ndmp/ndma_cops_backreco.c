@@ -215,24 +215,26 @@ ndmca_monitor_backup (struct ndm_session *sess)
 	ndmp9_mover_state	ms;
 	char *estb;
 
-   /*
-    * execute jobcontrol_cb if exists
-    * needs to return -1 if job is canceled
-    */
-   if (sess->jobcontrol_cbs && sess->jobcontrol_cbs->is_job_cancelled) {
-      return sess->jobcontrol_cbs->is_job_cancelled(sess);
-   }
-
    if (ca->job.tape_tcp) {
 		return ndmca_monitor_backup_tape_tcp(sess);
 	}
 
 	ndmalogf (sess, 0, 3, "Monitoring backup");
 
-	for (count = 0; count < 10; count++) {
-		ndmca_mon_wait_for_something (sess, count <= 1 ? 30 : 10);
-		if (ndmca_monitor_get_states(sess) < 0)
-		    break;
+   for (count = 0; count < 10; count++) {
+      /*
+       * check if job needs to be cancelled
+       */
+      if (sess->jobcontrol_cbs && sess->jobcontrol_cbs->is_job_canceled) {
+         if (sess->jobcontrol_cbs->is_job_canceled(sess)) {
+			   ndmalogf (sess, 0, 0, "Job was cancelled, cancelling NDMP operation");
+            return -1;
+         }
+      }
+
+      ndmca_mon_wait_for_something (sess, count <= 1 ? 30 : 10);
+      if (ndmca_monitor_get_states(sess) < 0)
+         break;
 
 #if 0
 		if (count > 2)

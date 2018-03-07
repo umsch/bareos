@@ -1061,6 +1061,86 @@ bool ndmp_send_label_request(UAContext *ua, STORERES *store, MEDIA_DBR *mr,
 
    return retval;
 }
+
+
+static bool ndmp_native_update_runtime_storage_status(JCR *jcr, STORERES *store)
+{
+
+   bool retval = true;
+
+   P(store->rss->changer_lock);
+   if ( !do_ndmp_native_query_tape_and_robot_agents(jcr, store) ) {
+      retval = false;
+   }
+   V(store->rss->changer_lock);
+
+   P(store->rss->changer_lock);
+   if( !ndmp_update_storage_mappings(jcr, store) ) {
+      retval = false;
+   }
+   V(store->rss->changer_lock);
+
+   return retval;
+}
+
+bool ndmp_native_setup_robot_and_tape_for_native_backup_job(JCR* jcr, STORERES* store,
+      ndm_job_param& ndmp_job)
+{
+   int driveaddress, driveindex;
+   std::string tapedevice;
+   bool retval = false;
+   if ( !ndmp_native_update_runtime_storage_status(jcr, store) ) {
+      Jmsg(jcr, M_ERROR, 0, _("Failed getting updating runtime storage status\n"));
+      return retval;
+   }
+
+   ndmp_job.robot_target = (struct ndmscsi_target *)actuallymalloc(sizeof(struct ndmscsi_target));
+   if (ndmscsi_target_from_str(ndmp_job.robot_target, store->ndmp_changer_device) != 0) {
+      actuallyfree(ndmp_job.robot_target);
+      Dmsg0(100,"no robot to use\n");
+      return retval;
+   }
+
+   tapedevice = reserve_ndmp_tapedevice_for_job(store, jcr);
+   ndmp_job.tape_device = (char*)tapedevice.c_str();
+
+   driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
+
+   if (driveindex == -1) {
+      Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s\n"),
+            ndmp_job.tape_device);
+      return retval;
+   }
+
+   driveaddress = get_element_address_by_index(store, slot_type_drive, driveindex);
+   if (driveaddress == -1) {
+      Jmsg(jcr, M_ERROR, 0, _("Could not lookup driveaddress for driveindex %d\n"),
+            driveaddress);
+      return retval;
+   }
+   ndmp_job.drive_addr = driveaddress;
+   ndmp_job.drive_addr_given = 1;
+
+   ndmp_job.have_robot = 1;
+   /*
+    * unload tape if tape is in drive
+    */
+   ndmp_job.auto_remedy = 1;
+   ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
+
+   Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);
+   Jmsg(jcr, M_INFO, 0, _("Using Tape  host:device:address  %s:%s:@%d\n"),
+         ndmp_job.tape_agent.host, ndmp_job.tape_device, ndmp_job.drive_addr);
+   Jmsg(jcr, M_INFO, 0, _("Using Robot host:device(ident)  %s:%s(%s)\n"),
+         ndmp_job.robot_agent.host, ndmp_job.robot_target, store->rss->smc_ident);
+   Jmsg(jcr, M_INFO, 0, _("Using Tape record size %d\n"), ndmp_job.record_size);
+
+   return true;
+}
+
+
+
+
 #else
 /**
  * Dummy entry points when NDMP not enabled.

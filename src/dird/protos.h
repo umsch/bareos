@@ -267,6 +267,8 @@ bool ndmp_update_storage_mappings(JCR* jcr, STORERES *store);
 bool do_ndmp_native_query_tape_and_robot_agents (JCR *jcr, STORERES *store);
 std::string reserve_ndmp_tapedevice_for_job(STORERES *store, JCR *jcr);
 bool unreserve_ndmp_tapedevice_for_job(STORERES *store, JCR *jcr);
+bool ndmp_native_setup_robot_and_tape_for_native_backup_job(JCR* jcr, STORERES* store,
+      ndm_job_param& ndmp_job);
 
    /* next_vol.c */
 void set_storageid_in_mr(STORERES *store, MEDIA_DBR *mr);

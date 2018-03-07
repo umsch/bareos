@@ -202,10 +202,12 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    }
 
    status = 0;
-   std::string tapedevice;
    STORERES *store = jcr->res.wstore;
    POOL_MEM virtual_filename(PM_FNAME);
    INCEXE *ie;
+
+
+
 
    if (!ndmp_build_client_and_storage_job(jcr, jcr->res.wstore, jcr->res.client,
             true, /* init_tape */
@@ -214,66 +216,10 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
       goto bail_out;
    }
 
-   /*
-    * Set the remote robotics name to use.
-    * We use the ndmscsi_target_from_str() function which parses the NDMJOB format of a
-    * device in the form NAME[,[CNUM,]SID[,LUN]
-    */
-   ndmp_job.robot_target = (struct ndmscsi_target *)actuallymalloc(sizeof(struct ndmscsi_target));
-   if (ndmscsi_target_from_str(ndmp_job.robot_target, store->ndmp_changer_device) != 0) {
-      actuallyfree(ndmp_job.robot_target);
-      Dmsg0(100,"no robot to use\n");
-      return retval;
+   if ( !ndmp_native_setup_robot_and_tape_for_native_backup_job(jcr, store, ndmp_job)) {
+      Jmsg(jcr, M_ERROR, 0, _("ndmp_native_setup_robot_and_tape_for_native_backup_job failed\n"));
+      goto cleanup;
    }
-
-
-   /*
-    * update storage status
-    */
-   P(store->rss->changer_lock);
-   do_ndmp_native_query_tape_and_robot_agents(jcr, store);
-   V(store->rss->changer_lock);
-
-   P(store->rss->changer_lock);
-   ndmp_update_storage_mappings(jcr, store);
-   V(store->rss->changer_lock);
-
-   tapedevice = reserve_ndmp_tapedevice_for_job(store, jcr);
-   ndmp_job.tape_device = (char*)tapedevice.c_str();
-
-   driveindex = lookup_ndmp_driveindex_by_name(store, ndmp_job.tape_device);
-
-   if (driveindex == -1) {
-      Jmsg(jcr, M_ERROR, 0, _("Could not find driveindex of drive %s\n"), ndmp_job.tape_device);
-      return retval;
-   }
-
-   driveaddress = get_element_address_by_index(store, slot_type_drive, driveindex);
-   if (driveaddress == -1) {
-      Jmsg(jcr, M_ERROR, 0, _("Could not lookup driveaddress for driveindex %d\n"),
-            driveaddress);
-      return retval;
-   }
-
-   ndmp_job.have_robot = 1;
-   /*
-    * unload tape if tape is in drive
-    */
-   ndmp_job.auto_remedy = 1;
-
-   /*
-    * Set the remote tape drive to use.
-    */
-   ndmp_job.record_size = jcr->res.client->ndmp_blocksize;
-   ndmp_job.drive_addr = driveaddress;
-   ndmp_job.drive_addr_given = 1;
-
-   Jmsg(jcr, M_INFO, 0, _("Using Data  host %s\n"), ndmp_job.data_agent.host);
-   Jmsg(jcr, M_INFO, 0, _("Using Tape  host:device:address  %s:%s:@%d\n"),
-         ndmp_job.tape_agent.host, ndmp_job.tape_device, ndmp_job.drive_addr);
-   Jmsg(jcr, M_INFO, 0, _("Using Robot host:device(ident)  %s:%s(%s)\n"),
-         ndmp_job.robot_agent.host, ndmp_job.robot_target, store->rss->smc_ident);
-   Jmsg(jcr, M_INFO, 0, _("Using Tape record size %d\n"), ndmp_job.record_size);
 
    nis = (NIS *)malloc(sizeof(NIS));
    memset(nis, 0, sizeof(NIS));

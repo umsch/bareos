@@ -218,7 +218,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
 
    if ( !ndmp_native_setup_robot_and_tape_for_native_backup_job(jcr, store, ndmp_job)) {
       Jmsg(jcr, M_ERROR, 0, _("ndmp_native_setup_robot_and_tape_for_native_backup_job failed\n"));
-      goto cleanup;
+      goto bail_out;
    }
 
    nis = (NIS *)malloc(sizeof(NIS));
@@ -437,10 +437,12 @@ cleanup:
       ndma_session_destroy(&ndmp_sess);
    }
 
-   if (ndmp_sess.param) {
-      free(ndmp_sess.param->log_tag);
-      free(ndmp_sess.param);
-   }
+   /*
+    * Free the param block.
+    */
+   free(ndmp_sess.param->log_tag);
+   free(ndmp_sess.param);
+   ndmp_sess.param = NULL;
 
 bail_out:
    /*

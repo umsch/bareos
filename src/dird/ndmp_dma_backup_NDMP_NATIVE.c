@@ -177,11 +177,7 @@ bool do_ndmp_backup_ndmp_native(JCR *jcr)
    slot_number_t driveaddress;
    char *item;
 
-   if (jcr->res.client->ndmp_loglevel > me->ndmp_loglevel) {
-      NdmpLoglevel = jcr->res.client->ndmp_loglevel;
-   } else {
-      NdmpLoglevel = me->ndmp_loglevel;
-   }
+   NdmpLoglevel = std::max(jcr->res.client->ndmp_loglevel, me->ndmp_loglevel);
 
    struct ndmca_media_callbacks media_callbacks;
 

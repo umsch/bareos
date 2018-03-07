@@ -187,11 +187,7 @@ bool do_ndmp_backup(JCR *jcr)
    bool retval = false;
    int NdmpLoglevel;
 
-   if (jcr->res.client->ndmp_loglevel > me->ndmp_loglevel) {
-      NdmpLoglevel = jcr->res.client->ndmp_loglevel;
-   } else {
-      NdmpLoglevel = me->ndmp_loglevel;
-   }
+   NdmpLoglevel = std::max(jcr->res.client->ndmp_loglevel, me->ndmp_loglevel);
 
    /*
     * Print Job Start message

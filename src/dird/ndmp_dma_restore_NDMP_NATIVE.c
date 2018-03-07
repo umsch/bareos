@@ -275,11 +275,7 @@ static bool do_ndmp_native_restore(JCR *jcr)
    nis = (NIS *)malloc(sizeof(NIS));
    memset(nis, 0, sizeof(NIS));
 
-   if (jcr->res.client->ndmp_loglevel > me->ndmp_loglevel) {
-      NdmpLoglevel = jcr->res.client->ndmp_loglevel;
-   } else {
-      NdmpLoglevel = me->ndmp_loglevel;
-   }
+   NdmpLoglevel = std::max(jcr->res.client->ndmp_loglevel, me->ndmp_loglevel);
 
    if (!ndmp_build_client_and_storage_job(jcr, store, jcr->res.client,
             true, /* init_tape */

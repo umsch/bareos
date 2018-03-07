@@ -490,11 +490,7 @@ static inline bool do_ndmp_restore_bootstrap(JCR *jcr)
    bool retval = false;
    int NdmpLoglevel;
 
-   if (jcr->res.client->ndmp_loglevel > me->ndmp_loglevel) {
-      NdmpLoglevel = jcr->res.client->ndmp_loglevel;
-   } else {
-      NdmpLoglevel = me->ndmp_loglevel;
-   }
+   NdmpLoglevel = std::max(jcr->res.client->ndmp_loglevel, me->ndmp_loglevel);
 
    /*
     * We first parse the BSR ourself so we know what to restore.

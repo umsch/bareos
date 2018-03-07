@@ -986,7 +986,6 @@ bool ndmp_send_label_request(UAContext *ua, STORERES *store, MEDIA_DBR *mr,
    struct ndmmedia *media;
 
    Dmsg4(100,"ndmp_send_label_request: VolumeName=%s MediaType=%s PoolName=%s drive=%hd\n", mr->VolumeName, mr->MediaType, pr->Name, drive);
-   ua->warning_msg(_("ndmp_send_label_request: VolumeName=%s MediaType=%s PoolName=%s drive=%hd\n"), mr->VolumeName, mr->MediaType, pr->Name, drive);
 
    /*
     * See if this is an autochanger.

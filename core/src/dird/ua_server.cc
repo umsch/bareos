@@ -46,100 +46,100 @@
 /**
  * Create a Job Control Record for a control "job", filling in all the appropriate fields.
  */
-JobControlRecord *new_control_jcr(const char *base_name, int job_type)
-{
-   JobControlRecord *jcr;
+JobControlRecord *new_control_jcr(const char *base_name, int job_type) {
 
-   jcr = new_jcr(sizeof(JobControlRecord), DirdFreeJcr);
+  JobControlRecord *jcr;
 
-   /*
-    * The job and defaults are not really used, but we set them up to ensure that
-    * everything is correctly initialized.
-    */
-   LockRes();
-   jcr->res.job = (JobResource *)GetNextRes(R_JOB, NULL);
-   SetJcrDefaults(jcr, jcr->res.job);
-   UnlockRes();
+  jcr = new_jcr(sizeof(JobControlRecord), DirdFreeJcr);
 
-   jcr->sd_auth_key = bstrdup("dummy"); /* dummy Storage daemon key */
-   CreateUniqueJobName(jcr, base_name);
-   jcr->sched_time = jcr->start_time;
-   jcr->setJobType(job_type);
-   jcr->setJobLevel(L_NONE);
-   jcr->setJobStatus(JS_Running);
-   jcr->JobId = 0;
+  /*
+   * The job and defaults are not really used, but we set them up to ensure that
+   * everything is correctly initialized.
+   */
+  LockRes();
+  jcr->res.job = (JobResource *)GetNextRes(R_JOB, NULL);
+  SetJcrDefaults(jcr, jcr->res.job);
+  UnlockRes();
 
-   return jcr;
+  jcr->sd_auth_key = bstrdup("dummy"); /* dummy Storage daemon key */
+  CreateUniqueJobName(jcr, base_name);
+  jcr->sched_time = jcr->start_time;
+  jcr->setJobType(job_type);
+  jcr->setJobLevel(L_NONE);
+  jcr->setJobStatus(JS_Running);
+  jcr->JobId = 0;
+
+  return jcr;
 }
 
 /**
  * Handle Director User Agent commands
  */
-void *handle_UA_client_request(BareosSocket *user)
-{
-   int status;
-   UaContext *ua;
-   JobControlRecord *jcr;
+void *handle_UA_client_request(BareosSocket *user) {
 
-   pthread_detach(pthread_self());
+  int status;
+  UaContext *ua;
+  JobControlRecord *jcr;
 
-   jcr = new_control_jcr("-Console-", JT_CONSOLE);
+  pthread_detach(pthread_self());
 
-   ua = new_ua_context(jcr);
-   ua->UA_sock = user;
-   SetJcrInTsd(INVALID_JCR);
+  jcr = new_control_jcr("-Console-", JT_CONSOLE);
 
-   if (!AuthenticateUserAgent(ua)) {
-      goto getout;
-   }
+  ua = new_ua_context(jcr);
+  ua->UA_sock = user;
+  SetJcrInTsd(INVALID_JCR);
 
-   while (!ua->quit) {
-      if (ua->api) {
-         user->signal(BNET_MAIN_PROMPT);
-      }
+  if (!AuthenticateUserAgent(ua)) {
+    goto getout;
+  }
 
-      status = user->recv();
-      if (status >= 0) {
-         PmStrcpy(ua->cmd, ua->UA_sock->msg);
-         ParseUaArgs(ua);
-         Do_a_command(ua);
+  while (!ua->quit) {
+    if (ua->api) {
+      user->signal(BNET_MAIN_PROMPT);
+    }
 
-         DequeueMessages(ua->jcr);
+    status = user->recv();
+    if (status >= 0) {
+      PmStrcpy(ua->cmd, ua->UA_sock->msg);
+      ParseUaArgs(ua);
+      Do_a_command(ua);
 
-         if (!ua->quit) {
-            if (console_msg_pending && ua->AclAccessOk(Command_ACL, "messages")) {
-               if (ua->auto_display_messages) {
-                  PmStrcpy(ua->cmd, "messages");
-                  DotMessagesCmd(ua, ua->cmd);
-                  ua->user_notified_msg_pending = false;
-               } else if (!ua->gui && !ua->user_notified_msg_pending && console_msg_pending) {
-                  if (ua->api) {
-                     user->signal(BNET_MSGS_PENDING);
-                  } else {
-                     bsendmsg(ua, _("You have messages.\n"));
-                  }
-                  ua->user_notified_msg_pending = true;
-               }
+      DequeueMessages(ua->jcr);
+
+      if (!ua->quit) {
+        if (console_msg_pending && ua->AclAccessOk(Command_ACL, "messages")) {
+          if (ua->auto_display_messages) {
+            PmStrcpy(ua->cmd, "messages");
+            DotMessagesCmd(ua, ua->cmd);
+            ua->user_notified_msg_pending = false;
+          } else if (!ua->gui && !ua->user_notified_msg_pending && console_msg_pending) {
+            if (ua->api) {
+              user->signal(BNET_MSGS_PENDING);
+            } else {
+              bsendmsg(ua, _("You have messages.\n"));
             }
-            if (!ua->api) {
-               user->signal(BNET_EOD); /* send end of command */
-            }
-         }
-      } else if (IsBnetStop(user)) {
-         ua->quit = true;
-      } else { /* signal */
-         user->signal(BNET_POLL);
+            ua->user_notified_msg_pending = true;
+          }
+        }
+        if (!ua->api) {
+          user->signal(BNET_EOD); /* send end of command */
+        }
       }
-   }
+    } else if (IsBnetStop(user)) {
+      ua->quit = true;
+    } else { /* signal */
+      user->signal(BNET_POLL);
+    }
+  }
 
 getout:
-   CloseDb(ua);
-   FreeUaContext(ua);
-   FreeJcr(jcr);
-   user->close();
-   delete user;
+  CloseDb(ua);
+  FreeUaContext(ua);
+  FreeJcr(jcr);
+  user->close();
+  delete user;
 
-   return NULL;
+  return NULL;
 }
 
 /**
@@ -149,47 +149,50 @@ getout:
  *   This is a sort of mini-kludge, and should be
  *   unified at some point.
  */
-UaContext *new_ua_context(JobControlRecord *jcr)
-{
-   UaContext *ua;
+UaContext *new_ua_context(JobControlRecord *jcr) {
 
-   ua = (UaContext *)malloc(sizeof(UaContext));
-   memset(ua, 0, sizeof(UaContext));
-   ua->jcr = jcr;
-   ua->db = jcr->db;
-   ua->cmd = GetPoolMemory(PM_FNAME);
-   ua->args = GetPoolMemory(PM_FNAME);
-   ua->errmsg = GetPoolMemory(PM_FNAME);
-   ua->verbose = true;
-   ua->automount = true;
-   ua->send = New(OutputFormatter(printit, ua, filterit, ua));
+  UaContext *ua;
 
-   return ua;
+  ua = (UaContext *)malloc(sizeof(UaContext));
+  memset(ua, 0, sizeof(UaContext));
+  ua->jcr = jcr;
+  ua->db = jcr->db;
+  ua->cmd = GetPoolMemory(PM_FNAME);
+  ua->args = GetPoolMemory(PM_FNAME);
+  ua->errmsg = GetPoolMemory(PM_FNAME);
+  ua->verbose = true;
+  ua->automount = true;
+  ua->send = New(OutputFormatter(printit, ua, filterit, ua));
+
+  return ua;
 }
 
-void FreeUaContext(UaContext *ua)
-{
-   if (ua->guid) {
-      FreeGuidList(ua->guid);
-   }
-   if (ua->cmd) {
-      FreePoolMemory(ua->cmd);
-   }
-   if (ua->args) {
-      FreePoolMemory(ua->args);
-   }
-   if (ua->errmsg) {
-      FreePoolMemory(ua->errmsg);
-   }
-   if (ua->prompt) {
-      free(ua->prompt);
-   }
-   if (ua->send) {
-      delete ua->send;
-   }
-   if (ua->UA_sock) {
-      ua->UA_sock->close();
-      ua->UA_sock = NULL;
-   }
-   free(ua);
+void FreeUaContext(UaContext *ua) {
+
+
+
+
+  if (ua->guid) {
+    FreeGuidList(ua->guid);
+  }
+  if (ua->cmd) {
+    FreePoolMemory(ua->cmd);
+  }
+  if (ua->args) {
+    FreePoolMemory(ua->args);
+  }
+  if (ua->errmsg) {
+    FreePoolMemory(ua->errmsg);
+  }
+  if (ua->prompt) {
+    free(ua->prompt);
+  }
+  if (ua->send) {
+    delete ua->send;
+  }
+  if (ua->UA_sock) {
+    ua->UA_sock->close();
+    ua->UA_sock = NULL;
+  }
+  free(ua);
 }

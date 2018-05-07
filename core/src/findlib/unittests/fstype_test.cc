@@ -33,27 +33,39 @@
 #include <stdio.h>
 
 TEST(FstypeTest, RootFs) {
+
+
+
+
   char fs[1000];
   bool retval;
   retval = fstype("/", fs, sizeof(fs));
   EXPECT_TRUE(retval);
-  EXPECT_STREQ("xfs", (const char *) fs) << "checking root fs to be xfs";
+  EXPECT_STREQ("xfs", (const char *)fs) << "checking root fs to be xfs";
 }
 
 TEST(FstypeTest, Proc) {
+
+
+
+
   char fs[1000];
   bool retval;
 
   retval = fstype("/proc", fs, sizeof(fs));
   EXPECT_TRUE(retval);
-  EXPECT_STREQ("proc", (const char *) fs) << "checking proc to be proc";
+  EXPECT_STREQ("proc", (const char *)fs) << "checking proc to be proc";
 }
 
 TEST(FstypeTest, Run) {
+
+
+
+
   char fs[1000];
   bool retval;
 
   retval = fstype("/run", fs, sizeof(fs));
   EXPECT_TRUE(retval);
-  EXPECT_STREQ("tmpfs", (const char *) fs) << "checking run to be tmpfs";
+  EXPECT_STREQ("tmpfs", (const char *)fs) << "checking run to be tmpfs";
 }

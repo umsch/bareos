@@ -29,7 +29,8 @@ DLL_IMP_EXP void UnlockLastJobsList();
 DLL_IMP_EXP bool ReadLastJobsList(int fd, uint64_t addr);
 DLL_IMP_EXP uint64_t WriteLastJobsList(int fd, uint64_t addr);
 DLL_IMP_EXP void WriteStateFile(char *dir, const char *progname, int port);
-DLL_IMP_EXP void RegisterJobEndCallback(JobControlRecord *jcr, void JobEndCb(JobControlRecord *jcr,void *), void *ctx);
+DLL_IMP_EXP void RegisterJobEndCallback(JobControlRecord *jcr,
+                                        void JobEndCb(JobControlRecord *jcr, void *), void *ctx);
 DLL_IMP_EXP void LockJobs();
 DLL_IMP_EXP void UnlockJobs();
 DLL_IMP_EXP JobControlRecord *jcr_walk_start();
@@ -42,4 +43,4 @@ DLL_IMP_EXP void RemoveJcrFromTsd(JobControlRecord *jcr);
 DLL_IMP_EXP uint32_t GetJobidFromTsd();
 DLL_IMP_EXP uint32_t GetJobidFromTid(pthread_t tid);
 
-#endif // BAREOS_LIB_JCR_H_
+#endif  // BAREOS_LIB_JCR_H_

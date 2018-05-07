@@ -33,36 +33,36 @@
 #include "../lib/protos.h"
 #include "protos.h"
 
-void d_msg(const char*, int, int, const char*, ...) {}
-
-
-
+void d_msg(const char *, int, int, const char *, ...) {}
 
 TEST(edit, edit) {
-   const char *str[] = {"3", "3n", "3 hours", "3.5 day", "3 week", "3 m", "3 q", "3 years"};
-   const char *resultstr[] = {"3 secs", "3 mins ", "3 hours ", "3 days 12 hours ", "21 days ", "3 months ", "9 months 3 days ", "3 years "};
-   utime_t val;
-   char buf[100];
-   char outval[100];
 
-   for (int i=0; i<8; i++) {
-      strcpy(buf, str[i]);
-      if (!DurationToUtime(buf, &val)) {
-         printf("Error return from DurationToUtime for in=%s\n", str[i]);
-         continue;
-      }
-      edit_utime(val, outval, sizeof(outval));
-      EXPECT_STREQ(outval, resultstr[i] );
-   }
+
+
+
+  const char *str[] = {"3", "3n", "3 hours", "3.5 day", "3 week", "3 m", "3 q", "3 years"};
+  const char *resultstr[] = {"3 secs",   "3 mins ",   "3 hours ",         "3 days 12 hours ",
+                             "21 days ", "3 months ", "9 months 3 days ", "3 years "};
+  utime_t val;
+  char buf[100];
+  char outval[100];
+
+  for (int i = 0; i < 8; i++) {
+    strcpy(buf, str[i]);
+    if (!DurationToUtime(buf, &val)) {
+      printf("Error return from DurationToUtime for in=%s\n", str[i]);
+      continue;
+    }
+    edit_utime(val, outval, sizeof(outval));
+    EXPECT_STREQ(outval, resultstr[i]);
+  }
 }
 
-
-
 struct test {
-   const char *pattern;
-   const char *string;
-   const int options;
-   const int result;
+  const char *pattern;
+  const char *string;
+  const int options;
+  const int result;
 };
 //#define FULL_TEST
 /*
@@ -73,76 +73,79 @@ struct test {
  *  me know.
  */
 static struct test tests[] = {
-/*1*/  {"x", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"x", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"x", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"*", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-/*5*/  {"*", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"*", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"*x", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"*x", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"*x", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-/*10*/ {"x*", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"x*", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"x*", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
-       {"a*b/*", "abbb/.x", FNM_PATHNAME|FNM_PERIOD, 0},
-       {"a*b/*", "abbb/xy", FNM_PATHNAME|FNM_PERIOD, 0},
-/*15*/ {"[A-[]", "A", 0, 0},
-       {"[A-[]", "a", 0, FNM_NOMATCH},
-       {"[a-{]", "A", 0, FNM_NOMATCH},
-       {"[a-{]", "a", 0, 0},
-       {"[A-[]", "A", FNM_CASEFOLD, FNM_NOMATCH},
-/*20*/ {"[A-[]", "a", FNM_CASEFOLD, FNM_NOMATCH},
-       {"[a-{]", "A", FNM_CASEFOLD, 0},
-       {"[a-{]", "a", FNM_CASEFOLD, 0},
-       { "*LIB*", "lib", FNM_PERIOD, FNM_NOMATCH },
-       { "*LIB*", "lib", FNM_CASEFOLD, 0},
-/*25*/ { "a[/]b", "a/b", 0, 0},
-       { "a[/]b", "a/b", FNM_PATHNAME, FNM_NOMATCH },
-       { "[a-z]/[a-z]", "a/b", 0, 0 },
-       { "a/b", "*", FNM_PATHNAME, FNM_NOMATCH },
-       { "*", "a/b", FNM_PATHNAME, FNM_NOMATCH },
-       { "*[/]b", "a/b", FNM_PATHNAME, FNM_NOMATCH },
-/*30*/ { "\\[/b", "[/b", 0, 0 },
-       { "?\?/b", "aa/b", 0, 0 },
-       { "???b", "aa/b", 0, 0 },
-       { "???b", "aa/b", FNM_PATHNAME, FNM_NOMATCH },
-       { "?a/b", ".a/b", FNM_PATHNAME|FNM_PERIOD, FNM_NOMATCH },
-/*35*/ { "a/?b", "a/.b", FNM_PATHNAME|FNM_PERIOD, FNM_NOMATCH },
-       { "*a/b", ".a/b", FNM_PATHNAME|FNM_PERIOD, FNM_NOMATCH },
-       { "a/*b", "a/.b", FNM_PATHNAME|FNM_PERIOD, FNM_NOMATCH },
-       { "[.]a/b", ".a/b", FNM_PATHNAME|FNM_PERIOD, FNM_NOMATCH },
-       { "a/[.]b", "a/.b", FNM_PATHNAME|FNM_PERIOD, FNM_NOMATCH },
-/*40*/ { "*/?", "a/b", FNM_PATHNAME|FNM_PERIOD, 0 },
-       { "?/*", "a/b", FNM_PATHNAME|FNM_PERIOD, 0 },
-       { ".*/?", ".a/b", FNM_PATHNAME|FNM_PERIOD, 0 },
-       { "*/.?", "a/.b", FNM_PATHNAME|FNM_PERIOD, 0 },
-       { "*/*", "a/.b", FNM_PATHNAME|FNM_PERIOD, FNM_NOMATCH },
-/*45*/ { "*[.]/b", "a./b", FNM_PATHNAME|FNM_PERIOD, 0 },
-       { "a?b", "a.b", FNM_PATHNAME|FNM_PERIOD, 0 },
-       { "a*b", "a.b", FNM_PATHNAME|FNM_PERIOD, 0 },
-       { "a[.]b", "a.b", FNM_PATHNAME|FNM_PERIOD, 0 },
-/*49*/ { "*a*", "a/b", FNM_PATHNAME|FNM_LEADING_DIR, 0 },
-       { "[/b", "[/b", 0, 0},
+    /*1*/ {"x", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"x", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"x", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"*", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    /*5*/ {"*", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"*", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"*x", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"*x", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"*x", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    /*10*/ {"x*", "x", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"x*", "x/y", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"x*", "x/y/z", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"a*b/*", "abbb/.x", FNM_PATHNAME | FNM_PERIOD, 0},
+    {"a*b/*", "abbb/xy", FNM_PATHNAME | FNM_PERIOD, 0},
+    /*15*/ {"[A-[]", "A", 0, 0},
+    {"[A-[]", "a", 0, FNM_NOMATCH},
+    {"[a-{]", "A", 0, FNM_NOMATCH},
+    {"[a-{]", "a", 0, 0},
+    {"[A-[]", "A", FNM_CASEFOLD, FNM_NOMATCH},
+    /*20*/ {"[A-[]", "a", FNM_CASEFOLD, FNM_NOMATCH},
+    {"[a-{]", "A", FNM_CASEFOLD, 0},
+    {"[a-{]", "a", FNM_CASEFOLD, 0},
+    {"*LIB*", "lib", FNM_PERIOD, FNM_NOMATCH},
+    {"*LIB*", "lib", FNM_CASEFOLD, 0},
+    /*25*/ {"a[/]b", "a/b", 0, 0},
+    {"a[/]b", "a/b", FNM_PATHNAME, FNM_NOMATCH},
+    {"[a-z]/[a-z]", "a/b", 0, 0},
+    {"a/b", "*", FNM_PATHNAME, FNM_NOMATCH},
+    {"*", "a/b", FNM_PATHNAME, FNM_NOMATCH},
+    {"*[/]b", "a/b", FNM_PATHNAME, FNM_NOMATCH},
+    /*30*/ {"\\[/b", "[/b", 0, 0},
+    {"?\?/b", "aa/b", 0, 0},
+    {"???b", "aa/b", 0, 0},
+    {"???b", "aa/b", FNM_PATHNAME, FNM_NOMATCH},
+    {"?a/b", ".a/b", FNM_PATHNAME | FNM_PERIOD, FNM_NOMATCH},
+    /*35*/ {"a/?b", "a/.b", FNM_PATHNAME | FNM_PERIOD, FNM_NOMATCH},
+    {"*a/b", ".a/b", FNM_PATHNAME | FNM_PERIOD, FNM_NOMATCH},
+    {"a/*b", "a/.b", FNM_PATHNAME | FNM_PERIOD, FNM_NOMATCH},
+    {"[.]a/b", ".a/b", FNM_PATHNAME | FNM_PERIOD, FNM_NOMATCH},
+    {"a/[.]b", "a/.b", FNM_PATHNAME | FNM_PERIOD, FNM_NOMATCH},
+    /*40*/ {"*/?", "a/b", FNM_PATHNAME | FNM_PERIOD, 0},
+    {"?/*", "a/b", FNM_PATHNAME | FNM_PERIOD, 0},
+    {".*/?", ".a/b", FNM_PATHNAME | FNM_PERIOD, 0},
+    {"*/.?", "a/.b", FNM_PATHNAME | FNM_PERIOD, 0},
+    {"*/*", "a/.b", FNM_PATHNAME | FNM_PERIOD, FNM_NOMATCH},
+    /*45*/ {"*[.]/b", "a./b", FNM_PATHNAME | FNM_PERIOD, 0},
+    {"a?b", "a.b", FNM_PATHNAME | FNM_PERIOD, 0},
+    {"a*b", "a.b", FNM_PATHNAME | FNM_PERIOD, 0},
+    {"a[.]b", "a.b", FNM_PATHNAME | FNM_PERIOD, 0},
+    /*49*/ {"*a*", "a/b", FNM_PATHNAME | FNM_LEADING_DIR, 0},
+    {"[/b", "[/b", 0, 0},
 #ifdef FULL_TEST
-       /* This test takes a *long* time */
-       {"a*b*c*d*e*f*g*h*i*j*k*l*m*n*o*p*q*r*s*t*u*v*w*x*y*z*",
-          "aaaabbbbccccddddeeeeffffgggghhhhiiiijjjjkkkkllllmmmm"
-          "nnnnooooppppqqqqrrrrssssttttuuuuvvvvwwwwxxxxyyyy", 0, FNM_NOMATCH},
+    /* This test takes a *long* time */
+    {"a*b*c*d*e*f*g*h*i*j*k*l*m*n*o*p*q*r*s*t*u*v*w*x*y*z*",
+     "aaaabbbbccccddddeeeeffffgggghhhhiiiijjjjkkkkllllmmmm"
+     "nnnnooooppppqqqqrrrrssssttttuuuuvvvvwwwwxxxxyyyy",
+     0, FNM_NOMATCH},
 #endif
 
-       /* Keep dummy last to avoid compiler warnings */
-       {"dummy", "dummy", 0, 0}
+    /* Keep dummy last to avoid compiler warnings */
+    {"dummy", "dummy", 0, 0}
 
 };
 
-
-
-#define ntests ((int)(sizeof(tests)/sizeof(struct test)))
+#define ntests ((int)(sizeof(tests) / sizeof(struct test)))
 TEST(edit, fnmatch) {
-   bool fail = false;
-   for (int i=0; i<ntests; i++) {
-      EXPECT_FALSE(fnmatch(tests[i].pattern, tests[i].string, tests[i].options) != tests[i].result);
-      //printf("%s - %s  -> %d \n",tests[i].pattern, tests[i].string, tests[i].result);
-   }
+
+
+
+
+  bool fail = false;
+  for (int i = 0; i < ntests; i++) {
+    EXPECT_FALSE(fnmatch(tests[i].pattern, tests[i].string, tests[i].options) != tests[i].result);
+    // printf("%s - %s  -> %d \n",tests[i].pattern, tests[i].string, tests[i].result);
+  }
 }

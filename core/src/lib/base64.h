@@ -36,4 +36,3 @@ DLL_IMP_EXP int to_base64(int64_t value, char *where);
 DLL_IMP_EXP int from_base64(int64_t *value, char *where);
 DLL_IMP_EXP int bin_to_base64(char *buf, int buflen, char *bin, int binlen, bool compatible);
 DLL_IMP_EXP int base64_to_bin(char *dest, int destlen, char *src, int srclen);
-

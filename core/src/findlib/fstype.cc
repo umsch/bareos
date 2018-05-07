@@ -36,24 +36,25 @@
  *
  * bool fstype(const char *fname, char *fs, int fslen);
  */
-#if defined(HAVE_DARWIN_OS) || \
-    defined(HAVE_FREEBSD_OS) || \
-    defined(HAVE_OPENBSD_OS)
+#if defined(HAVE_DARWIN_OS) || defined(HAVE_FREEBSD_OS) || defined(HAVE_OPENBSD_OS)
 
 #include <sys/param.h>
 #include <sys/mount.h>
 
-bool fstype(const char *fname, char *fs, int fslen)
-{
-   struct statfs st;
+bool fstype(const char *fname, char *fs, int fslen) {
 
-   if (statfs(fname, &st) == 0) {
-      bstrncpy(fs, st.f_fstypename, fslen);
-      return true;
-   }
 
-   Dmsg1(50, "statfs() failed for \"%s\"\n", fname);
-   return false;
+
+
+  struct statfs st;
+
+  if (statfs(fname, &st) == 0) {
+    bstrncpy(fs, st.f_fstypename, fslen);
+    return true;
+  }
+
+  Dmsg1(50, "statfs() failed for \"%s\"\n", fname);
+  return false;
 }
 
 #elif defined(HAVE_NETBSD_OS)
@@ -65,60 +66,67 @@ bool fstype(const char *fname, char *fs, int fslen)
 #define statvfs statfs
 #endif
 
-bool fstype(const char *fname, char *fs, int fslen)
-{
-   struct statvfs st;
+bool fstype(const char *fname, char *fs, int fslen) {
 
-   if (statvfs(fname, &st) == 0) {
-      bstrncpy(fs, st.f_fstypename, fslen);
-      return true;
-   }
 
-   Dmsg1(50, "statfs() failed for \"%s\"\n", fname);
-   return false;
+
+
+  struct statvfs st;
+
+  if (statvfs(fname, &st) == 0) {
+    bstrncpy(fs, st.f_fstypename, fslen);
+    return true;
+  }
+
+  Dmsg1(50, "statfs() failed for \"%s\"\n", fname);
+  return false;
 }
 
-#elif defined(HAVE_HPUX_OS) || \
-      defined(HAVE_IRIX_OS)
+#elif defined(HAVE_HPUX_OS) || defined(HAVE_IRIX_OS)
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
 
-bool fstype(const char *fname, char *fs, int fslen)
-{
-   struct statvfs st;
+bool fstype(const char *fname, char *fs, int fslen) {
 
-   if (statvfs(fname, &st) == 0) {
-      bstrncpy(fs, st.f_basetype, fslen);
-      return true;
-   }
 
-   Dmsg1(50, "statfs() failed for \"%s\"\n", fname);
-   return false;
+
+
+  struct statvfs st;
+
+  if (statvfs(fname, &st) == 0) {
+    bstrncpy(fs, st.f_basetype, fslen);
+    return true;
+  }
+
+  Dmsg1(50, "statfs() failed for \"%s\"\n", fname);
+  return false;
 }
 
-#elif defined(HAVE_LINUX_OS) || \
-      defined(HAVE_OSF1_OS)
+#elif defined(HAVE_LINUX_OS) || defined(HAVE_OSF1_OS)
 
 #include <sys/stat.h>
 #include "lib/mntent_cache.h"
 
-bool fstype(const char *fname, char *fs, int fslen)
-{
-   struct stat st;
-   mntent_cache_entry_t *mce;
+bool fstype(const char *fname, char *fs, int fslen) {
 
-   if (lstat(fname, &st) == 0) {
-      if ((mce = find_mntent_mapping(st.st_dev)) != NULL) {
-         bstrncpy(fs, mce->fstype, fslen);
-         ReleaseMntentMapping(mce);
-         return true;
-      }
-      return false;
-   }
 
-   Dmsg1(50, "lstat() failed for \"%s\"\n", fname);
-   return false;
+
+
+  struct stat st;
+  mntent_cache_entry_t *mce;
+
+  if (lstat(fname, &st) == 0) {
+    if ((mce = find_mntent_mapping(st.st_dev)) != NULL) {
+      bstrncpy(fs, mce->fstype, fslen);
+      ReleaseMntentMapping(mce);
+      return true;
+    }
+    return false;
+  }
+
+  Dmsg1(50, "lstat() failed for \"%s\"\n", fname);
+  return false;
 }
 
 #elif defined(HAVE_SUN_OS)
@@ -126,58 +134,67 @@ bool fstype(const char *fname, char *fs, int fslen)
 #include <sys/types.h>
 #include <sys/stat.h>
 
-bool fstype(const char *fname, char *fs, int fslen)
-{
-   struct stat st;
+bool fstype(const char *fname, char *fs, int fslen) {
 
-   if (lstat(fname, &st) == 0) {
-      bstrncpy(fs, st.st_fstype, fslen);
-      return true;
-   }
 
-   Dmsg1(50, "lstat() failed for \"%s\"\n", fname);
-   return false;
+
+
+  struct stat st;
+
+  if (lstat(fname, &st) == 0) {
+    bstrncpy(fs, st.st_fstype, fslen);
+    return true;
+  }
+
+  Dmsg1(50, "lstat() failed for \"%s\"\n", fname);
+  return false;
 }
 
-#elif defined (HAVE_WIN32)
+#elif defined(HAVE_WIN32)
 /* Windows */
 
-bool fstype(const char *fname, char *fs, int fslen)
-{
-   DWORD componentlength;
-   DWORD fsflags;
-   CHAR rootpath[4];
-   UINT oldmode;
-   BOOL result;
+bool fstype(const char *fname, char *fs, int fslen) {
 
-   /* Copy Drive Letter, colon, and backslash to rootpath */
-   bstrncpy(rootpath, fname, sizeof(rootpath));
 
-   /* We don't want any popups if there isn't any media in the drive */
-   oldmode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-   result = GetVolumeInformation(rootpath, NULL, 0, NULL, &componentlength, &fsflags, fs, fslen);
 
-   SetErrorMode(oldmode);
+  DWORD componentlength;
+  DWORD fsflags;
+  CHAR rootpath[4];
+  UINT oldmode;
+  BOOL result;
 
-   if (result) {
-      /* Windows returns NTFS, FAT, etc.  Make it lowercase to be consistent with other OSes */
-      lcase(fs);
-   } else {
-      Dmsg2(10, "GetVolumeInformation() failed for \"%s\", Error = %d.\n", rootpath, GetLastError());
-   }
+  /* Copy Drive Letter, colon, and backslash to rootpath */
+  bstrncpy(rootpath, fname, sizeof(rootpath));
 
-   return result != 0;
+  /* We don't want any popups if there isn't any media in the drive */
+  oldmode = SetErrorMode(SEM_FAILCRITICALERRORS);
+
+  result = GetVolumeInformation(rootpath, NULL, 0, NULL, &componentlength, &fsflags, fs, fslen);
+
+  SetErrorMode(oldmode);
+
+  if (result) {
+    /* Windows returns NTFS, FAT, etc.  Make it lowercase to be consistent with other OSes */
+    lcase(fs);
+  } else {
+    Dmsg2(10, "GetVolumeInformation() failed for \"%s\", Error = %d.\n", rootpath, GetLastError());
+  }
+
+  return result != 0;
 }
 
 /* Windows */
 
-#else    /* No recognised OS */
+#else /* No recognised OS */
 
-bool fstype(const char *fname, char *fs, int fslen)
-{
-   Dmsg0(10, "!!! fstype() not implemented for this OS. !!!\n");
-   return false;
+bool fstype(const char *fname, char *fs, int fslen) {
+
+
+
+
+  Dmsg0(10, "!!! fstype() not implemented for this OS. !!!\n");
+  return false;
 }
 #endif
 
@@ -186,13 +203,16 @@ bool fstype(const char *fname, char *fs, int fslen)
  *
  * bool FstypeEquals(const char *fname, const char *fstypename);
  */
-bool FstypeEquals(const char *fname, const char *fstypename)
-{
-   char fs_typename[128];
+bool FstypeEquals(const char *fname, const char *fstypename) {
 
-   if (fstype(fname, fs_typename, sizeof(fs_typename))) {
-      return bstrcmp(fs_typename, fstypename);
-   }
 
-   return false;
+
+
+  char fs_typename[128];
+
+  if (fstype(fname, fs_typename, sizeof(fs_typename))) {
+    return bstrcmp(fs_typename, fstypename);
+  }
+
+  return false;
 }

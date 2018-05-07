@@ -24,4 +24,4 @@
 void *handle_stored_connection(BareosSocket *sd, char *job_name);
 bool DoListenRun(JobControlRecord *jcr);
 
-#endif // BAREOS_STORED_SD_CMDS_H_
+#endif  // BAREOS_STORED_SD_CMDS_H_

@@ -33,7 +33,6 @@
  * These functions are used by both backup and verify.
  */
 
-
 #include "include/bareos.h"
 #include "dird.h"
 #include "findlib/find.h"
@@ -44,49 +43,30 @@
 #include "lib/bnet.h"
 #include "lib/edit.h"
 
-
 const int debuglevel = 400;
 
 /* Commands sent to File daemon */
-static char filesetcmd[] =
-   "fileset%s\n"; /* set full fileset */
-static char jobcmd[] =
-   "JobId=%s Job=%s SDid=%u SDtime=%u Authorization=%s\n";
+static char filesetcmd[] = "fileset%s\n"; /* set full fileset */
+static char jobcmd[] = "JobId=%s Job=%s SDid=%u SDtime=%u Authorization=%s\n";
 /* Note, mtime_only is not used here -- implemented as file option */
-static char levelcmd[] =
-   "level = %s%s%s mtime_only=%d %s%s\n";
-static char runscriptcmd[] =
-   "Run OnSuccess=%u OnFailure=%u AbortOnError=%u When=%u Command=%s\n";
-static char runbeforenowcmd[] =
-   "RunBeforeNow\n";
-static char restoreobjectendcmd[] =
-   "restoreobject end\n";
-static char bandwidthcmd[] =
-   "setbandwidth=%lld Job=%s\n";
-static char pluginoptionscmd[] =
-   "pluginoptions %s\n";
-static char getSecureEraseCmd[] =
-   "getSecureEraseCmd\n";
+static char levelcmd[] = "level = %s%s%s mtime_only=%d %s%s\n";
+static char runscriptcmd[] = "Run OnSuccess=%u OnFailure=%u AbortOnError=%u When=%u Command=%s\n";
+static char runbeforenowcmd[] = "RunBeforeNow\n";
+static char restoreobjectendcmd[] = "restoreobject end\n";
+static char bandwidthcmd[] = "setbandwidth=%lld Job=%s\n";
+static char pluginoptionscmd[] = "pluginoptions %s\n";
+static char getSecureEraseCmd[] = "getSecureEraseCmd\n";
 
 /* Responses received from File daemon */
-static char OKinc[] =
-   "2000 OK include\n";
-static char OKjob[] =
-   "2000 OK Job";
-static char OKlevel[] =
-   "2000 OK level\n";
-static char OKRunScript[] =
-   "2000 OK RunScript\n";
-static char OKRunBeforeNow[] =
-   "2000 OK RunBeforeNow\n";
-static char OKRestoreObject[] =
-   "2000 OK ObjectRestored\n";
-static char OKBandwidth[] =
-   "2000 OK Bandwidth\n";
-static char OKPluginOptions[] =
-   "2000 OK PluginOptions\n";
-static char OKgetSecureEraseCmd[] =
-   "2000 OK FDSecureEraseCmd %s\n";
+static char OKinc[] = "2000 OK include\n";
+static char OKjob[] = "2000 OK Job";
+static char OKlevel[] = "2000 OK level\n";
+static char OKRunScript[] = "2000 OK RunScript\n";
+static char OKRunBeforeNow[] = "2000 OK RunBeforeNow\n";
+static char OKRestoreObject[] = "2000 OK ObjectRestored\n";
+static char OKBandwidth[] = "2000 OK Bandwidth\n";
+static char OKPluginOptions[] = "2000 OK PluginOptions\n";
+static char OKgetSecureEraseCmd[] = "2000 OK FDSecureEraseCmd %s\n";
 
 /* Forward referenced functions */
 static bool SendListItem(JobControlRecord *jcr, const char *code, char *item, BareosSocket *fd);
@@ -97,17 +77,17 @@ extern DirectorResource *director;
 #define INC_LIST 0
 #define EXC_LIST 1
 
-static inline utime_t get_heartbeat_interval(ClientResource *res)
-{
-   utime_t heartbeat;
+static inline utime_t get_heartbeat_interval(ClientResource *res) {
 
-   if (res->heartbeat_interval) {
-      heartbeat = res->heartbeat_interval;
-   } else {
-      heartbeat = me->heartbeat_interval;
-   }
+  utime_t heartbeat;
 
-   return heartbeat;
+  if (res->heartbeat_interval) {
+    heartbeat = res->heartbeat_interval;
+  } else {
+    heartbeat = me->heartbeat_interval;
+  }
+
+  return heartbeat;
 }
 
 /**
@@ -117,530 +97,551 @@ static inline utime_t get_heartbeat_interval(ClientResource *res)
  * give up after max_retry_time (default 30 mins).
  */
 static inline bool connect_outbound_to_file_daemon(JobControlRecord *jcr, int retry_interval,
-                                                   int max_retry_time, bool verbose)
-{
-   bool result = false;
-   BareosSocket *fd = NULL;
-   utime_t heart_beat;
+                                                   int max_retry_time, bool verbose) {
+  bool result = false;
+  BareosSocket *fd = NULL;
+  utime_t heart_beat;
 
-   if (!IsConnectingToClientAllowed(jcr)) {
-      Dmsg1(120, "connecting to client \"%s\" is not allowed.\n", jcr->res.client->name());
-      return false;
-   }
+  if (!IsConnectingToClientAllowed(jcr)) {
+    Dmsg1(120, "connecting to client \"%s\" is not allowed.\n", jcr->res.client->name());
+    return false;
+  }
 
-   fd = New(BareosSocketTCP);
-   if (me->nokeepalive) {
-      fd->ClearKeepalive();
-   }
-   heart_beat = get_heartbeat_interval(jcr->res.client);
+  fd = New(BareosSocketTCP);
+  if (me->nokeepalive) {
+    fd->ClearKeepalive();
+  }
+  heart_beat = get_heartbeat_interval(jcr->res.client);
 
-   char name[MAX_NAME_LENGTH + 100];
-   bstrncpy(name, _("Client: "), sizeof(name));
-   bstrncat(name, jcr->res.client->name(), sizeof(name));
+  char name[MAX_NAME_LENGTH + 100];
+  bstrncpy(name, _("Client: "), sizeof(name));
+  bstrncat(name, jcr->res.client->name(), sizeof(name));
 
-   fd->SetSourceAddress(me->DIRsrc_addr);
-   if (!fd->connect(jcr,retry_interval,max_retry_time,
-                    heart_beat, name,
-                    jcr->res.client->address, NULL,
-                    jcr->res.client->FDport, verbose)) {
-      delete fd;
-      fd = NULL;
-      jcr->setJobStatus(JS_ErrorTerminated);
-   } else {
-      jcr->file_bsock = fd;
-      jcr->authenticated = false;
-      Dmsg0(10, "Opened connection with File daemon\n");
-      result = true;
-   }
+  fd->SetSourceAddress(me->DIRsrc_addr);
+  if (!fd->connect(jcr, retry_interval, max_retry_time, heart_beat, name, jcr->res.client->address,
+                   NULL, jcr->res.client->FDport, verbose)) {
+    delete fd;
+    fd = NULL;
+    jcr->setJobStatus(JS_ErrorTerminated);
+  } else {
+    jcr->file_bsock = fd;
+    jcr->authenticated = false;
+    Dmsg0(10, "Opened connection with File daemon\n");
+    result = true;
+  }
 
-   return result;
+  return result;
 }
 
-bool ConnectToFileDaemon(JobControlRecord *jcr, int retry_interval, int max_retry_time, bool verbose)
-{
-   bool result = false;
+bool ConnectToFileDaemon(JobControlRecord *jcr, int retry_interval, int max_retry_time,
+                         bool verbose) {
+  bool result = false;
 
-   /*
-    * connection already exists.
-    * TODO: when is this the case? Is it really used? Does it than really need authentication?
-    */
-   if (!jcr->file_bsock) {
+  /*
+   * connection already exists.
+   * TODO: when is this the case? Is it really used? Does it than really need authentication?
+   */
+  if (!jcr->file_bsock) {
+    /*
+     * check without waiting, if waiting client connection exists.
+     */
+    if (!UseWaitingClient(jcr, 0)) {
       /*
-       * check without waiting, if waiting client connection exists.
+       * open connection to client
        */
-      if (!UseWaitingClient(jcr, 0)) {
-         /*
-          * open connection to client
-          */
-         if (!connect_outbound_to_file_daemon(jcr, retry_interval, max_retry_time, verbose)) {
-            /*
-             * Check if a waiting client connection exist.
-             * If yes, use it, otherwise jcr->file_bsock will not be set.
-             */
-            UseWaitingClient(jcr, max_retry_time);
-         }
+      if (!connect_outbound_to_file_daemon(jcr, retry_interval, max_retry_time, verbose)) {
+        /*
+         * Check if a waiting client connection exist.
+         * If yes, use it, otherwise jcr->file_bsock will not be set.
+         */
+        UseWaitingClient(jcr, max_retry_time);
       }
-   }
+    }
+  }
 
-   /*
-    * connection have been established
-    */
-   if (jcr->file_bsock) {
-      jcr->setJobStatus(JS_Running);
-      if (AuthenticateWithFileDaemon(jcr)) {
-         result = true;
-      }
-   } else {
-      Jmsg(jcr, M_FATAL, 0, "Failed to connect to client \"%s\".\n", jcr->res.client->name());
-   }
+  /*
+   * connection have been established
+   */
+  if (jcr->file_bsock) {
+    jcr->setJobStatus(JS_Running);
+    if (AuthenticateWithFileDaemon(jcr)) {
+      result = true;
+    }
+  } else {
+    Jmsg(jcr, M_FATAL, 0, "Failed to connect to client \"%s\".\n", jcr->res.client->name());
+  }
 
-   if (!result) {
-     jcr->setJobStatus(JS_ErrorTerminated);
-   }
+  if (!result) {
+    jcr->setJobStatus(JS_ErrorTerminated);
+  }
 
-   return result;
+  return result;
 }
 
-int SendJobInfo(JobControlRecord *jcr)
-{
-   BareosSocket *fd = jcr->file_bsock;
-   char ed1[30];
+int SendJobInfo(JobControlRecord *jcr) {
 
-   /*
-    * Now send JobId and authorization key
-    */
-   if (jcr->sd_auth_key == NULL) {
-      jcr->sd_auth_key = bstrdup("dummy");
-   }
 
-   fd->fsend(jobcmd, edit_int64(jcr->JobId, ed1), jcr->Job, jcr->VolSessionId,
-             jcr->VolSessionTime, jcr->sd_auth_key);
 
-   if (!jcr->keep_sd_auth_key && !bstrcmp(jcr->sd_auth_key, "dummy")) {
-      memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
-   }
 
-   Dmsg1(100, ">filed: %s", fd->msg);
-   if (BgetDirmsg(fd) > 0) {
-      Dmsg1(110, "<filed: %s", fd->msg);
-      if (!bstrncmp(fd->msg, OKjob, strlen(OKjob))) {
-         Jmsg(jcr, M_FATAL, 0, _("File daemon \"%s\" rejected Job command: %s\n"),
-              jcr->res.client->hdr.name, fd->msg);
-         jcr->setJobStatus(JS_ErrorTerminated);
-         return 0;
-      } else if (jcr->db) {
-         ClientDbRecord cr;
+  BareosSocket *fd = jcr->file_bsock;
+  char ed1[30];
 
-         memset(&cr, 0, sizeof(cr));
-         bstrncpy(cr.Name, jcr->res.client->hdr.name, sizeof(cr.Name));
-         cr.AutoPrune = jcr->res.client->AutoPrune;
-         cr.FileRetention = jcr->res.client->FileRetention;
-         cr.JobRetention = jcr->res.client->JobRetention;
-         bstrncpy(cr.Uname, fd->msg+strlen(OKjob)+1, sizeof(cr.Uname));
-         if (!jcr->db->UpdateClientRecord(jcr, &cr)) {
-            Jmsg(jcr, M_WARNING, 0, _("Error updating Client record. ERR=%s\n"), jcr->db->strerror());
-         }
-      }
-   } else {
-      Jmsg(jcr, M_FATAL, 0, _("FD gave bad response to JobId command: %s\n"), bnet_strerror(fd));
+  /*
+   * Now send JobId and authorization key
+   */
+  if (jcr->sd_auth_key == NULL) {
+    jcr->sd_auth_key = bstrdup("dummy");
+  }
+
+  fd->fsend(jobcmd, edit_int64(jcr->JobId, ed1), jcr->Job, jcr->VolSessionId, jcr->VolSessionTime,
+            jcr->sd_auth_key);
+
+  if (!jcr->keep_sd_auth_key && !bstrcmp(jcr->sd_auth_key, "dummy")) {
+    memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
+  }
+
+  Dmsg1(100, ">filed: %s", fd->msg);
+  if (BgetDirmsg(fd) > 0) {
+    Dmsg1(110, "<filed: %s", fd->msg);
+    if (!bstrncmp(fd->msg, OKjob, strlen(OKjob))) {
+      Jmsg(jcr, M_FATAL, 0, _("File daemon \"%s\" rejected Job command: %s\n"),
+           jcr->res.client->hdr.name, fd->msg);
       jcr->setJobStatus(JS_ErrorTerminated);
       return 0;
-   }
+    } else if (jcr->db) {
+      ClientDbRecord cr;
 
-   return 1;
+      memset(&cr, 0, sizeof(cr));
+      bstrncpy(cr.Name, jcr->res.client->hdr.name, sizeof(cr.Name));
+      cr.AutoPrune = jcr->res.client->AutoPrune;
+      cr.FileRetention = jcr->res.client->FileRetention;
+      cr.JobRetention = jcr->res.client->JobRetention;
+      bstrncpy(cr.Uname, fd->msg + strlen(OKjob) + 1, sizeof(cr.Uname));
+      if (!jcr->db->UpdateClientRecord(jcr, &cr)) {
+        Jmsg(jcr, M_WARNING, 0, _("Error updating Client record. ERR=%s\n"), jcr->db->strerror());
+      }
+    }
+  } else {
+    Jmsg(jcr, M_FATAL, 0, _("FD gave bad response to JobId command: %s\n"), bnet_strerror(fd));
+    jcr->setJobStatus(JS_ErrorTerminated);
+    return 0;
+  }
+
+  return 1;
 }
 
-bool SendPreviousRestoreObjects(JobControlRecord *jcr)
-{
-   int JobLevel;
+bool SendPreviousRestoreObjects(JobControlRecord *jcr) {
 
-   JobLevel = jcr->getJobLevel();
-   switch (JobLevel) {
-   case L_DIFFERENTIAL:
-   case L_INCREMENTAL:
+
+
+
+  int JobLevel;
+
+  JobLevel = jcr->getJobLevel();
+  switch (JobLevel) {
+    case L_DIFFERENTIAL:
+    case L_INCREMENTAL:
       if (jcr->previous_jr.JobId > 0) {
-         if (!SendRestoreObjects(jcr, jcr->previous_jr.JobId, false)) {
-            return false;
-         }
+        if (!SendRestoreObjects(jcr, jcr->previous_jr.JobId, false)) {
+          return false;
+        }
       }
       break;
-   default:
+    default:
       break;
-   }
+  }
 
-   return true;
+  return true;
 }
 
-bool SendBwlimitToFd(JobControlRecord *jcr, const char *Job)
-{
-   BareosSocket *fd = jcr->file_bsock;
+bool SendBwlimitToFd(JobControlRecord *jcr, const char *Job) {
 
-   if (jcr->FDVersion >= FD_VERSION_4) {
-      fd->fsend(bandwidthcmd, jcr->max_bandwidth, Job);
-      if (!response(jcr, fd, OKBandwidth, "Bandwidth", DISPLAY_ERROR)) {
-         jcr->max_bandwidth = 0;      /* can't set bandwidth limit */
-         return false;
+
+
+
+  BareosSocket *fd = jcr->file_bsock;
+
+  if (jcr->FDVersion >= FD_VERSION_4) {
+    fd->fsend(bandwidthcmd, jcr->max_bandwidth, Job);
+    if (!response(jcr, fd, OKBandwidth, "Bandwidth", DISPLAY_ERROR)) {
+      jcr->max_bandwidth = 0; /* can't set bandwidth limit */
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool SendSecureEraseReqToFd(JobControlRecord *jcr) {
+
+
+
+
+  int32_t n;
+  BareosSocket *fd = jcr->file_bsock;
+
+  if (!jcr->FDSecureEraseCmd) {
+    jcr->FDSecureEraseCmd = GetPoolMemory(PM_NAME);
+  }
+
+  if (jcr->FDVersion > FD_VERSION_53) {
+    fd->fsend(getSecureEraseCmd);
+    while ((n = BgetDirmsg(fd)) >= 0) {
+      jcr->FDSecureEraseCmd = CheckPoolMemorySize(jcr->FDSecureEraseCmd, fd->msglen);
+      if (sscanf(fd->msg, OKgetSecureEraseCmd, jcr->FDSecureEraseCmd) == 1) {
+        Dmsg1(400, "Got FD Secure Erase Cmd: %s\n", jcr->FDSecureEraseCmd);
+        break;
+      } else {
+        Jmsg(jcr, M_WARNING, 0, _("Unexpected Client Secure Erase Cmd: %s\n"), fd->msg);
+        PmStrcpy(jcr->FDSecureEraseCmd, "*None*");
+        return false;
       }
-   }
+    }
+  } else {
+    PmStrcpy(jcr->FDSecureEraseCmd, "*None*");
+  }
 
-   return true;
+  return true;
 }
 
-bool SendSecureEraseReqToFd(JobControlRecord *jcr)
-{
-   int32_t n;
-   BareosSocket *fd = jcr->file_bsock;
+static inline void SendSinceTime(JobControlRecord *jcr) {
 
-   if (!jcr->FDSecureEraseCmd) {
-      jcr->FDSecureEraseCmd = GetPoolMemory(PM_NAME);
-   }
 
-   if (jcr->FDVersion > FD_VERSION_53) {
-      fd->fsend(getSecureEraseCmd);
-      while ((n = BgetDirmsg(fd)) >= 0) {
-         jcr->FDSecureEraseCmd = CheckPoolMemorySize(jcr->FDSecureEraseCmd, fd->msglen);
-         if (sscanf(fd->msg, OKgetSecureEraseCmd, jcr->FDSecureEraseCmd) == 1) {
-            Dmsg1(400, "Got FD Secure Erase Cmd: %s\n", jcr->FDSecureEraseCmd);
-            break;
-         } else {
-            Jmsg(jcr, M_WARNING, 0, _("Unexpected Client Secure Erase Cmd: %s\n"), fd->msg);
-            PmStrcpy(jcr->FDSecureEraseCmd, "*None*");
-            return false;
-         }
-      }
-   } else {
-      PmStrcpy(jcr->FDSecureEraseCmd, "*None*");
-   }
 
-   return true;
-}
 
-static inline void SendSinceTime(JobControlRecord *jcr)
-{
-   char ed1[50];
-   utime_t stime;
-   BareosSocket *fd = jcr->file_bsock;
+  char ed1[50];
+  utime_t stime;
+  BareosSocket *fd = jcr->file_bsock;
 
-   stime = StrToUtime(jcr->stime);
-   fd->fsend(levelcmd, "", NT_("since_utime "), edit_uint64(stime, ed1), 0,
-             NT_("prev_job="), jcr->PrevJob);
+  stime = StrToUtime(jcr->stime);
+  fd->fsend(levelcmd, "", NT_("since_utime "), edit_uint64(stime, ed1), 0, NT_("prev_job="),
+            jcr->PrevJob);
 
-   while (BgetDirmsg(fd) >= 0) {  /* allow him to poll us to sync clocks */
-      Jmsg(jcr, M_INFO, 0, "%s\n", fd->msg);
-   }
+  while (BgetDirmsg(fd) >= 0) { /* allow him to poll us to sync clocks */
+    Jmsg(jcr, M_INFO, 0, "%s\n", fd->msg);
+  }
 }
 
 /**
  * Send level command to FD.
  * Used for backup jobs and estimate command.
  */
-bool SendLevelCommand(JobControlRecord *jcr)
-{
-   int JobLevel;
-   BareosSocket *fd = jcr->file_bsock;
-   const char *accurate = jcr->accurate ? "accurate_" : "";
-   const char *not_accurate = "";
-   const char *rerunning = jcr->rerunning ? " rerunning " : " ";
+bool SendLevelCommand(JobControlRecord *jcr) {
 
-   /*
-    * Send Level command to File daemon
-    */
-   JobLevel = jcr->getJobLevel();
-   switch (JobLevel) {
-   case L_BASE:
+
+
+
+  int JobLevel;
+  BareosSocket *fd = jcr->file_bsock;
+  const char *accurate = jcr->accurate ? "accurate_" : "";
+  const char *not_accurate = "";
+  const char *rerunning = jcr->rerunning ? " rerunning " : " ";
+
+  /*
+   * Send Level command to File daemon
+   */
+  JobLevel = jcr->getJobLevel();
+  switch (JobLevel) {
+    case L_BASE:
       fd->fsend(levelcmd, not_accurate, "base", rerunning, 0, "", "");
       break;
-   case L_NONE: /* L_NONE is the console, sending something off to the FD */
-   case L_FULL:
+    case L_NONE: /* L_NONE is the console, sending something off to the FD */
+    case L_FULL:
       fd->fsend(levelcmd, not_accurate, "full", rerunning, 0, "", "");
       break;
-   case L_DIFFERENTIAL:
+    case L_DIFFERENTIAL:
       fd->fsend(levelcmd, accurate, "differential", rerunning, 0, "", "");
       SendSinceTime(jcr);
       break;
-   case L_INCREMENTAL:
+    case L_INCREMENTAL:
       fd->fsend(levelcmd, accurate, "incremental", rerunning, 0, "", "");
       SendSinceTime(jcr);
       break;
-   case L_SINCE:
+    case L_SINCE:
       Jmsg2(jcr, M_FATAL, 0, _("Unimplemented backup level %d %c\n"), JobLevel, JobLevel);
       break;
-   default:
+    default:
       Jmsg2(jcr, M_FATAL, 0, _("Unimplemented backup level %d %c\n"), JobLevel, JobLevel);
       return 0;
-   }
+  }
 
-   Dmsg1(120, ">filed: %s", fd->msg);
+  Dmsg1(120, ">filed: %s", fd->msg);
 
-   if (!response(jcr, fd, OKlevel, "Level", DISPLAY_ERROR)) {
-      return false;
-   }
+  if (!response(jcr, fd, OKlevel, "Level", DISPLAY_ERROR)) {
+    return false;
+  }
 
-   return true;
+  return true;
 }
 
 /**
  * Send either an Included or an Excluded list to FD
  */
-static bool SendFileset(JobControlRecord *jcr)
-{
-   FilesetResource *fileset = jcr->res.fileset;
-   BareosSocket *fd = jcr->file_bsock;
-   StorageResource *store = jcr->res.wstore;
-   int num;
-   bool include = true;
+static bool SendFileset(JobControlRecord *jcr) {
 
-   while (1) {
+
+
+
+  FilesetResource *fileset = jcr->res.fileset;
+  BareosSocket *fd = jcr->file_bsock;
+  StorageResource *store = jcr->res.wstore;
+  int num;
+  bool include = true;
+
+  while (1) {
+    if (include) {
+      num = fileset->num_includes;
+    } else {
+      num = fileset->num_excludes;
+    }
+    for (int i = 0; i < num; i++) {
+      char *item;
+      IncludeExcludeItem *ie;
+
       if (include) {
-         num = fileset->num_includes;
+        ie = fileset->include_items[i];
+        fd->fsend("I\n");
       } else {
-         num = fileset->num_excludes;
+        ie = fileset->exclude_items[i];
+        fd->fsend("E\n");
       }
-      for (int i = 0; i < num; i++) {
-         char *item;
-         IncludeExcludeItem *ie;
 
-         if (include) {
-            ie = fileset->include_items[i];
-            fd->fsend("I\n");
-         } else {
-            ie = fileset->exclude_items[i];
-            fd->fsend("E\n");
-         }
+      for (int j = 0; j < ie->ignoredir.size(); j++) {
+        fd->fsend("Z %s\n", ie->ignoredir.get(j));
+      }
 
-         for (int j = 0; j < ie->ignoredir.size(); j++) {
-            fd->fsend("Z %s\n", ie->ignoredir.get(j));
-         }
+      for (int j = 0; j < ie->num_opts; j++) {
+        FileOptions *fo = ie->opts_list[j];
+        bool enhanced_wild = false;
 
-         for (int j = 0; j < ie->num_opts; j++) {
-            FileOptions *fo = ie->opts_list[j];
-            bool enhanced_wild = false;
+        for (int k = 0; fo->opts[k] != '\0'; k++) {
+          if (fo->opts[k] == 'W') {
+            enhanced_wild = true;
+            break;
+          }
+        }
 
-            for (int k = 0; fo->opts[k] != '\0'; k++) {
-               if (fo->opts[k] == 'W') {
-                  enhanced_wild = true;
-                  break;
-               }
-            }
+        /*
+         * Strip out compression option Zn if disallowed for this Storage
+         */
+        if (store && !store->AllowCompress) {
+          char newopts[MAX_FOPTS];
+          bool done = false; /* print warning only if compression enabled in FS */
+          int l = 0;
 
+          for (int k = 0; fo->opts[k] != '\0'; k++) {
             /*
-             * Strip out compression option Zn if disallowed for this Storage
+             * Z compress option is followed by the single-digit compress level or 'o'
+             * For fastlz its Zf with a single char selecting the actual compression algo.
              */
-            if (store && !store->AllowCompress) {
-               char newopts[MAX_FOPTS];
-               bool done = false;       /* print warning only if compression enabled in FS */
-               int l = 0;
-
-               for (int k = 0; fo->opts[k] != '\0'; k++) {
-                 /*
-                  * Z compress option is followed by the single-digit compress level or 'o'
-                  * For fastlz its Zf with a single char selecting the actual compression algo.
-                  */
-                 if (fo->opts[k] == 'Z' && fo->opts[k + 1] == 'f') {
-                    done = true;
-                    k += 2;             /* skip option */
-                 } else if (fo->opts[k] == 'Z') {
-                    done = true;
-                    k++;                /* skip option and level */
-                 } else {
-                    newopts[l] = fo->opts[k];
-                    l++;
-                 }
-               }
-               newopts[l] = '\0';
-
-               if (done) {
-                  Jmsg(jcr, M_INFO, 0,
-                        _("FD compression disabled for this Job because AllowCompress=No in Storage resource.\n") );
-               }
-
-               /*
-                * Send the new trimmed option set without overwriting fo->opts
-                */
-               fd->fsend("O %s\n", newopts);
+            if (fo->opts[k] == 'Z' && fo->opts[k + 1] == 'f') {
+              done = true;
+              k += 2; /* skip option */
+            } else if (fo->opts[k] == 'Z') {
+              done = true;
+              k++; /* skip option and level */
             } else {
-               /*
-                * Send the original options
-                */
-               fd->fsend("O %s\n", fo->opts);
+              newopts[l] = fo->opts[k];
+              l++;
             }
+          }
+          newopts[l] = '\0';
 
-            for (int k = 0; k < fo->regex.size(); k++) {
-               fd->fsend("R %s\n", fo->regex.get(k));
-            }
+          if (done) {
+            Jmsg(jcr, M_INFO, 0,
+                 _("FD compression disabled for this Job because AllowCompress=No in Storage "
+                   "resource.\n"));
+          }
 
-            for (int k = 0; k < fo->regexdir.size(); k++) {
-               fd->fsend("RD %s\n", fo->regexdir.get(k));
-            }
+          /*
+           * Send the new trimmed option set without overwriting fo->opts
+           */
+          fd->fsend("O %s\n", newopts);
+        } else {
+          /*
+           * Send the original options
+           */
+          fd->fsend("O %s\n", fo->opts);
+        }
 
-            for (int k = 0; k < fo->regexfile.size(); k++) {
-               fd->fsend("RF %s\n", fo->regexfile.get(k));
-            }
+        for (int k = 0; k < fo->regex.size(); k++) {
+          fd->fsend("R %s\n", fo->regex.get(k));
+        }
 
-            for (int k = 0; k<fo->wild.size(); k++) {
-               fd->fsend("W %s\n", fo->wild.get(k));
-            }
+        for (int k = 0; k < fo->regexdir.size(); k++) {
+          fd->fsend("RD %s\n", fo->regexdir.get(k));
+        }
 
-            for (int k = 0; k < fo->wilddir.size(); k++) {
-               fd->fsend("WD %s\n", fo->wilddir.get(k));
-            }
+        for (int k = 0; k < fo->regexfile.size(); k++) {
+          fd->fsend("RF %s\n", fo->regexfile.get(k));
+        }
 
-            for (int k = 0; k < fo->wildfile.size(); k++) {
-               fd->fsend("WF %s\n", fo->wildfile.get(k));
-            }
+        for (int k = 0; k < fo->wild.size(); k++) {
+          fd->fsend("W %s\n", fo->wild.get(k));
+        }
 
-            for (int k = 0; k < fo->wildbase.size(); k++) {
-               fd->fsend("W%c %s\n", enhanced_wild ? 'B' : 'F', fo->wildbase.get(k));
-            }
+        for (int k = 0; k < fo->wilddir.size(); k++) {
+          fd->fsend("WD %s\n", fo->wilddir.get(k));
+        }
 
-            for (int k = 0; k < fo->base.size(); k++) {
-               fd->fsend("B %s\n", fo->base.get(k));
-            }
+        for (int k = 0; k < fo->wildfile.size(); k++) {
+          fd->fsend("WF %s\n", fo->wildfile.get(k));
+        }
 
-            for (int k = 0; k < fo->fstype.size(); k++) {
-               fd->fsend("X %s\n", fo->fstype.get(k));
-            }
+        for (int k = 0; k < fo->wildbase.size(); k++) {
+          fd->fsend("W%c %s\n", enhanced_wild ? 'B' : 'F', fo->wildbase.get(k));
+        }
 
-            for (int k = 0; k < fo->Drivetype.size(); k++) {
-               fd->fsend("XD %s\n", fo->Drivetype.get(k));
-            }
+        for (int k = 0; k < fo->base.size(); k++) {
+          fd->fsend("B %s\n", fo->base.get(k));
+        }
 
-            if (fo->plugin) {
-               fd->fsend("G %s\n", fo->plugin);
-            }
+        for (int k = 0; k < fo->fstype.size(); k++) {
+          fd->fsend("X %s\n", fo->fstype.get(k));
+        }
 
-            if (fo->reader) {
-               fd->fsend("D %s\n", fo->reader);
-            }
+        for (int k = 0; k < fo->Drivetype.size(); k++) {
+          fd->fsend("XD %s\n", fo->Drivetype.get(k));
+        }
 
-            if (fo->writer) {
-               fd->fsend("T %s\n", fo->writer);
-            }
+        if (fo->plugin) {
+          fd->fsend("G %s\n", fo->plugin);
+        }
 
-            fd->fsend("N\n");
-         }
+        if (fo->reader) {
+          fd->fsend("D %s\n", fo->reader);
+        }
 
-         for (int j = 0; j < ie->name_list.size(); j++) {
-            item = (char *)ie->name_list.get(j);
-            if (!SendListItem(jcr, "F ", item, fd)) {
-               goto bail_out;
-            }
-         }
-         fd->fsend("N\n");
+        if (fo->writer) {
+          fd->fsend("T %s\n", fo->writer);
+        }
 
-         for (int j = 0; j < ie->plugin_list.size(); j++) {
-            item = (char *)ie->plugin_list.get(j);
-            if (!SendListItem(jcr, "P ", item, fd)) {
-               goto bail_out;
-            }
-         }
-         fd->fsend("N\n");
+        fd->fsend("N\n");
       }
 
-      if (!include) {                 /* If we just did excludes */
-         break;                       /*   all done */
+      for (int j = 0; j < ie->name_list.size(); j++) {
+        item = (char *)ie->name_list.get(j);
+        if (!SendListItem(jcr, "F ", item, fd)) {
+          goto bail_out;
+        }
       }
+      fd->fsend("N\n");
 
-      include = false;                /* Now do excludes */
-   }
+      for (int j = 0; j < ie->plugin_list.size(); j++) {
+        item = (char *)ie->plugin_list.get(j);
+        if (!SendListItem(jcr, "P ", item, fd)) {
+          goto bail_out;
+        }
+      }
+      fd->fsend("N\n");
+    }
 
-   fd->signal(BNET_EOD);              /* end of data */
-   if (!response(jcr, fd, OKinc, "Include", DISPLAY_ERROR)) {
-      goto bail_out;
-   }
-   return true;
+    if (!include) { /* If we just did excludes */
+      break;        /*   all done */
+    }
+
+    include = false; /* Now do excludes */
+  }
+
+  fd->signal(BNET_EOD); /* end of data */
+  if (!response(jcr, fd, OKinc, "Include", DISPLAY_ERROR)) {
+    goto bail_out;
+  }
+  return true;
 
 bail_out:
-   jcr->setJobStatus(JS_ErrorTerminated);
-   return false;
-
+  jcr->setJobStatus(JS_ErrorTerminated);
+  return false;
 }
 
-static bool SendListItem(JobControlRecord *jcr, const char *code, char *item, BareosSocket *fd)
-{
-   Bpipe *bpipe;
-   FILE *ffd;
-   char buf[2000];
-   int optlen, status;
-   char *p = item;
+static bool SendListItem(JobControlRecord *jcr, const char *code, char *item, BareosSocket *fd) {
 
-   switch (*p) {
-   case '|':
-      p++;                      /* skip over the | */
+
+
+
+  Bpipe *bpipe;
+  FILE *ffd;
+  char buf[2000];
+  int optlen, status;
+  char *p = item;
+
+  switch (*p) {
+    case '|':
+      p++; /* skip over the | */
       fd->msg = edit_job_codes(jcr, fd->msg, p, "");
       bpipe = open_bpipe(fd->msg, 0, "r");
       if (!bpipe) {
-         berrno be;
-         Jmsg(jcr, M_FATAL, 0, _("Cannot run program: %s. ERR=%s\n"),
-            p, be.bstrerror());
-         return false;
+        berrno be;
+        Jmsg(jcr, M_FATAL, 0, _("Cannot run program: %s. ERR=%s\n"), p, be.bstrerror());
+        return false;
       }
       bstrncpy(buf, code, sizeof(buf));
       Dmsg1(500, "code=%s\n", buf);
       optlen = strlen(buf);
-      while (fgets(buf+optlen, sizeof(buf)-optlen, bpipe->rfd)) {
-         fd->msglen = Mmsg(fd->msg, "%s", buf);
-         Dmsg2(500, "Inc/exc len=%d: %s", fd->msglen, fd->msg);
-         if (!BnetSend(fd)) {
-            Jmsg(jcr, M_FATAL, 0, _(">filed: write error on socket\n"));
-            return false;
-         }
+      while (fgets(buf + optlen, sizeof(buf) - optlen, bpipe->rfd)) {
+        fd->msglen = Mmsg(fd->msg, "%s", buf);
+        Dmsg2(500, "Inc/exc len=%d: %s", fd->msglen, fd->msg);
+        if (!BnetSend(fd)) {
+          Jmsg(jcr, M_FATAL, 0, _(">filed: write error on socket\n"));
+          return false;
+        }
       }
       if ((status = CloseBpipe(bpipe)) != 0) {
-         berrno be;
-         Jmsg(jcr, M_FATAL, 0, _("Error running program: %s. ERR=%s\n"),
-            p, be.bstrerror(status));
-         return false;
+        berrno be;
+        Jmsg(jcr, M_FATAL, 0, _("Error running program: %s. ERR=%s\n"), p, be.bstrerror(status));
+        return false;
       }
       break;
-   case '<':
-      p++;                      /* skip over < */
+    case '<':
+      p++; /* skip over < */
       if ((ffd = fopen(p, "rb")) == NULL) {
-         berrno be;
-         Jmsg(jcr, M_FATAL, 0, _("Cannot open included file: %s. ERR=%s\n"),
-            p, be.bstrerror());
-         return false;
+        berrno be;
+        Jmsg(jcr, M_FATAL, 0, _("Cannot open included file: %s. ERR=%s\n"), p, be.bstrerror());
+        return false;
       }
       bstrncpy(buf, code, sizeof(buf));
       Dmsg1(500, "code=%s\n", buf);
       optlen = strlen(buf);
-      while (fgets(buf+optlen, sizeof(buf)-optlen, ffd)) {
-         fd->msglen = Mmsg(fd->msg, "%s", buf);
-         if (!BnetSend(fd)) {
-            Jmsg(jcr, M_FATAL, 0, _(">filed: write error on socket\n"));
-            fclose(ffd);
-            return false;
-         }
+      while (fgets(buf + optlen, sizeof(buf) - optlen, ffd)) {
+        fd->msglen = Mmsg(fd->msg, "%s", buf);
+        if (!BnetSend(fd)) {
+          Jmsg(jcr, M_FATAL, 0, _(">filed: write error on socket\n"));
+          fclose(ffd);
+          return false;
+        }
       }
       fclose(ffd);
       break;
-   case '\\':
-      p++;                      /* skip over \ */
-      /* Note, fall through wanted */
-   default:
+    case '\\':
+      p++; /* skip over \ */
+           /* Note, fall through wanted */
+    default:
       PmStrcpy(fd->msg, code);
       fd->msglen = PmStrcat(fd->msg, p);
       Dmsg1(500, "Inc/Exc name=%s\n", fd->msg);
       if (!fd->send()) {
-         Jmsg(jcr, M_FATAL, 0, _(">filed: write error on socket\n"));
-         return false;
+        Jmsg(jcr, M_FATAL, 0, _(">filed: write error on socket\n"));
+        return false;
       }
       break;
-   }
-   return true;
+  }
+  return true;
 }
 
 /**
  * Send include list to File daemon
  */
-bool SendIncludeList(JobControlRecord *jcr)
-{
-   BareosSocket *fd = jcr->file_bsock;
-   if (jcr->res.fileset->new_include) {
-      fd->fsend(filesetcmd, jcr->res.fileset->enable_vss ? " vss=1" : "");
-      return SendFileset(jcr);
-   }
-   return true;
+bool SendIncludeList(JobControlRecord *jcr) {
+
+
+
+
+  BareosSocket *fd = jcr->file_bsock;
+  if (jcr->res.fileset->new_include) {
+    fd->fsend(filesetcmd, jcr->res.fileset->enable_vss ? " vss=1" : "");
+    return SendFileset(jcr);
+  }
+  return true;
 }
 
 /**
@@ -649,30 +650,30 @@ bool SendIncludeList(JobControlRecord *jcr)
  *   is part of the FileSet sent with the
  *   "include_list" above.
  */
-bool SendExcludeList(JobControlRecord *jcr)
-{
-   return true;
-}
+bool SendExcludeList(JobControlRecord *jcr) { return true; }
 
 /*
  * This checks to see if there are any non local runscripts for this job.
  */
-static inline bool HaveClientRunscripts(alist *RunScripts)
-{
-   RunScript *cmd;
-   bool retval = false;
+static inline bool HaveClientRunscripts(alist *RunScripts) {
 
-   if (RunScripts->empty()) {
-      return false;
-   }
 
-   foreach_alist(cmd, RunScripts) {
-      if (!cmd->IsLocal()) {
-         retval = true;
-      }
-   }
 
-   return retval;
+
+  RunScript *cmd;
+  bool retval = false;
+
+  if (RunScripts->empty()) {
+    return false;
+  }
+
+  foreach_alist(cmd, RunScripts) {
+    if (!cmd->IsLocal()) {
+      retval = true;
+    }
+  }
+
+  return retval;
 }
 
 /**
@@ -681,560 +682,587 @@ static inline bool HaveClientRunscripts(alist *RunScripts)
  * 2) Then, we send a "RunBeforeNow" command to the FD to tell him to do the
  *    first run_script() call. (ie ClientRunBeforeJob)
  */
-int SendRunscriptsCommands(JobControlRecord *jcr)
-{
-   int result;
-   RunScript *cmd;
-   POOLMEM *msg, *ehost;
-   BareosSocket *fd = jcr->file_bsock;
-   bool has_before_jobs = false;
+int SendRunscriptsCommands(JobControlRecord *jcr) {
 
-   /*
-    * See if there are any runscripts that need to be ran on the client.
-    */
-   if (!HaveClientRunscripts(jcr->res.job->RunScripts)) {
-      return 1;
-   }
 
-   Dmsg0(120, "dird: sending runscripts to fd\n");
 
-   msg = GetPoolMemory(PM_FNAME);
-   ehost = GetPoolMemory(PM_FNAME);
-   foreach_alist(cmd, jcr->res.job->RunScripts) {
-      if (cmd->CanRunAtLevel(jcr->getJobLevel()) && cmd->target) {
-         ehost = edit_job_codes(jcr, ehost, cmd->target, "");
-         Dmsg2(200, "dird: runscript %s -> %s\n", cmd->target, ehost);
 
-         if (bstrcmp(ehost, jcr->res.client->name())) {
-            PmStrcpy(msg, cmd->command);
-            BashSpaces(msg);
+  int result;
+  RunScript *cmd;
+  POOLMEM *msg, *ehost;
+  BareosSocket *fd = jcr->file_bsock;
+  bool has_before_jobs = false;
 
-            Dmsg1(120, "dird: sending runscripts to fd '%s'\n", cmd->command);
+  /*
+   * See if there are any runscripts that need to be ran on the client.
+   */
+  if (!HaveClientRunscripts(jcr->res.job->RunScripts)) {
+    return 1;
+  }
 
-            fd->fsend(runscriptcmd,
-                      cmd->on_success,
-                      cmd->on_failure,
-                      cmd->fail_on_error,
-                      cmd->when,
-                      msg);
+  Dmsg0(120, "dird: sending runscripts to fd\n");
 
-            result = response(jcr, fd, OKRunScript, "RunScript", DISPLAY_ERROR);
+  msg = GetPoolMemory(PM_FNAME);
+  ehost = GetPoolMemory(PM_FNAME);
+  foreach_alist(cmd, jcr->res.job->RunScripts) {
+    if (cmd->CanRunAtLevel(jcr->getJobLevel()) && cmd->target) {
+      ehost = edit_job_codes(jcr, ehost, cmd->target, "");
+      Dmsg2(200, "dird: runscript %s -> %s\n", cmd->target, ehost);
 
-            if (!result) {
-               goto bail_out;
-            }
-         }
-         /* TODO : we have to play with other client */
-         /*
-           else {
-           send command to another client
-           }
-         */
+      if (bstrcmp(ehost, jcr->res.client->name())) {
+        PmStrcpy(msg, cmd->command);
+        BashSpaces(msg);
+
+        Dmsg1(120, "dird: sending runscripts to fd '%s'\n", cmd->command);
+
+        fd->fsend(runscriptcmd, cmd->on_success, cmd->on_failure, cmd->fail_on_error, cmd->when,
+                  msg);
+
+        result = response(jcr, fd, OKRunScript, "RunScript", DISPLAY_ERROR);
+
+        if (!result) {
+          goto bail_out;
+        }
       }
-
+      /* TODO : we have to play with other client */
       /*
-       * See if this is a ClientRunBeforeJob.
-       */
-      if (cmd->when & SCRIPT_Before || cmd->when & SCRIPT_AfterVSS) {
-         has_before_jobs = true;
-      }
-   }
+        else {
+        send command to another client
+        }
+      */
+    }
 
-   /*
-    * Tell the FD to execute the ClientRunBeforeJob
-    */
-   if (has_before_jobs) {
-      fd->fsend(runbeforenowcmd);
-      if (!response(jcr, fd, OKRunBeforeNow, "RunBeforeNow", DISPLAY_ERROR)) {
-        goto bail_out;
-      }
-   }
+    /*
+     * See if this is a ClientRunBeforeJob.
+     */
+    if (cmd->when & SCRIPT_Before || cmd->when & SCRIPT_AfterVSS) {
+      has_before_jobs = true;
+    }
+  }
 
-   FreePoolMemory(msg);
-   FreePoolMemory(ehost);
+  /*
+   * Tell the FD to execute the ClientRunBeforeJob
+   */
+  if (has_before_jobs) {
+    fd->fsend(runbeforenowcmd);
+    if (!response(jcr, fd, OKRunBeforeNow, "RunBeforeNow", DISPLAY_ERROR)) {
+      goto bail_out;
+    }
+  }
 
-   return 1;
+  FreePoolMemory(msg);
+  FreePoolMemory(ehost);
+
+  return 1;
 
 bail_out:
-   Jmsg(jcr, M_FATAL, 0, _("Client \"%s\" RunScript failed.\n"), ehost);
-   FreePoolMemory(msg);
-   FreePoolMemory(ehost);
+  Jmsg(jcr, M_FATAL, 0, _("Client \"%s\" RunScript failed.\n"), ehost);
+  FreePoolMemory(msg);
+  FreePoolMemory(ehost);
 
-   return 0;
+  return 0;
 }
 
 struct RestoreObjectContext {
-   JobControlRecord *jcr;
-   int count;
+  JobControlRecord *jcr;
+  int count;
 };
 
 /**
  * RestoreObjectHandler is called for each file found
  */
-static int RestoreObjectHandler(void *ctx, int num_fields, char **row)
-{
-   BareosSocket *fd;
-   bool is_compressed;
-   RestoreObjectContext *octx = (RestoreObjectContext *)ctx;
-   JobControlRecord *jcr = octx->jcr;
+static int RestoreObjectHandler(void *ctx, int num_fields, char **row) {
 
-   fd = jcr->file_bsock;
-   if (jcr->IsJobCanceled()) {
-      return 1;
-   }
 
-   /*
-    * Old File Daemon doesn't handle restore objects
-    */
-   if (jcr->FDVersion < FD_VERSION_3) {
-      Jmsg(jcr, M_WARNING, 0, _("Client \"%s\" may not be used to restore "
-                                "this job. Please upgrade your client.\n"),
-           jcr->res.client->name());
-      return 1;
-   }
 
-   if (jcr->FDVersion < FD_VERSION_5) {    /* Old version without PluginName */
-      fd->fsend("restoreobject JobId=%s %s,%s,%s,%s,%s,%s\n",
-                row[0], row[1], row[2], row[3], row[4], row[5], row[6]);
-   } else {
-      /*
-       * bash spaces from PluginName
-       */
-      BashSpaces(row[9]);
-      fd->fsend("restoreobject JobId=%s %s,%s,%s,%s,%s,%s,%s\n",
-                row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[9]);
-   }
-   Dmsg1(010, "Send obj hdr=%s", fd->msg);
 
-   fd->msglen = PmStrcpy(fd->msg, row[7]);
-   fd->send();                            /* send Object name */
+  BareosSocket *fd;
+  bool is_compressed;
+  RestoreObjectContext *octx = (RestoreObjectContext *)ctx;
+  JobControlRecord *jcr = octx->jcr;
 
-   Dmsg1(010, "Send obj: %s\n", fd->msg);
+  fd = jcr->file_bsock;
+  if (jcr->IsJobCanceled()) {
+    return 1;
+  }
 
-   jcr->db->UnescapeObject(jcr,
-                            row[8],                /* Object  */
-                            str_to_uint64(row[1]), /* Object length */
-                            fd->msg,
-                            &fd->msglen);
-   fd->send();                           /* send object */
-   octx->count++;
+  /*
+   * Old File Daemon doesn't handle restore objects
+   */
+  if (jcr->FDVersion < FD_VERSION_3) {
+    Jmsg(jcr, M_WARNING, 0,
+         _("Client \"%s\" may not be used to restore "
+           "this job. Please upgrade your client.\n"),
+         jcr->res.client->name());
+    return 1;
+  }
 
-   /*
-    * Don't try to print compressed objects.
-    */
-   is_compressed = str_to_uint64(row[5]) > 0;
-   if (debug_level >= 100 && !is_compressed) {
-      for (int i = 0; i < fd->msglen; i++) {
-         if (!fd->msg[i]) {
-            fd->msg[i] = ' ';
-         }
+  if (jcr->FDVersion < FD_VERSION_5) { /* Old version without PluginName */
+    fd->fsend("restoreobject JobId=%s %s,%s,%s,%s,%s,%s\n", row[0], row[1], row[2], row[3], row[4],
+              row[5], row[6]);
+  } else {
+    /*
+     * bash spaces from PluginName
+     */
+    BashSpaces(row[9]);
+    fd->fsend("restoreobject JobId=%s %s,%s,%s,%s,%s,%s,%s\n", row[0], row[1], row[2], row[3],
+              row[4], row[5], row[6], row[9]);
+  }
+  Dmsg1(010, "Send obj hdr=%s", fd->msg);
+
+  fd->msglen = PmStrcpy(fd->msg, row[7]);
+  fd->send(); /* send Object name */
+
+  Dmsg1(010, "Send obj: %s\n", fd->msg);
+
+  jcr->db->UnescapeObject(jcr, row[8],           /* Object  */
+                          str_to_uint64(row[1]), /* Object length */
+                          fd->msg, &fd->msglen);
+  fd->send(); /* send object */
+  octx->count++;
+
+  /*
+   * Don't try to print compressed objects.
+   */
+  is_compressed = str_to_uint64(row[5]) > 0;
+  if (debug_level >= 100 && !is_compressed) {
+    for (int i = 0; i < fd->msglen; i++) {
+      if (!fd->msg[i]) {
+        fd->msg[i] = ' ';
       }
+    }
 
-      Dmsg1(100, "Send obj: %s\n", fd->msg);
-   }
+    Dmsg1(100, "Send obj: %s\n", fd->msg);
+  }
 
-   return 0;
+  return 0;
 }
 
-bool SendPluginOptions(JobControlRecord *jcr)
-{
-   BareosSocket *fd = jcr->file_bsock;
-   POOLMEM *msg;
+bool SendPluginOptions(JobControlRecord *jcr) {
 
-   if (jcr->plugin_options) {
-      msg = GetPoolMemory(PM_FNAME);
-      PmStrcpy(msg, jcr->plugin_options);
-      BashSpaces(msg);
 
-      fd->fsend(pluginoptionscmd, msg);
-      FreePoolMemory(msg);
 
-      if (!response(jcr, fd, OKPluginOptions, "PluginOptions", DISPLAY_ERROR)) {
-         Jmsg(jcr, M_FATAL, 0, _("Plugin options failed.\n"));
-         return false;
-      }
-   }
 
-   return true;
+  BareosSocket *fd = jcr->file_bsock;
+  POOLMEM *msg;
+
+  if (jcr->plugin_options) {
+    msg = GetPoolMemory(PM_FNAME);
+    PmStrcpy(msg, jcr->plugin_options);
+    BashSpaces(msg);
+
+    fd->fsend(pluginoptionscmd, msg);
+    FreePoolMemory(msg);
+
+    if (!response(jcr, fd, OKPluginOptions, "PluginOptions", DISPLAY_ERROR)) {
+      Jmsg(jcr, M_FATAL, 0, _("Plugin options failed.\n"));
+      return false;
+    }
+  }
+
+  return true;
 }
 
-static inline void SendGlobalRestoreObjects(JobControlRecord *jcr, RestoreObjectContext *octx)
-{
-   char ed1[50];
-   PoolMem query(PM_MESSAGE);
+static inline void SendGlobalRestoreObjects(JobControlRecord *jcr, RestoreObjectContext *octx) {
 
-   if (!jcr->JobIds || !jcr->JobIds[0]) {
-      return;
-   }
 
-   /*
-    * Send restore objects for all jobs involved
-    */
-   jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, jcr->JobIds, FT_RESTORE_FIRST);
-   jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
 
-   jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, jcr->JobIds, FT_PLUGIN_CONFIG);
-   jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
 
-   /*
-    * Send config objects for the current restore job
-    */
-   jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, edit_uint64(jcr->JobId, ed1), FT_PLUGIN_CONFIG_FILLED);
-   jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
+  char ed1[50];
+  PoolMem query(PM_MESSAGE);
+
+  if (!jcr->JobIds || !jcr->JobIds[0]) {
+    return;
+  }
+
+  /*
+   * Send restore objects for all jobs involved
+   */
+  jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, jcr->JobIds, FT_RESTORE_FIRST);
+  jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
+
+  jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, jcr->JobIds, FT_PLUGIN_CONFIG);
+  jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
+
+  /*
+   * Send config objects for the current restore job
+   */
+  jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, edit_uint64(jcr->JobId, ed1),
+                     FT_PLUGIN_CONFIG_FILLED);
+  jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
 }
 
-static inline void SendJobSpecificRestoreObjects(JobControlRecord *jcr, JobId_t JobId, RestoreObjectContext *octx)
-{
-   char ed1[50];
-   PoolMem query(PM_MESSAGE);
+static inline void SendJobSpecificRestoreObjects(JobControlRecord *jcr, JobId_t JobId,
+                                                 RestoreObjectContext *octx) {
+  char ed1[50];
+  PoolMem query(PM_MESSAGE);
 
-   /*
-    * Send restore objects for specific JobId.
-    */
-   jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, edit_uint64(JobId, ed1), FT_RESTORE_FIRST);
-   jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
+  /*
+   * Send restore objects for specific JobId.
+   */
+  jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, edit_uint64(JobId, ed1),
+                     FT_RESTORE_FIRST);
+  jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
 
-   jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, edit_uint64(JobId, ed1), FT_PLUGIN_CONFIG);
-   jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
+  jcr->db->FillQuery(query, BareosDb::SQL_QUERY_get_restore_objects, edit_uint64(JobId, ed1),
+                     FT_PLUGIN_CONFIG);
+  jcr->db->SqlQuery(query.c_str(), RestoreObjectHandler, (void *)octx);
 }
 
-bool SendRestoreObjects(JobControlRecord *jcr, JobId_t JobId, bool send_global)
-{
-   BareosSocket *fd;
-   RestoreObjectContext octx;
+bool SendRestoreObjects(JobControlRecord *jcr, JobId_t JobId, bool send_global) {
 
-   octx.jcr = jcr;
-   octx.count = 0;
 
-   if (send_global) {
-      SendGlobalRestoreObjects(jcr, &octx);
-   } else {
-      SendJobSpecificRestoreObjects(jcr, JobId, &octx);
-   }
 
-   /*
-    * Send to FD only if we have at least one restore object.
-    * This permits backward compatibility with older FDs.
-    */
-   if (octx.count > 0) {
-      fd = jcr->file_bsock;
-      fd->fsend(restoreobjectendcmd);
-      if (!response(jcr, fd, OKRestoreObject, "RestoreObject", DISPLAY_ERROR)) {
-         Jmsg(jcr, M_FATAL, 0, _("RestoreObject failed.\n"));
-         return false;
-      }
-   }
 
-   return true;
+  BareosSocket *fd;
+  RestoreObjectContext octx;
+
+  octx.jcr = jcr;
+  octx.count = 0;
+
+  if (send_global) {
+    SendGlobalRestoreObjects(jcr, &octx);
+  } else {
+    SendJobSpecificRestoreObjects(jcr, JobId, &octx);
+  }
+
+  /*
+   * Send to FD only if we have at least one restore object.
+   * This permits backward compatibility with older FDs.
+   */
+  if (octx.count > 0) {
+    fd = jcr->file_bsock;
+    fd->fsend(restoreobjectendcmd);
+    if (!response(jcr, fd, OKRestoreObject, "RestoreObject", DISPLAY_ERROR)) {
+      Jmsg(jcr, M_FATAL, 0, _("RestoreObject failed.\n"));
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
  * Read the attributes from the File daemon for
  * a Verify job and store them in the catalog.
  */
-int GetAttributesAndPutInCatalog(JobControlRecord *jcr)
-{
-   BareosSocket *fd;
-   int n = 0;
-   AttributesDbRecord *ar = NULL;
-   PoolMem digest(PM_MESSAGE);
+int GetAttributesAndPutInCatalog(JobControlRecord *jcr) {
 
-   fd = jcr->file_bsock;
-   jcr->jr.FirstIndex = 1;
-   jcr->FileIndex = 0;
 
-   /*
-    * Start transaction allocates jcr->attr and jcr->ar if needed
-    */
-   jcr->db->StartTransaction(jcr); /* start transaction if not already open */
-   ar = jcr->ar;
 
-   Dmsg0(120, "dird: waiting to receive file attributes\n");
 
-   /*
-    * Pickup file attributes and digest
-    */
-   while (!fd->errors && (n = BgetDirmsg(fd)) > 0) {
-      uint32_t file_index;
-      int stream, len;
-      char *p, *fn;
-      PoolMem Digest(PM_MESSAGE);    /* Either Verify opts or MD5/SHA1 digest */
+  BareosSocket *fd;
+  int n = 0;
+  AttributesDbRecord *ar = NULL;
+  PoolMem digest(PM_MESSAGE);
 
-      if ((len = sscanf(fd->msg, "%ld %d %s", &file_index, &stream, Digest.c_str())) != 3) {
-         Jmsg(jcr, M_FATAL, 0, _("<filed: bad attributes, expected 3 fields got %d\n"
-                                 "msglen=%d msg=%s\n"), len, fd->msglen, fd->msg);
-         jcr->setJobStatus(JS_ErrorTerminated);
-         return 0;
+  fd = jcr->file_bsock;
+  jcr->jr.FirstIndex = 1;
+  jcr->FileIndex = 0;
+
+  /*
+   * Start transaction allocates jcr->attr and jcr->ar if needed
+   */
+  jcr->db->StartTransaction(jcr); /* start transaction if not already open */
+  ar = jcr->ar;
+
+  Dmsg0(120, "dird: waiting to receive file attributes\n");
+
+  /*
+   * Pickup file attributes and digest
+   */
+  while (!fd->errors && (n = BgetDirmsg(fd)) > 0) {
+    uint32_t file_index;
+    int stream, len;
+    char *p, *fn;
+    PoolMem Digest(PM_MESSAGE); /* Either Verify opts or MD5/SHA1 digest */
+
+    if ((len = sscanf(fd->msg, "%ld %d %s", &file_index, &stream, Digest.c_str())) != 3) {
+      Jmsg(jcr, M_FATAL, 0,
+           _("<filed: bad attributes, expected 3 fields got %d\n"
+             "msglen=%d msg=%s\n"),
+           len, fd->msglen, fd->msg);
+      jcr->setJobStatus(JS_ErrorTerminated);
+      return 0;
+    }
+    p = fd->msg;
+
+    /*
+     * The following three fields were sscanf'ed above so skip them
+     */
+    SkipNonspaces(&p); /* skip FileIndex */
+    SkipSpaces(&p);
+    SkipNonspaces(&p); /* skip Stream */
+    SkipSpaces(&p);
+    SkipNonspaces(&p); /* skip Opts_Digest */
+    p++;               /* skip space */
+    Dmsg1(debuglevel, "Stream=%d\n", stream);
+    if (stream == STREAM_UNIX_ATTRIBUTES || stream == STREAM_UNIX_ATTRIBUTES_EX) {
+      if (jcr->cached_attribute) {
+        Dmsg3(debuglevel, "Cached attr. Stream=%d fname=%s\n", ar->Stream, ar->fname, ar->attr);
+        if (!jcr->db->CreateFileAttributesRecord(jcr, ar)) {
+          Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), jcr->db->strerror());
+        }
       }
-      p = fd->msg;
 
       /*
-       * The following three fields were sscanf'ed above so skip them
+       * Any cached attr is flushed so we can reuse jcr->attr and jcr->ar
        */
-      SkipNonspaces(&p);             /* skip FileIndex */
-      SkipSpaces(&p);
-      SkipNonspaces(&p);             /* skip Stream */
-      SkipSpaces(&p);
-      SkipNonspaces(&p);             /* skip Opts_Digest */
-      p++;                            /* skip space */
-      Dmsg1(debuglevel, "Stream=%d\n", stream);
-      if (stream == STREAM_UNIX_ATTRIBUTES || stream == STREAM_UNIX_ATTRIBUTES_EX) {
-         if (jcr->cached_attribute) {
-            Dmsg3(debuglevel, "Cached attr. Stream=%d fname=%s\n", ar->Stream, ar->fname,
-               ar->attr);
-            if (!jcr->db->CreateFileAttributesRecord(jcr, ar)) {
-               Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), jcr->db->strerror());
-            }
-         }
-
-         /*
-          * Any cached attr is flushed so we can reuse jcr->attr and jcr->ar
-          */
-         fn = jcr->fname = CheckPoolMemorySize(jcr->fname, fd->msglen);
-         while (*p != 0) {
-            *fn++ = *p++;                /* copy filename */
-         }
-         *fn = *p++;                     /* term filename and point p to attribs */
-         PmStrcpy(jcr->attr, p);        /* save attributes */
-         jcr->JobFiles++;
-         jcr->FileIndex = file_index;
-         ar->attr = jcr->attr;
-         ar->fname = jcr->fname;
-         ar->FileIndex = file_index;
-         ar->Stream = stream;
-         ar->link = NULL;
-         ar->JobId = jcr->JobId;
-         ar->ClientId = jcr->ClientId;
-         ar->PathId = 0;
-         ar->Digest = NULL;
-         ar->DigestType = CRYPTO_DIGEST_NONE;
-         ar->DeltaSeq = 0;
-         jcr->cached_attribute = true;
-
-         Dmsg2(debuglevel, "dird<filed: stream=%d %s\n", stream, jcr->fname);
-         Dmsg1(debuglevel, "dird<filed: attr=%s\n", ar->attr);
-         jcr->FileId = ar->FileId;
-      } else if (CryptoDigestStreamType(stream) != CRYPTO_DIGEST_NONE) {
-         size_t length;
-
-         /*
-          * First, get STREAM_UNIX_ATTRIBUTES and fill AttributesDbRecord structure
-          * Next, we CAN have a CRYPTO_DIGEST, so we fill AttributesDbRecord with it (or not)
-          * When we get a new STREAM_UNIX_ATTRIBUTES, we known that we can add file to the catalog
-          * At the end, we have to add the last file
-          */
-         if (jcr->FileIndex != (uint32_t)file_index) {
-            Jmsg3(jcr, M_ERROR, 0, _("%s index %d not same as attributes %d\n"),
-               stream_to_ascii(stream), file_index, jcr->FileIndex);
-            continue;
-         }
-
-         ar->Digest = digest.c_str();
-         ar->DigestType = CryptoDigestStreamType(stream);
-         length = strlen(Digest.c_str());
-         digest.check_size(length * 2 + 1);
-         jcr->db->EscapeString(jcr, digest.c_str(), Digest.c_str(), length);
-         Dmsg4(debuglevel, "stream=%d DigestLen=%d Digest=%s type=%d\n", stream,
-               strlen(digest.c_str()), digest.c_str(), ar->DigestType);
+      fn = jcr->fname = CheckPoolMemorySize(jcr->fname, fd->msglen);
+      while (*p != 0) {
+        *fn++ = *p++; /* copy filename */
       }
-      jcr->jr.JobFiles = jcr->JobFiles = file_index;
-      jcr->jr.LastIndex = file_index;
-   }
+      *fn = *p++;             /* term filename and point p to attribs */
+      PmStrcpy(jcr->attr, p); /* save attributes */
+      jcr->JobFiles++;
+      jcr->FileIndex = file_index;
+      ar->attr = jcr->attr;
+      ar->fname = jcr->fname;
+      ar->FileIndex = file_index;
+      ar->Stream = stream;
+      ar->link = NULL;
+      ar->JobId = jcr->JobId;
+      ar->ClientId = jcr->ClientId;
+      ar->PathId = 0;
+      ar->Digest = NULL;
+      ar->DigestType = CRYPTO_DIGEST_NONE;
+      ar->DeltaSeq = 0;
+      jcr->cached_attribute = true;
 
-   if (IsBnetError(fd)) {
-      Jmsg1(jcr, M_FATAL, 0, _("<filed: Network error getting attributes. ERR=%s\n"),
-            fd->bstrerror());
-      return 0;
-   }
+      Dmsg2(debuglevel, "dird<filed: stream=%d %s\n", stream, jcr->fname);
+      Dmsg1(debuglevel, "dird<filed: attr=%s\n", ar->attr);
+      jcr->FileId = ar->FileId;
+    } else if (CryptoDigestStreamType(stream) != CRYPTO_DIGEST_NONE) {
+      size_t length;
 
-   if (jcr->cached_attribute) {
-      Dmsg3(debuglevel, "Cached attr with digest. Stream=%d fname=%s attr=%s\n", ar->Stream,
-         ar->fname, ar->attr);
-      if (!jcr->db->CreateFileAttributesRecord(jcr, ar)) {
-         Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), jcr->db->strerror());
+      /*
+       * First, get STREAM_UNIX_ATTRIBUTES and fill AttributesDbRecord structure
+       * Next, we CAN have a CRYPTO_DIGEST, so we fill AttributesDbRecord with it (or not)
+       * When we get a new STREAM_UNIX_ATTRIBUTES, we known that we can add file to the catalog
+       * At the end, we have to add the last file
+       */
+      if (jcr->FileIndex != (uint32_t)file_index) {
+        Jmsg3(jcr, M_ERROR, 0, _("%s index %d not same as attributes %d\n"),
+              stream_to_ascii(stream), file_index, jcr->FileIndex);
+        continue;
       }
-      jcr->cached_attribute = false;
-   }
 
-   jcr->setJobStatus(JS_Terminated);
+      ar->Digest = digest.c_str();
+      ar->DigestType = CryptoDigestStreamType(stream);
+      length = strlen(Digest.c_str());
+      digest.check_size(length * 2 + 1);
+      jcr->db->EscapeString(jcr, digest.c_str(), Digest.c_str(), length);
+      Dmsg4(debuglevel, "stream=%d DigestLen=%d Digest=%s type=%d\n", stream,
+            strlen(digest.c_str()), digest.c_str(), ar->DigestType);
+    }
+    jcr->jr.JobFiles = jcr->JobFiles = file_index;
+    jcr->jr.LastIndex = file_index;
+  }
 
-   return 1;
+  if (IsBnetError(fd)) {
+    Jmsg1(jcr, M_FATAL, 0, _("<filed: Network error getting attributes. ERR=%s\n"),
+          fd->bstrerror());
+    return 0;
+  }
+
+  if (jcr->cached_attribute) {
+    Dmsg3(debuglevel, "Cached attr with digest. Stream=%d fname=%s attr=%s\n", ar->Stream,
+          ar->fname, ar->attr);
+    if (!jcr->db->CreateFileAttributesRecord(jcr, ar)) {
+      Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), jcr->db->strerror());
+    }
+    jcr->cached_attribute = false;
+  }
+
+  jcr->setJobStatus(JS_Terminated);
+
+  return 1;
 }
 
 /**
  * Cancel a job running in the File daemon
  */
-bool CancelFileDaemonJob(UaContext *ua, JobControlRecord *jcr)
-{
-   BareosSocket *fd;
+bool CancelFileDaemonJob(UaContext *ua, JobControlRecord *jcr) {
 
-   ua->jcr->res.client = jcr->res.client;
-   if (!ConnectToFileDaemon(ua->jcr, 10, me->FDConnectTimeout, true)) {
-      ua->ErrorMsg(_("Failed to connect to File daemon.\n"));
-      return false;
-   }
-   Dmsg0(200, "Connected to file daemon\n");
-   fd = ua->jcr->file_bsock;
-   fd->fsend("cancel Job=%s\n", jcr->Job);
-   while (fd->recv() >= 0) {
-      ua->SendMsg("%s", fd->msg);
-   }
-   fd->signal(BNET_TERMINATE);
-   fd->close();
-   delete ua->jcr->file_bsock;
-   ua->jcr->file_bsock = NULL;
-   jcr->file_bsock->SetTerminated();
-   jcr->MyThreadSendSignal(TIMEOUT_SIGNAL);
-   return true;
+
+
+
+  BareosSocket *fd;
+
+  ua->jcr->res.client = jcr->res.client;
+  if (!ConnectToFileDaemon(ua->jcr, 10, me->FDConnectTimeout, true)) {
+    ua->ErrorMsg(_("Failed to connect to File daemon.\n"));
+    return false;
+  }
+  Dmsg0(200, "Connected to file daemon\n");
+  fd = ua->jcr->file_bsock;
+  fd->fsend("cancel Job=%s\n", jcr->Job);
+  while (fd->recv() >= 0) {
+    ua->SendMsg("%s", fd->msg);
+  }
+  fd->signal(BNET_TERMINATE);
+  fd->close();
+  delete ua->jcr->file_bsock;
+  ua->jcr->file_bsock = NULL;
+  jcr->file_bsock->SetTerminated();
+  jcr->MyThreadSendSignal(TIMEOUT_SIGNAL);
+  return true;
 }
 
 /**
  * Get the status of a remote File Daemon.
  */
-void DoNativeClientStatus(UaContext *ua, ClientResource *client, char *cmd)
-{
-   BareosSocket *fd;
+void DoNativeClientStatus(UaContext *ua, ClientResource *client, char *cmd) {
 
-   /*
-    * Connect to File daemon
-    */
-   ua->jcr->res.client = client;
 
-   /*
-    * Try to connect for 15 seconds
-    */
-   if (!ua->api) {
-      ua->SendMsg(_("Connecting to Client %s at %s:%d\n"),
-                   client->name(), client->address, client->FDport);
-   }
 
-   if (!ConnectToFileDaemon(ua->jcr, 1, 15, false)) {
-      ua->SendMsg(_("Failed to connect to Client %s.\n====\n"),
-         client->name());
-      if (ua->jcr->file_bsock) {
-         ua->jcr->file_bsock->close();
-         delete ua->jcr->file_bsock;
-         ua->jcr->file_bsock = NULL;
-      }
-      return;
-   }
 
-   Dmsg0(20, _("Connected to file daemon\n"));
-   fd = ua->jcr->file_bsock;
-   if (cmd) {
-      fd->fsend(".status %s", cmd);
-   } else {
-      fd->fsend("status");
-   }
+  BareosSocket *fd;
 
-   while (fd->recv() >= 0) {
-      ua->SendMsg("%s", fd->msg);
-   }
+  /*
+   * Connect to File daemon
+   */
+  ua->jcr->res.client = client;
 
-   fd->signal(BNET_TERMINATE);
-   fd->close();
-   delete ua->jcr->file_bsock;
-   ua->jcr->file_bsock = NULL;
+  /*
+   * Try to connect for 15 seconds
+   */
+  if (!ua->api) {
+    ua->SendMsg(_("Connecting to Client %s at %s:%d\n"), client->name(), client->address,
+                client->FDport);
+  }
 
-   return;
+  if (!ConnectToFileDaemon(ua->jcr, 1, 15, false)) {
+    ua->SendMsg(_("Failed to connect to Client %s.\n====\n"), client->name());
+    if (ua->jcr->file_bsock) {
+      ua->jcr->file_bsock->close();
+      delete ua->jcr->file_bsock;
+      ua->jcr->file_bsock = NULL;
+    }
+    return;
+  }
+
+  Dmsg0(20, _("Connected to file daemon\n"));
+  fd = ua->jcr->file_bsock;
+  if (cmd) {
+    fd->fsend(".status %s", cmd);
+  } else {
+    fd->fsend("status");
+  }
+
+  while (fd->recv() >= 0) {
+    ua->SendMsg("%s", fd->msg);
+  }
+
+  fd->signal(BNET_TERMINATE);
+  fd->close();
+  delete ua->jcr->file_bsock;
+  ua->jcr->file_bsock = NULL;
+
+  return;
 }
 
 /**
  * resolve a host on a filedaemon
  */
-void DoClientResolve(UaContext *ua, ClientResource *client)
-{
-   BareosSocket *fd;
+void DoClientResolve(UaContext *ua, ClientResource *client) {
 
-   /*
-    * Connect to File daemon
-    */
-   ua->jcr->res.client = client;
 
-   /*
-    * Try to connect for 15 seconds
-    */
-   if (!ua->api) {
-      ua->SendMsg(_("Connecting to Client %s at %s:%d\n"),
-                   client->name(), client->address, client->FDport);
-   }
 
-   if (!ConnectToFileDaemon(ua->jcr, 1, 15, false)) {
-      ua->SendMsg(_("Failed to connect to Client %s.\n====\n"),
-         client->name());
-      if (ua->jcr->file_bsock) {
-         ua->jcr->file_bsock->close();
-         delete ua->jcr->file_bsock;
-         ua->jcr->file_bsock = NULL;
-      }
-      return;
-   }
 
-   Dmsg0(20, _("Connected to file daemon\n"));
-   fd = ua->jcr->file_bsock;
+  BareosSocket *fd;
 
-   for (int i = 1; i < ua->argc; i++) {
-      if (!*ua->argk[i]) {
-         continue;
-      }
+  /*
+   * Connect to File daemon
+   */
+  ua->jcr->res.client = client;
 
-      fd->fsend("resolve %s", ua->argk[i]);
-      while (fd->recv() >= 0) {
-         ua->SendMsg("%s", fd->msg);
-      }
-   }
+  /*
+   * Try to connect for 15 seconds
+   */
+  if (!ua->api) {
+    ua->SendMsg(_("Connecting to Client %s at %s:%d\n"), client->name(), client->address,
+                client->FDport);
+  }
 
-   fd->signal(BNET_TERMINATE);
-   fd->close();
-   delete ua->jcr->file_bsock;
-   ua->jcr->file_bsock = NULL;
+  if (!ConnectToFileDaemon(ua->jcr, 1, 15, false)) {
+    ua->SendMsg(_("Failed to connect to Client %s.\n====\n"), client->name());
+    if (ua->jcr->file_bsock) {
+      ua->jcr->file_bsock->close();
+      delete ua->jcr->file_bsock;
+      ua->jcr->file_bsock = NULL;
+    }
+    return;
+  }
 
-   return;
+  Dmsg0(20, _("Connected to file daemon\n"));
+  fd = ua->jcr->file_bsock;
+
+  for (int i = 1; i < ua->argc; i++) {
+    if (!*ua->argk[i]) {
+      continue;
+    }
+
+    fd->fsend("resolve %s", ua->argk[i]);
+    while (fd->recv() >= 0) {
+      ua->SendMsg("%s", fd->msg);
+    }
+  }
+
+  fd->signal(BNET_TERMINATE);
+  fd->close();
+  delete ua->jcr->file_bsock;
+  ua->jcr->file_bsock = NULL;
+
+  return;
 }
 
 /**
  * After receiving a connection (in socket_server.c) if it is
  * from the File daemon, this routine is called.
  */
-void *handle_filed_connection(ConnectionPool *connections, BareosSocket *fd,
-                              char *client_name, int fd_protocol_version)
-{
-   ClientResource *client_resource;
-   Connection *connection = NULL;
+void *handle_filed_connection(ConnectionPool *connections, BareosSocket *fd, char *client_name,
+                              int fd_protocol_version) {
+  ClientResource *client_resource;
+  Connection *connection = NULL;
 
-   client_resource = (ClientResource *)GetResWithName(R_CLIENT, client_name);
-   if (!client_resource) {
-      Emsg1(M_WARNING, 0, "Client \"%s\" tries to connect, "
-                          "but no matching resource is defined.\n", client_name);
-      goto getout;
-   }
+  client_resource = (ClientResource *)GetResWithName(R_CLIENT, client_name);
+  if (!client_resource) {
+    Emsg1(M_WARNING, 0,
+          "Client \"%s\" tries to connect, "
+          "but no matching resource is defined.\n",
+          client_name);
+    goto getout;
+  }
 
-   if (!IsConnectFromClientAllowed(client_resource)) {
-      Emsg1(M_WARNING, 0, "Client \"%s\" tries to connect, "
-                          "but does not have the required permission.\n", client_name);
-      goto getout;
-   }
+  if (!IsConnectFromClientAllowed(client_resource)) {
+    Emsg1(M_WARNING, 0,
+          "Client \"%s\" tries to connect, "
+          "but does not have the required permission.\n",
+          client_name);
+    goto getout;
+  }
 
-   if (!AuthenticateFileDaemon(fd, client_name)) {
-      goto getout;
-   }
+  if (!AuthenticateFileDaemon(fd, client_name)) {
+    goto getout;
+  }
 
-   Dmsg1(20, "Connected to file daemon %s\n", client_name);
+  Dmsg1(20, "Connected to file daemon %s\n", client_name);
 
-   connection = connections->add_connection(client_name, fd_protocol_version, fd, true);
-   if (!connection) {
-      Emsg0(M_ERROR, 0, "Failed to add connection to pool.\n");
-      goto getout;
-   }
+  connection = connections->add_connection(client_name, fd_protocol_version, fd, true);
+  if (!connection) {
+    Emsg0(M_ERROR, 0, "Failed to add connection to pool.\n");
+    goto getout;
+  }
 
-   /*
-    * The connection is now kept in connection_pool.
-    * This thread is no longer required and will end now.
-    */
-   return NULL;
+  /*
+   * The connection is now kept in connection_pool.
+   * This thread is no longer required and will end now.
+   */
+  return NULL;
 
 getout:
-   fd->close();
-   delete(fd);
-   return NULL;
+  fd->close();
+  delete (fd);
+  return NULL;
 }

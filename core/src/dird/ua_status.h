@@ -24,4 +24,4 @@
 
 void ListDirStatusHeader(UaContext *ua);
 
-#endif // BAREOS_DIRD_UA_STATUS_H_
+#endif  // BAREOS_DIRD_UA_STATUS_H_

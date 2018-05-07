@@ -32,9 +32,8 @@
 #if !defined(__COMPAT_H_)
 #define __COMPAT_H_
 #if !defined(_STAT_H)
-#define _STAT_H         /* don't pull in MinGW stat.h */
+#define _STAT_H /* don't pull in MinGW stat.h */
 #endif
-
 
 #if defined(BUILDING_DLL)
 #define DLL_IMP_EXP _declspec(dllexport)
@@ -50,14 +49,14 @@
 #define SD_IMP_EXP
 #endif
 
-
 #ifndef _STAT_DEFINED
 #define _STAT_DEFINED 1 /* don't pull in MinGW struct stat from wchar.h */
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1400) // VC8+
-#pragma warning(disable : 4996) // Either disable all deprecation warnings,
-// #define _CRT_SECURE_NO_DEPRECATE // Or just turn off warnings about the newly deprecated CRT functions.
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)  // VC8+
+#pragma warning(disable : 4996)              // Either disable all deprecation warnings,
+// #define _CRT_SECURE_NO_DEPRECATE // Or just turn off warnings about the newly deprecated CRT
+// functions.
 #elif !defined(HAVE_MINGW) && !defined(HAVE_WXCONSOLE)
 #define __STDC__ 1
 #endif
@@ -73,35 +72,35 @@
 #endif
 
 typedef struct _REPARSE_DATA_BUFFER {
-   DWORD ReparseTag;
-   WORD ReparseDataLength;
-   WORD Reserved;
-   union {
-      struct {
-         WORD SubstituteNameOffset;
-         WORD SubstituteNameLength;
-         WORD PrintNameOffset;
-         WORD PrintNameLength;
-         ULONG Flags;
-         WCHAR PathBuffer[1];
-      } SymbolicLinkReparseBuffer;
-      struct {
-         WORD SubstituteNameOffset;
-         WORD SubstituteNameLength;
-         WORD PrintNameOffset;
-         WORD PrintNameLength;
-         WCHAR PathBuffer[1];
-      } MountPointReparseBuffer;
-      struct {
-         BYTE DataBuffer[1];
-      } GenericReparseBuffer;
-   } DUMMYUNIONNAME;
+  DWORD ReparseTag;
+  WORD ReparseDataLength;
+  WORD Reserved;
+  union {
+    struct {
+      WORD SubstituteNameOffset;
+      WORD SubstituteNameLength;
+      WORD PrintNameOffset;
+      WORD PrintNameLength;
+      ULONG Flags;
+      WCHAR PathBuffer[1];
+    } SymbolicLinkReparseBuffer;
+    struct {
+      WORD SubstituteNameOffset;
+      WORD SubstituteNameLength;
+      WORD PrintNameOffset;
+      WORD PrintNameLength;
+      WCHAR PathBuffer[1];
+    } MountPointReparseBuffer;
+    struct {
+      BYTE DataBuffer[1];
+    } GenericReparseBuffer;
+  } DUMMYUNIONNAME;
 } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 
 #include <winioctl.h>
 
 #ifdef _WIN64
-#define GWL_USERDATA  GWLP_USERDATA
+#define GWL_USERDATA GWLP_USERDATA
 #endif
 
 #ifndef INT64
@@ -121,20 +120,19 @@ typedef UINT32 gid_t;
 typedef UINT32 uid_t;
 typedef UINT32 gid_t;
 typedef UINT32 mode_t;
-typedef INT32  ssize_t;
+typedef INT32 ssize_t;
 typedef UINT32 size_t;
 #define HAVE_SSIZE_T 1
 
 #endif /* HAVE_MINGW */
 
 struct dirent {
-    uint64_t    d_ino;
-    uint32_t    d_off;
-    uint16_t    d_reclen;
-    char        d_name[256];
+  uint64_t d_ino;
+  uint32_t d_off;
+  uint16_t d_reclen;
+  char d_name[256];
 };
 typedef void DIR;
-
 
 #if !defined(__cplusplus)
 #if !defined(true)
@@ -148,12 +146,12 @@ typedef void DIR;
 #ifndef _TIMEZONE_DEFINED /* also in sys/time.h */
 #define _TIMEZONE_DEFINED
 struct timezone {
-    int foo;
+  int foo;
 };
 #endif
 
 #ifndef HAVE_MINGW
-int strcasecmp(const char*, const char *);
+int strcasecmp(const char *, const char *);
 #endif
 DLL_IMP_EXP int gettimeofday(struct timeval *, struct timezone *);
 
@@ -173,77 +171,76 @@ DLL_IMP_EXP int gettimeofday(struct timeval *, struct timezone *);
 #define ENODATA 61
 #endif
 
-struct stat
-{
-   _dev_t      st_dev;
-   uint64_t    st_ino;
-   uint16_t    st_mode;
-   int16_t     st_nlink;
-   uint32_t    st_uid;
-   uint32_t    st_gid;
-   _dev_t      st_rdev;
-   uint64_t    st_size;
-   time_t      st_atime;
-   time_t      st_mtime;
-   time_t      st_ctime;
-   uint32_t    st_blksize;
-   uint64_t    st_blocks;
+struct stat {
+  _dev_t st_dev;
+  uint64_t st_ino;
+  uint16_t st_mode;
+  int16_t st_nlink;
+  uint32_t st_uid;
+  uint32_t st_gid;
+  _dev_t st_rdev;
+  uint64_t st_size;
+  time_t st_atime;
+  time_t st_mtime;
+  time_t st_ctime;
+  uint32_t st_blksize;
+  uint64_t st_blocks;
 };
 
-#undef  S_IFMT
-#define S_IFMT      0170000         /* file type mask */
-#undef  S_IFDIR
-#define S_IFDIR     0040000         /* directory */
-#define S_IFCHR     0020000         /* character special */
-#define S_IFBLK     0060000         /* block special */
-#define S_IFIFO     0010000         /* pipe */
-#undef  S_IFREG
-#define S_IFREG     0100000         /* regular */
+#undef S_IFMT
+#define S_IFMT 0170000 /* file type mask */
+#undef S_IFDIR
+#define S_IFDIR 0040000 /* directory */
+#define S_IFCHR 0020000 /* character special */
+#define S_IFBLK 0060000 /* block special */
+#define S_IFIFO 0010000 /* pipe */
+#undef S_IFREG
+#define S_IFREG 0100000 /* regular */
 #undef S_IFLNK
-#define S_IFLNK     0120000         /* symbolic link */
-#define S_IREAD     0000400         /* read permission, owner */
-#define S_IWRITE    0000200         /* write permission, owner */
-#define S_IEXEC     0000100         /* execute/search permission, owner */
+#define S_IFLNK 0120000  /* symbolic link */
+#define S_IREAD 0000400  /* read permission, owner */
+#define S_IWRITE 0000200 /* write permission, owner */
+#define S_IEXEC 0000100  /* execute/search permission, owner */
 
-#define S_IRUSR     S_IREAD
-#define S_IWUSR     S_IWRITE
-#define S_IXUSR     S_IEXEC
-#define S_ISREG(x)  (((x) & S_IFMT) == S_IFREG)
-#define S_ISLNK(x)  (((x) & S_IFMT) == S_IFLNK)
-#define S_ISDIR(x)  (((x) & S_IFMT) == S_IFDIR)
-#define S_ISCHR(x)  0
-#define S_ISBLK(x)  (((x) & S_IFMT) == S_IFBLK)
+#define S_IRUSR S_IREAD
+#define S_IWUSR S_IWRITE
+#define S_IXUSR S_IEXEC
+#define S_ISREG(x) (((x)&S_IFMT) == S_IFREG)
+#define S_ISLNK(x) (((x)&S_IFMT) == S_IFLNK)
+#define S_ISDIR(x) (((x)&S_IFMT) == S_IFDIR)
+#define S_ISCHR(x) 0
+#define S_ISBLK(x) (((x)&S_IFMT) == S_IFBLK)
 #define S_ISFIFO(x) 0
 
-#define S_IRGRP     000040
-#define S_IWGRP     000020
-#define S_IXGRP     000010
+#define S_IRGRP 000040
+#define S_IWGRP 000020
+#define S_IXGRP 000010
 
-#define S_IROTH     00004
-#define S_IWOTH     00002
-#define S_IXOTH     00001
+#define S_IROTH 00004
+#define S_IWOTH 00002
+#define S_IXOTH 00001
 
-#define S_IRWXO     000007
-#define S_IRWXG     000070
-#define S_ISUID     004000
-#define S_ISGID     002000
-#define S_ISVTX     001000
+#define S_IRWXO 000007
+#define S_IRWXG 000070
+#define S_ISUID 004000
+#define S_ISGID 002000
+#define S_ISVTX 001000
 #define S_ISSOCK(x) 0
 
 #if __STDC__
-#define O_RDONLY    _O_RDONLY
-#define O_WRONLY    _O_WRONLY
-#define O_RDWR      _O_RDWR
-#define O_CREAT     _O_CREAT
-#define O_TRUNC     _O_TRUNC
+#define O_RDONLY _O_RDONLY
+#define O_WRONLY _O_WRONLY
+#define O_RDWR _O_RDWR
+#define O_CREAT _O_CREAT
+#define O_TRUNC _O_TRUNC
 #ifndef O_NOFOLLOW
-#define O_NOFOLLOW  0x80000
+#define O_NOFOLLOW 0x80000
 #endif
 
 #define isascii __isascii
 #define toascii __toascii
 #define iscsymf __iscsymf
-#define iscsym  __iscsym
+#define iscsym __iscsym
 #endif
 
 DLL_IMP_EXP bool InitializeComSecurity();
@@ -253,16 +250,17 @@ const char *errorString(void);
 
 typedef bool (*t_pVSSPathConvert)(const char *szFilePath, char *szShadowPath, int nBuflen);
 typedef bool (*t_pVSSPathConvertW)(const wchar_t *szFilePath, wchar_t *szShadowPath, int nBuflen);
-DLL_IMP_EXP bool SetVSSPathConvert(t_pVSSPathConvert pPathConvert, t_pVSSPathConvertW pPathConvertW);
+DLL_IMP_EXP bool SetVSSPathConvert(t_pVSSPathConvert pPathConvert,
+                                   t_pVSSPathConvertW pPathConvertW);
 
 DLL_IMP_EXP int lchown(const char *, uid_t uid, gid_t gid);
 DLL_IMP_EXP int chown(const char *, uid_t uid, gid_t gid);
-#define O_NONBLOCK   04000
-#define F_GETFL      3
-#define F_SETFL      4
+#define O_NONBLOCK 04000
+#define F_GETFL 3
+#define F_SETFL 4
 
 #ifndef MINGW64
-#define open   _open
+#define open _open
 #endif
 
 DLL_IMP_EXP int fcntl(int fd, int cmd, long arg);
@@ -270,17 +268,17 @@ DLL_IMP_EXP int fstat(intptr_t fd, struct stat *sb);
 
 DLL_IMP_EXP int inet_aton(const char *cp, struct in_addr *inp);
 DLL_IMP_EXP int kill(int pid, int signo);
-DLL_IMP_EXP int pipe(int []);
+DLL_IMP_EXP int pipe(int[]);
 DLL_IMP_EXP int fork();
 DLL_IMP_EXP int waitpid(int, int *, int);
 
 #if !defined(HAVE_MINGW)
 #define strncasecmp strnicmp
-//int strncasecmp(const char*, const char *, int);
+// int strncasecmp(const char*, const char *, int);
 int utime(const char *filename, struct utimbuf *buf);
 #define vsnprintf _vsnprintf
 #define snprintf _snprintf
-#endif //HAVE_MINGW
+#endif  // HAVE_MINGW
 
 #define WNOHANG 0
 #define WIFEXITED(x) 0
@@ -313,19 +311,19 @@ DLL_IMP_EXP DIR *opendir(const char *filename);
 DLL_IMP_EXP int closedir(DIR *dir);
 
 struct passwd {
-    char *foo;
+  char *foo;
 };
 
 struct group {
-    char *foo;
+  char *foo;
 };
 
 struct passwd *getpwuid(uid_t);
 struct group *getgrgid(uid_t);
 
 struct sigaction {
-    int sa_flags;
-    void (*sa_handler)(int);
+  int sa_flags;
+  void (*sa_handler)(int);
 };
 #define sigfillset(x)
 #define sigaction(a, b, c)
@@ -346,9 +344,9 @@ int stat(const char *, struct stat *);
 #define access _access
 extern "C" _CRTIMP int __cdecl _access(const char *, int);
 int execvp(const char *, char *[]);
-extern "C" void *  __cdecl _alloca(size_t);
+extern "C" void *__cdecl _alloca(size_t);
 #endif
-#endif //HAVE_MINGW
+#endif  // HAVE_MINGW
 
 #define getpid _getpid
 
@@ -367,7 +365,7 @@ DLL_IMP_EXP int win32_fputs(const char *string, FILE *stream);
 DLL_IMP_EXP int win32_unlink(const char *filename);
 DLL_IMP_EXP int win32_chmod(const char *, mode_t, _dev_t);
 
-DLL_IMP_EXP char* win32_cgets (char* buffer, int len);
+DLL_IMP_EXP char *win32_cgets(char *buffer, int len);
 
 DLL_IMP_EXP int WSA_Init(void);
 DLL_IMP_EXP void Win32TSDCleanup();
@@ -378,7 +376,7 @@ DLL_IMP_EXP bool Win32IsCompatible();
 #if defined(HAVE_MINGW)
 DLL_IMP_EXP void closelog();
 DLL_IMP_EXP void openlog(const char *ident, int option, int facility);
-#endif //HAVE_MINGW
+#endif  // HAVE_MINGW
 
 /* Don't let OS go to sleep (usually a Laptop) while we are backing up */
 DLL_IMP_EXP void PreventOsSuspensions();
@@ -407,25 +405,27 @@ extern void LogErrorMsg(const char *message);
 #endif
 
 #if defined(_MSC_VER)
-inline unsigned long ffs(unsigned long word)
-{
-   unsigned long  index;
+inline unsigned long ffs(unsigned long word) {
 
-   if (_BitScanForward(&index, word) != 0)
-      return index + 1;
-   else
-      return 0;
+
+
+
+  unsigned long index;
+
+  if (_BitScanForward(&index, word) != 0)
+    return index + 1;
+  else
+    return 0;
 }
 
 #else
-#define  ffs   __builtin_ffs
+#define ffs __builtin_ffs
 #endif
 
 DLL_IMP_EXP bool win32_get_vmp_devicename(const char *filename, POOLMEM *&device);
 DLL_IMP_EXP int win32_ftruncate(int fd, int64_t length);
-DLL_IMP_EXP bool win32_restore_file_attributes(POOLMEM *ofname,
-                                   HANDLE handle,
-                                   WIN32_FILE_ATTRIBUTE_DATA *atts);
+DLL_IMP_EXP bool win32_restore_file_attributes(POOLMEM *ofname, HANDLE handle,
+                                               WIN32_FILE_ATTRIBUTE_DATA *atts);
 
 #undef ftruncate
 #define ftruncate win32_ftruncate

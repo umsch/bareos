@@ -31,4 +31,4 @@ void SetNewFileParameters(DeviceControlRecord *dcr);
 BootStrapRecord *position_device_to_first_file(JobControlRecord *jcr, DeviceControlRecord *dcr);
 bool TryDeviceRepositioning(JobControlRecord *jcr, DeviceRecord *rec, DeviceControlRecord *dcr);
 
-#endif // BAREOS_STORED_DEVICE_H_
+#endif  // BAREOS_STORED_DEVICE_H_

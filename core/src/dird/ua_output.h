@@ -28,4 +28,4 @@ bool printit(void *ctx, const char *msg);
 bool CompleteJcrForJob(JobControlRecord *jcr, JobResource *job, PoolResource *pool);
 RunResource *find_next_run(RunResource *run, JobResource *job, utime_t &runtime, int ndays);
 
-#endif // BAREOS_DIRD_UA_OUTPUT_H_
+#endif  // BAREOS_DIRD_UA_OUTPUT_H_

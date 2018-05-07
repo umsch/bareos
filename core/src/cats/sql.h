@@ -26,4 +26,4 @@ DLL_IMP_EXP int DbListHandler(void *ctx, int num_fields, char **row);
 DLL_IMP_EXP void DbDebugPrint(JobControlRecord *jcr, FILE *fp);
 DLL_IMP_EXP int DbIntHandler(void *ctx, int num_fields, char **row);
 
-#endif // BAREOS_CATS_SQL_H_
+#endif  // BAREOS_CATS_SQL_H_

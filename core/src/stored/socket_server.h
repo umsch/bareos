@@ -24,4 +24,4 @@
 void StartSocketServer(dlist *addrs);
 void StopSocketServer();
 
-#endif // BAREOS_STORED_SOCKET_SERVER_H_
+#endif  // BAREOS_STORED_SOCKET_SERVER_H_

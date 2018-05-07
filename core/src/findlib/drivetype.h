@@ -23,4 +23,4 @@
 
 DLL_IMP_EXP bool Drivetype(const char *fname, char *fs, int fslen);
 
-#endif // BAREOS_FINDLIB_DRIVETYPE_H_
+#endif  // BAREOS_FINDLIB_DRIVETYPE_H_

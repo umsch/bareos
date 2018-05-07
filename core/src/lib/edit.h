@@ -23,8 +23,8 @@
 
 DLL_IMP_EXP uint64_t str_to_uint64(const char *str);
 DLL_IMP_EXP int64_t str_to_int64(const char *str);
-#define str_to_int16(str)((int16_t)str_to_int64(str))
-#define str_to_int32(str)((int32_t)str_to_int64(str))
+#define str_to_int16(str) ((int16_t)str_to_int64(str))
+#define str_to_int32(str) ((int32_t)str_to_int64(str))
 DLL_IMP_EXP char *edit_uint64_with_commas(uint64_t val, char *buf);
 DLL_IMP_EXP char *edit_uint64_with_suffix(uint64_t val, char *buf);
 DLL_IMP_EXP char *add_commas(char *val, char *buf);
@@ -42,4 +42,4 @@ DLL_IMP_EXP bool IsAnInteger(const char *n);
 DLL_IMP_EXP bool IsNameValid(const char *name, POOLMEM *&msg);
 DLL_IMP_EXP bool IsNameValid(const char *name);
 
-#endif // BAREOS_LIB_EDIT_H_
+#endif  // BAREOS_LIB_EDIT_H_

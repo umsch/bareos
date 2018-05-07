@@ -25,7 +25,8 @@ DeviceControlRecord *acquire_device_for_append(DeviceControlRecord *dcr);
 bool AcquireDeviceForRead(DeviceControlRecord *dcr);
 bool ReleaseDevice(DeviceControlRecord *dcr);
 bool CleanDevice(DeviceControlRecord *dcr);
-void SetupNewDcrDevice(JobControlRecord *jcr, DeviceControlRecord *dcr, Device *dev, BlockSizes *blocksizes);
+void SetupNewDcrDevice(JobControlRecord *jcr, DeviceControlRecord *dcr, Device *dev,
+                       BlockSizes *blocksizes);
 void FreeDcr(DeviceControlRecord *dcr);
 
-#endif // BAREOS_STORED_ACQUIRE_H_
+#endif  // BAREOS_STORED_ACQUIRE_H_

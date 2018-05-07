@@ -34,26 +34,29 @@
 #include "include/bareos.h"
 #include "lib/edit.h"
 
-int main(int argc, char *argv[])
-{
-   off_t howBig;
-   FILE *fp;
+int main(int argc, char *argv[]) {
 
-   if (argc != 3) {
-      Pmsg0(0, "Calling sequence: grow <filename> <size>\n");
-      exit(1);
-   }
-   howBig = str_to_int64(argv[2]);
-   fp = fopen(argv[1], "r+");
-   if (!fp) {
-      berrno be;
-      Pmsg2(0, "Could not open %s for write. ERR=%s\n", argv[1], be.bstrerror());
-      exit(1);
-   }
-   char trailer[] = "xxxxxxx\n";
 
-   fseeko(fp, howBig - strlen(trailer), SEEK_SET);
-   fwrite(trailer, strlen(trailer), 1, fp);
-   fclose(fp);
-   return 0;
+
+
+  off_t howBig;
+  FILE *fp;
+
+  if (argc != 3) {
+    Pmsg0(0, "Calling sequence: grow <filename> <size>\n");
+    exit(1);
+  }
+  howBig = str_to_int64(argv[2]);
+  fp = fopen(argv[1], "r+");
+  if (!fp) {
+    berrno be;
+    Pmsg2(0, "Could not open %s for write. ERR=%s\n", argv[1], be.bstrerror());
+    exit(1);
+  }
+  char trailer[] = "xxxxxxx\n";
+
+  fseeko(fp, howBig - strlen(trailer), SEEK_SET);
+  fwrite(trailer, strlen(trailer), 1, fp);
+  fclose(fp);
+  return 0;
 }

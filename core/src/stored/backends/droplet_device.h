@@ -31,49 +31,49 @@
 #include <droplet.h>
 #include <droplet/vfs.h>
 
-class droplet_device: public chunked_device {
-private:
-   /*
-    * Private Members
-    */
-   char *configstring_;
-   const char *profile_;
-   const char *location_;
-   const char *canned_acl_;
-   const char *storage_class_;
-   const char *bucketname_;
-   dpl_ctx_t *ctx_;
-   dpl_sysmd_t sysmd_;
+class droplet_device : public chunked_device {
+ private:
+  /*
+   * Private Members
+   */
+  char *configstring_;
+  const char *profile_;
+  const char *location_;
+  const char *canned_acl_;
+  const char *storage_class_;
+  const char *bucketname_;
+  dpl_ctx_t *ctx_;
+  dpl_sysmd_t sysmd_;
 
-   /*
-    * Private Methods
-    */
-   bool initialize();
+  /*
+   * Private Methods
+   */
+  bool initialize();
 
-   /*
-    * Interface from chunked_device
-    */
-   bool FlushRemoteChunk(chunk_io_request *request);
-   bool ReadRemoteChunk(chunk_io_request *request);
-   ssize_t chunked_remote_volume_size();
-   bool TruncateRemoteChunkedVolume(DeviceControlRecord *dcr);
+  /*
+   * Interface from chunked_device
+   */
+  bool FlushRemoteChunk(chunk_io_request *request);
+  bool ReadRemoteChunk(chunk_io_request *request);
+  ssize_t chunked_remote_volume_size();
+  bool TruncateRemoteChunkedVolume(DeviceControlRecord *dcr);
 
-public:
-   /*
-    * Public Methods
-    */
-   droplet_device();
-   ~droplet_device();
+ public:
+  /*
+   * Public Methods
+   */
+  droplet_device();
+  ~droplet_device();
 
-   /*
-    * Interface from Device
-    */
-   int d_close(int fd);
-   int d_open(const char *pathname, int flags, int mode);
-   int d_ioctl(int fd, ioctl_req_t request, char *mt = NULL);
-   boffset_t d_lseek(DeviceControlRecord *dcr, boffset_t offset, int whence);
-   ssize_t d_read(int fd, void *buffer, size_t count);
-   ssize_t d_write(int fd, const void *buffer, size_t count);
-   bool d_truncate(DeviceControlRecord *dcr);
+  /*
+   * Interface from Device
+   */
+  int d_close(int fd);
+  int d_open(const char *pathname, int flags, int mode);
+  int d_ioctl(int fd, ioctl_req_t request, char *mt = NULL);
+  boffset_t d_lseek(DeviceControlRecord *dcr, boffset_t offset, int whence);
+  ssize_t d_read(int fd, void *buffer, size_t count);
+  ssize_t d_write(int fd, const void *buffer, size_t count);
+  bool d_truncate(DeviceControlRecord *dcr);
 };
 #endif /* OBJECTSTORE_DEVICE_H */

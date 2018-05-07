@@ -37,9 +37,9 @@
  * FileIndex entry in restore bootstrap record
  */
 struct RestoreBootstrapRecordFileIndex {
-   RestoreBootstrapRecordFileIndex *next;
-   int32_t findex;
-   int32_t findex2;
+  RestoreBootstrapRecordFileIndex *next;
+  int32_t findex;
+  int32_t findex2;
 };
 
 /**
@@ -51,14 +51,14 @@ struct RestoreBootstrapRecordFileIndex {
  *    on which the Job is stored to the BootStrapRecord.
  */
 struct RestoreBootstrapRecord {
-   RestoreBootstrapRecord *next;                        /**< next JobId */
-   JobId_t JobId;                     /**< JobId this bsr */
-   uint32_t VolSessionId;
-   uint32_t VolSessionTime;
-   int      VolCount;                 /**< Volume parameter count */
-   VolumeParameters *VolParams;             /**< Volume, start/end file/blocks */
-   RestoreBootstrapRecordFileIndex *fi;                   /**< File indexes this JobId */
-   char *fileregex;                   /**< Only restore files matching regex */
+  RestoreBootstrapRecord *next; /**< next JobId */
+  JobId_t JobId;                /**< JobId this bsr */
+  uint32_t VolSessionId;
+  uint32_t VolSessionTime;
+  int VolCount;                        /**< Volume parameter count */
+  VolumeParameters *VolParams;         /**< Volume, start/end file/blocks */
+  RestoreBootstrapRecordFileIndex *fi; /**< File indexes this JobId */
+  char *fileregex;                     /**< Only restore files matching regex */
 };
 
 class UaContext;
@@ -66,11 +66,10 @@ class UaContext;
 /**
  * Open bootstrap file.
  */
-struct bootstrap_info
-{
-   FILE *bs;
-   UaContext *ua;
-   char storage[MAX_NAME_LENGTH + 1];
+struct bootstrap_info {
+  FILE *bs;
+  UaContext *ua;
+  char storage[MAX_NAME_LENGTH + 1];
 };
 
 #include "dird/ua.h"
@@ -90,4 +89,4 @@ bool OpenBootstrapFile(JobControlRecord *jcr, bootstrap_info &info);
 bool SendBootstrapFile(JobControlRecord *jcr, BareosSocket *sock, bootstrap_info &info);
 void CloseBootstrapFile(bootstrap_info &info);
 
-#endif // BAREOS_DIRD_BSR_H_
+#endif  // BAREOS_DIRD_BSR_H_

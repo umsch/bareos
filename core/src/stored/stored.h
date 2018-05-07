@@ -80,9 +80,9 @@ int Readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 #include "sd_plugins.h"
 
 extern char SD_IMP_EXP *configfile;
-extern bool SD_IMP_EXP forge_on;      /* Proceed inspite of I/O errors */
-extern StorageResource SD_IMP_EXP *me;         /* "Global" daemon resource */
-extern ConfigurationParser SD_IMP_EXP *my_config;  /* Our Global config */
+extern bool SD_IMP_EXP forge_on;                  /* Proceed inspite of I/O errors */
+extern StorageResource SD_IMP_EXP *me;            /* "Global" daemon resource */
+extern ConfigurationParser SD_IMP_EXP *my_config; /* Our Global config */
 uint32_t new_VolSessionId();
 
 #endif /* BAREOS_STORED_STORED_H_ */

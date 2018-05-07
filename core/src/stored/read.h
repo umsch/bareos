@@ -23,4 +23,4 @@
 
 DLL_IMP_EXP bool DoReadData(JobControlRecord *jcr);
 
-#endif // BAREOS_STORED_READ_H_
+#endif  // BAREOS_STORED_READ_H_

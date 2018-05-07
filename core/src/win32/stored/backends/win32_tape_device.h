@@ -28,18 +28,18 @@
 #ifndef BAREOS_WIN32_STORED_BACKENDS_WIN32_TAPE_DEVICE_H_
 #define BAREOS_WIN32_STORED_BACKENDS_WIN32_TAPE_DEVICE_H_
 
-class win32_tape_device: public generic_tape_device {
-public:
-   win32_tape_device();
-   ~win32_tape_device();
+class win32_tape_device : public generic_tape_device {
+ public:
+  win32_tape_device();
+  ~win32_tape_device();
 
-   int d_close(int);
-   int d_open(const char *pathname, int flags, int mode);
-   int d_ioctl(int fd, ioctl_req_t request, char *mt = NULL);
-   ssize_t d_read(int fd, void *buffer, size_t count);
-   ssize_t d_write(int fd, const void *buffer, size_t count);
-   int TapeOp(struct mtop *mt_com);
-   int TapeGet(struct mtget *mt_com);
-   int TapePos(struct mtpos *mt_com);
+  int d_close(int);
+  int d_open(const char *pathname, int flags, int mode);
+  int d_ioctl(int fd, ioctl_req_t request, char *mt = NULL);
+  ssize_t d_read(int fd, void *buffer, size_t count);
+  ssize_t d_write(int fd, const void *buffer, size_t count);
+  int TapeOp(struct mtop *mt_com);
+  int TapeGet(struct mtget *mt_com);
+  int TapePos(struct mtpos *mt_com);
 };
 #endif /* BAREOS_WIN32_STORED_BACKENDS_WIN32_TAPE_DEVICE_H_ */

@@ -22,37 +22,37 @@
 #include "tls_conf.h"
 
 TlsCert::~TlsCert() {
-   if (AllowedCns) {
-      delete AllowedCns;
-      AllowedCns = nullptr;
-   }
+  if (AllowedCns) {
+    delete AllowedCns;
+    AllowedCns = nullptr;
+  }
 }
 
 uint32_t TlsCert::GetPolicy() const {
-   uint32_t result = TlsBase::BNET_TLS_NONE;
-   if (enable) {
-      result = TlsBase::BNET_TLS_ENABLED;
-   }
-   if (require) {
-      result = TlsBase::BNET_TLS_REQUIRED | TlsBase::BNET_TLS_ENABLED;
-   }
-   return result << TlsCert::policy_offset;
+  uint32_t result = TlsBase::BNET_TLS_NONE;
+  if (enable) {
+    result = TlsBase::BNET_TLS_ENABLED;
+  }
+  if (require) {
+    result = TlsBase::BNET_TLS_REQUIRED | TlsBase::BNET_TLS_ENABLED;
+  }
+  return result << TlsCert::policy_offset;
 }
 
 TlsPsk::~TlsPsk() {
-   if (cipherlist != nullptr) {
-      free(cipherlist);
-   }
+  if (cipherlist != nullptr) {
+    free(cipherlist);
+  }
 }
 
 uint32_t TlsPsk::GetPolicy() const {
-   uint32_t result = TlsBase::BNET_TLS_NONE;
-   if (enable) {
-      result = TlsBase::BNET_TLS_ENABLED;
-   }
-   if (require) {
-      result = TlsBase::BNET_TLS_REQUIRED | TlsBase::BNET_TLS_ENABLED;
-   }
+  uint32_t result = TlsBase::BNET_TLS_NONE;
+  if (enable) {
+    result = TlsBase::BNET_TLS_ENABLED;
+  }
+  if (require) {
+    result = TlsBase::BNET_TLS_REQUIRED | TlsBase::BNET_TLS_ENABLED;
+  }
 
-   return result << TlsPsk::policy_offset;
+  return result << TlsPsk::policy_offset;
 }

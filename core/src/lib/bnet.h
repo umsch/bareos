@@ -27,9 +27,9 @@ DLL_IMP_EXP bool BnetFsend(BareosSocket *bs, const char *fmt, ...);
 DLL_IMP_EXP bool BnetSetBufferSize(BareosSocket *bs, uint32_t size, int rw);
 DLL_IMP_EXP bool BnetSig(BareosSocket *bs, int sig);
 DLL_IMP_EXP bool BnetTlsServer(std::shared_ptr<TlsContext> tls_ctx, BareosSocket *bsock,
-                     alist *verify_list);
+                               alist *verify_list);
 DLL_IMP_EXP bool BnetTlsClient(std::shared_ptr<TLS_CONTEXT> tls_ctx, BareosSocket *bsock,
-                     bool VerifyPeer, alist *verify_list);
+                               bool VerifyPeer, alist *verify_list);
 DLL_IMP_EXP int BnetGetPeer(BareosSocket *bs, char *buf, socklen_t buflen);
 DLL_IMP_EXP BareosSocket *dup_bsock(BareosSocket *bsock);
 DLL_IMP_EXP const char *bnet_strerror(BareosSocket *bsock);
@@ -47,4 +47,4 @@ DLL_IMP_EXP int NetConnect(int port);
 DLL_IMP_EXP BareosSocket *bnet_bind(int port);
 DLL_IMP_EXP BareosSocket *bnet_accept(BareosSocket *bsock, char *who);
 
-#endif // BAREOS_LIB_BNET_H_
+#endif  // BAREOS_LIB_BNET_H_

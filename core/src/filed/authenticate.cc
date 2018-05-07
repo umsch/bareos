@@ -47,36 +47,39 @@ const int debuglevel = 50;
  *  53 02Apr15 - Added setdebug timestamp
  *  54 29Oct15 - Added getSecureEraseCmd
  */
-static char OK_hello_compat[] =
-   "2000 OK Hello 5\n";
-static char OK_hello[] =
-   "2000 OK Hello 54\n";
+static char OK_hello_compat[] = "2000 OK Hello 5\n";
+static char OK_hello[] = "2000 OK Hello 54\n";
 
-static char Dir_sorry[] =
-   "2999 Authentication failed.\n";
+static char Dir_sorry[] = "2999 Authentication failed.\n";
 
 /**
  * To prevent DOS attacks,
  * wait a bit in case of an
  * authentication failure of a (remotely) initiated connection.
  */
-static inline void delay()
-{
-   static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static inline void delay() {
 
-   /*
-    * Single thread all failures to avoid DOS
-    */
-   P(mutex);
-   Bmicrosleep(6, 0);
-   V(mutex);
+
+
+
+  static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+  /*
+   * Single thread all failures to avoid DOS
+   */
+  P(mutex);
+  Bmicrosleep(6, 0);
+  V(mutex);
 }
 
-static inline void AuthenticateFailed(JobControlRecord *jcr, PoolMem &message)
-{
-   Dmsg0(debuglevel, message.c_str());
-   Jmsg0(jcr, M_FATAL, 0, message.c_str());
-   delay();
+static inline void AuthenticateFailed(JobControlRecord *jcr, PoolMem &message) {
+
+
+
+
+  Dmsg0(debuglevel, message.c_str());
+  Jmsg0(jcr, M_FATAL, 0, message.c_str());
+  delay();
 }
 
 /**
@@ -86,112 +89,125 @@ static inline void AuthenticateFailed(JobControlRecord *jcr, PoolMem &message)
  * Basic tasks done here:
  * We read Director's initial message and authorize him.
  */
-bool AuthenticateDirector(JobControlRecord *jcr)
-{
-   BareosSocket *dir = jcr->dir_bsock;
+bool AuthenticateDirector(JobControlRecord *jcr) {
 
-   PoolMem errormsg(PM_MESSAGE);
-   PoolMem dirname(PM_MESSAGE);
-   DirectorResource *director = NULL;
 
-   if (dir->msglen < 25 || dir->msglen > 500) {
-      char addr[64];
-      char *who = BnetGetPeer(dir, addr, sizeof(addr)) ? dir->who() : addr;
-      errormsg.bsprintf(_("Bad Hello command from Director at %s. Len=%d.\n"), who, dir->msglen);
-      AuthenticateFailed(jcr, errormsg);
-      return false;
-   }
 
-   if (sscanf(dir->msg, "Hello Director %s calling", dirname.check_size(dir->msglen)) != 1) {
-      char addr[64];
-      char *who     = BnetGetPeer(dir, addr, sizeof(addr)) ? dir->who() : addr;
-      dir->msg[100] = 0;
-      errormsg.bsprintf(_("Bad Hello command from Director at %s: %s\n"), who, dir->msg);
-      AuthenticateFailed(jcr, errormsg);
-      return false;
-   }
 
-   UnbashSpaces(dirname.c_str());
-   director = (DirectorResource *)GetResWithName(R_DIRECTOR, dirname.c_str());
+  BareosSocket *dir = jcr->dir_bsock;
 
-   if (!director) {
-      char addr[64];
-      char *who = BnetGetPeer(dir, addr, sizeof(addr)) ? dir->who() : addr;
-      errormsg.bsprintf(
-          _("Connection from unknown Director %s at %s rejected.\n"), dirname.c_str(), who);
-      AuthenticateFailed(jcr, errormsg);
-      return false;
-   }
+  PoolMem errormsg(PM_MESSAGE);
+  PoolMem dirname(PM_MESSAGE);
+  DirectorResource *director = NULL;
 
-   if (!director->conn_from_dir_to_fd) {
-      errormsg.bsprintf(_("Connection from Director %s rejected.\n"), dirname.c_str());
-      AuthenticateFailed(jcr, errormsg);
-      return false;
-   }
+  if (dir->msglen < 25 || dir->msglen > 500) {
+    char addr[64];
+    char *who = BnetGetPeer(dir, addr, sizeof(addr)) ? dir->who() : addr;
+    errormsg.bsprintf(_("Bad Hello command from Director at %s. Len=%d.\n"), who, dir->msglen);
+    AuthenticateFailed(jcr, errormsg);
+    return false;
+  }
 
-   if (!dir->AuthenticateInboundConnection(
-           jcr, "Director", dirname.c_str(), director->password, director)) {
-      dir->fsend("%s", Dir_sorry);
-      errormsg.bsprintf(_("Unable to authenticate Director %s.\n"), dirname.c_str());
-      AuthenticateFailed(jcr, errormsg);
-      return false;
-   }
+  if (sscanf(dir->msg, "Hello Director %s calling", dirname.check_size(dir->msglen)) != 1) {
+    char addr[64];
+    char *who = BnetGetPeer(dir, addr, sizeof(addr)) ? dir->who() : addr;
+    dir->msg[100] = 0;
+    errormsg.bsprintf(_("Bad Hello command from Director at %s: %s\n"), who, dir->msg);
+    AuthenticateFailed(jcr, errormsg);
+    return false;
+  }
 
-   jcr->director = director;
+  UnbashSpaces(dirname.c_str());
+  director = (DirectorResource *)GetResWithName(R_DIRECTOR, dirname.c_str());
 
-   return dir->fsend("%s", (me->compatible) ? OK_hello_compat : OK_hello);
+  if (!director) {
+    char addr[64];
+    char *who = BnetGetPeer(dir, addr, sizeof(addr)) ? dir->who() : addr;
+    errormsg.bsprintf(_("Connection from unknown Director %s at %s rejected.\n"), dirname.c_str(),
+                      who);
+    AuthenticateFailed(jcr, errormsg);
+    return false;
+  }
+
+  if (!director->conn_from_dir_to_fd) {
+    errormsg.bsprintf(_("Connection from Director %s rejected.\n"), dirname.c_str());
+    AuthenticateFailed(jcr, errormsg);
+    return false;
+  }
+
+  if (!dir->AuthenticateInboundConnection(jcr, "Director", dirname.c_str(), director->password,
+                                          director)) {
+    dir->fsend("%s", Dir_sorry);
+    errormsg.bsprintf(_("Unable to authenticate Director %s.\n"), dirname.c_str());
+    AuthenticateFailed(jcr, errormsg);
+    return false;
+  }
+
+  jcr->director = director;
+
+  return dir->fsend("%s", (me->compatible) ? OK_hello_compat : OK_hello);
 }
 
 /**
  * Authenticate with a remote director.
  */
 bool AuthenticateWithDirector(JobControlRecord *jcr, DirectorResource *director) {
-   return jcr->dir_bsock->AuthenticateOutboundConnection(
-      jcr, "Director", me->name(), director->password, director);
+
+
+
+
+  return jcr->dir_bsock->AuthenticateOutboundConnection(jcr, "Director", me->name(),
+                                                        director->password, director);
 }
 
 /**
  * Authenticate a remote storage daemon.
  */
-bool AuthenticateStoragedaemon(JobControlRecord *jcr)
-{
-   bool result = false;
-   BareosSocket *sd = jcr->store_bsock;
-   s_password password;
+bool AuthenticateStoragedaemon(JobControlRecord *jcr) {
 
-   password.encoding = p_encoding_md5;
-   password.value = jcr->sd_auth_key;
-   result = sd->AuthenticateInboundConnection(jcr, "Storage daemon", jcr->client_name, password, me);
 
-   /*
-    * Destroy session key
-    */
-   memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
-   if (!result) {
-      delay();
-   }
 
-   return result;
+
+  bool result = false;
+  BareosSocket *sd = jcr->store_bsock;
+  s_password password;
+
+  password.encoding = p_encoding_md5;
+  password.value = jcr->sd_auth_key;
+  result = sd->AuthenticateInboundConnection(jcr, "Storage daemon", jcr->client_name, password, me);
+
+  /*
+   * Destroy session key
+   */
+  memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
+  if (!result) {
+    delay();
+  }
+
+  return result;
 }
 
 /**
  * Authenticate with a remote storage daemon.
  */
-bool AuthenticateWithStoragedaemon(JobControlRecord *jcr)
-{
-   bool result = false;
-   BareosSocket *sd = jcr->store_bsock;
-   s_password password;
+bool AuthenticateWithStoragedaemon(JobControlRecord *jcr) {
 
-   password.encoding = p_encoding_md5;
-   password.value    = jcr->sd_auth_key;
-   result = sd->AuthenticateOutboundConnection(
-      jcr, "Storage daemon", (char *) jcr->client_name, password, me);
 
-   /*
-    * Destroy session key
-    */
-   memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
 
-   return result;
+
+  bool result = false;
+  BareosSocket *sd = jcr->store_bsock;
+  s_password password;
+
+  password.encoding = p_encoding_md5;
+  password.value = jcr->sd_auth_key;
+  result = sd->AuthenticateOutboundConnection(jcr, "Storage daemon", (char *)jcr->client_name,
+                                              password, me);
+
+  /*
+   * Destroy session key
+   */
+  memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
+
+  return result;
 }

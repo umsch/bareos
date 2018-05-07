@@ -24,4 +24,4 @@
 
 int VariableExpansion(JobControlRecord *jcr, char *inp, POOLMEM *&exp);
 
-#endif // BAREOS_DIRD_EXPAND_H_
+#endif  // BAREOS_DIRD_EXPAND_H_

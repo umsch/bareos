@@ -24,4 +24,4 @@
 
 void MountRequest(JobControlRecord *jcr, BareosSocket *bs, char *buf);
 
-#endif // BAREOS_DIRD_MOUNTREQ_H_
+#endif  // BAREOS_DIRD_MOUNTREQ_H_

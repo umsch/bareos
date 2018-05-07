@@ -23,4 +23,4 @@
 
 DLL_IMP_EXP void CheckIncludeListShadowing(JobControlRecord *jcr, findFILESET *fileset);
 
-#endif // BAREOS_FINDLIB_SHADOWING_H_
+#endif  // BAREOS_FINDLIB_SHADOWING_H_

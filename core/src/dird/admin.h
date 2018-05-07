@@ -27,4 +27,4 @@ bool DoAdminInit(JobControlRecord *jcr);
 bool do_admin(JobControlRecord *jcr);
 void AdminCleanup(JobControlRecord *jcr, int TermCode);
 
-#endif // BAREOS_DIRD_ADMIN_H_
+#endif  // BAREOS_DIRD_ADMIN_H_

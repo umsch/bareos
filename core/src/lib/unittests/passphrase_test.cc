@@ -28,11 +28,15 @@
 #include "gtest/gtest.h"
 #define PASSWORDLEN 10
 
-TEST(passphrase,passphrase) {
-   char *password;
-   int pwlen;
-   password = generate_crypto_passphrase(PASSWORDLEN);
-   pwlen = strlen(password);
-   free(password);
-   EXPECT_EQ(PASSWORDLEN, pwlen);
+TEST(passphrase, passphrase) {
+
+
+
+
+  char *password;
+  int pwlen;
+  password = generate_crypto_passphrase(PASSWORDLEN);
+  pwlen = strlen(password);
+  free(password);
+  EXPECT_EQ(PASSWORDLEN, pwlen);
 }

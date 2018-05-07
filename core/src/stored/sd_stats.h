@@ -26,4 +26,4 @@ void StopStatisticsThread();
 void UpdateDeviceTapealert(const char *devname, uint64_t flags, utime_t now);
 void UpdateJobStatistics(JobControlRecord *jcr, utime_t now);
 
-#endif // BAREOS_STORED_SD_STATS_H_
+#endif  // BAREOS_STORED_SD_STATS_H_

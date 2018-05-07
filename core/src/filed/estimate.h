@@ -20,4 +20,3 @@
 */
 
 int MakeEstimate(JobControlRecord *jcr);
-

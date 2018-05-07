@@ -45,4 +45,4 @@ void CancelStorageDaemonJob(JobControlRecord *jcr);
 bool RunConsoleCommand(JobControlRecord *jcr, const char *cmd);
 void SdMsgThreadSendSignal(JobControlRecord *jcr, int sig);
 
-#endif // BAREOS_DIRD_JOB_H_
+#endif  // BAREOS_DIRD_JOB_H_

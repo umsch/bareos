@@ -28,4 +28,4 @@ bool AuthenticateWithStoragedaemon(JobControlRecord *jcr);
 bool AuthenticateFiledaemon(JobControlRecord *jcr);
 bool AuthenticateWithFiledaemon(JobControlRecord *jcr);
 
-#endif // BAREOS_STORED_AUTHENTICATE_H_
+#endif  // BAREOS_STORED_AUTHENTICATE_H_

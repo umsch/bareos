@@ -22,8 +22,9 @@
 #ifndef BAREOS_DIRD_FD_CMDS_H_
 #define BAREOS_DIRD_FD_CMDS_H_
 
-bool ConnectToFileDaemon(JobControlRecord *jcr, int retry_interval, int max_retry_time, bool verbose);
-int  SendJobInfo(JobControlRecord *jcr);
+bool ConnectToFileDaemon(JobControlRecord *jcr, int retry_interval, int max_retry_time,
+                         bool verbose);
+int SendJobInfo(JobControlRecord *jcr);
 bool SendIncludeList(JobControlRecord *jcr);
 bool SendExcludeList(JobControlRecord *jcr);
 bool SendLevelCommand(JobControlRecord *jcr);
@@ -32,16 +33,16 @@ bool SendSecureEraseReqToFd(JobControlRecord *jcr);
 bool SendPreviousRestoreObjects(JobControlRecord *jcr);
 int GetAttributesAndPutInCatalog(JobControlRecord *jcr);
 void GetAttributesAndCompareToCatalog(JobControlRecord *jcr, JobId_t JobId);
-int put_file_into_catalog(JobControlRecord *jcr, long file_index, char *fname,
-                          char *link, char *attr, int stream);
+int put_file_into_catalog(JobControlRecord *jcr, long file_index, char *fname, char *link,
+                          char *attr, int stream);
 int SendRunscriptsCommands(JobControlRecord *jcr);
 bool SendPluginOptions(JobControlRecord *jcr);
 bool SendRestoreObjects(JobControlRecord *jcr, JobId_t JobId, bool send_global);
 bool CancelFileDaemonJob(UaContext *ua, JobControlRecord *jcr);
 void DoNativeClientStatus(UaContext *ua, ClientResource *client, char *cmd);
 void DoClientResolve(UaContext *ua, ClientResource *client);
-void *handle_filed_connection(ConnectionPool *connections, BareosSocket *fd,
-                              char *client_name, int fd_protocol_version);
+void *handle_filed_connection(ConnectionPool *connections, BareosSocket *fd, char *client_name,
+                              int fd_protocol_version);
 
 ConnectionPool *get_client_connections();
 bool IsConnectingToClientAllowed(ClientResource *res);
@@ -50,4 +51,4 @@ bool IsConnectFromClientAllowed(ClientResource *res);
 bool IsConnectFromClientAllowed(JobControlRecord *jcr);
 bool UseWaitingClient(JobControlRecord *jcr_job, int timeout);
 
-#endif // BAREOS_DIRD_FD_CMDS_H_
+#endif  // BAREOS_DIRD_FD_CMDS_H_

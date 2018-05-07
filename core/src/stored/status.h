@@ -27,4 +27,4 @@ bool DotstatusCmd(JobControlRecord *jcr);
 char *bareos_status(char *buf, int buf_len);
 #endif
 
-#endif // BAREOS_STORED_STATUS_H_
+#endif  // BAREOS_STORED_STATUS_H_

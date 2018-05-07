@@ -28,7 +28,8 @@ DLL_IMP_EXP void BashSpaces(char *str);
 DLL_IMP_EXP void BashSpaces(PoolMem &pm);
 DLL_IMP_EXP void UnbashSpaces(char *str);
 DLL_IMP_EXP void UnbashSpaces(PoolMem &pm);
-DLL_IMP_EXP const char* IndentMultilineString(PoolMem &resultbuffer, const char *multilinestring, const char *separator);
+DLL_IMP_EXP const char *IndentMultilineString(PoolMem &resultbuffer, const char *multilinestring,
+                                              const char *separator);
 DLL_IMP_EXP char *encode_time(utime_t time, char *buf);
 DLL_IMP_EXP bool ConvertTimeoutToTimespec(timespec &timeout, int timeout_in_seconds);
 DLL_IMP_EXP char *encode_mode(mode_t mode, char *buf);
@@ -45,8 +46,9 @@ DLL_IMP_EXP const char *volume_status_to_str(const char *status);
 DLL_IMP_EXP void MakeSessionKey(char *key, char *seed, int mode);
 DLL_IMP_EXP void EncodeSessionKey(char *encode, char *session, char *key, int maxlen);
 DLL_IMP_EXP void DecodeSessionKey(char *decode, char *session, char *key, int maxlen);
-DLL_IMP_EXP POOLMEM *edit_job_codes(JobControlRecord *jcr, char *omsg, char *imsg, const char *to, job_code_callback_t job_code_callback = NULL);
+DLL_IMP_EXP POOLMEM *edit_job_codes(JobControlRecord *jcr, char *omsg, char *imsg, const char *to,
+                                    job_code_callback_t job_code_callback = NULL);
 DLL_IMP_EXP void SetWorkingDirectory(char *wd);
 DLL_IMP_EXP const char *last_path_separator(const char *str);
 
-#endif // BAREOS_LIB_UTIL_H_
+#endif  // BAREOS_LIB_UTIL_H_

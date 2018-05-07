@@ -27,52 +27,51 @@
 #error "Illegal inclusion of catalog private interface"
 #endif
 
-class CATS_IMP_EXP BareosDbPrivateInterface: public BareosDb {
-protected:
-   /*
-    * Members
-    */
-   int status_;                      /**< Status */
-   int num_rows_;                    /**< Number of rows returned by last query */
-   int num_fields_;                  /**< Number of fields returned by last query */
-   int rows_size_;                   /**< Size of malloced rows */
-   int fields_size_;                 /**< Size of malloced fields */
-   int row_number_;                  /**< Row number from xx_data_seek */
-   int field_number_;                /**< Field number from SqlFieldSeek */
-   SQL_ROW rows_;                    /**< Defined rows */
-   SQL_FIELD *fields_;               /**< Defined fields */
-   bool allow_transactions_;         /**< Transactions allowed ? */
-   bool transaction_;                /**< Transaction started ? */
+class CATS_IMP_EXP BareosDbPrivateInterface : public BareosDb {
+ protected:
+  /*
+   * Members
+   */
+  int status_;              /**< Status */
+  int num_rows_;            /**< Number of rows returned by last query */
+  int num_fields_;          /**< Number of fields returned by last query */
+  int rows_size_;           /**< Size of malloced rows */
+  int fields_size_;         /**< Size of malloced fields */
+  int row_number_;          /**< Row number from xx_data_seek */
+  int field_number_;        /**< Field number from SqlFieldSeek */
+  SQL_ROW rows_;            /**< Defined rows */
+  SQL_FIELD *fields_;       /**< Defined fields */
+  bool allow_transactions_; /**< Transactions allowed ? */
+  bool transaction_;        /**< Transaction started ? */
 
-private:
-   /*
-    * Methods
-    */
-   int SqlNumRows(void) { return num_rows_; }
-   void SqlFieldSeek(int field) { field_number_ = field; }
-   int SqlNumFields(void) { return num_fields_; }
-   virtual void SqlFreeResult(void) = 0;
-   virtual SQL_ROW SqlFetchRow(void) = 0;
-   virtual bool SqlQueryWithHandler(const char *query, DB_RESULT_HANDLER *ResultHandler, void *ctx) = 0;
-   virtual bool SqlQueryWithoutHandler(const char *query, int flags = 0) = 0;
-   virtual const char *sql_strerror(void) = 0;
-   virtual void SqlDataSeek(int row) = 0;
-   virtual int SqlAffectedRows(void) = 0;
-   virtual uint64_t SqlInsertAutokeyRecord(const char *query, const char *table_name) = 0;
-   virtual SQL_FIELD *SqlFetchField(void) = 0;
-   virtual bool SqlFieldIsNotNull(int field_type) = 0;
-   virtual bool SqlFieldIsNumeric(int field_type) = 0;
-   virtual bool SqlBatchStart(JobControlRecord *jcr) = 0;
-   virtual bool SqlBatchEnd(JobControlRecord *jcr, const char *error) = 0;
-   virtual bool SqlBatchInsert(JobControlRecord *jcr, AttributesDbRecord *ar) = 0;
+ private:
+  /*
+   * Methods
+   */
+  int SqlNumRows(void) { return num_rows_; }
+  void SqlFieldSeek(int field) { field_number_ = field; }
+  int SqlNumFields(void) { return num_fields_; }
+  virtual void SqlFreeResult(void) = 0;
+  virtual SQL_ROW SqlFetchRow(void) = 0;
+  virtual bool SqlQueryWithHandler(const char *query, DB_RESULT_HANDLER *ResultHandler,
+                                   void *ctx) = 0;
+  virtual bool SqlQueryWithoutHandler(const char *query, int flags = 0) = 0;
+  virtual const char *sql_strerror(void) = 0;
+  virtual void SqlDataSeek(int row) = 0;
+  virtual int SqlAffectedRows(void) = 0;
+  virtual uint64_t SqlInsertAutokeyRecord(const char *query, const char *table_name) = 0;
+  virtual SQL_FIELD *SqlFetchField(void) = 0;
+  virtual bool SqlFieldIsNotNull(int field_type) = 0;
+  virtual bool SqlFieldIsNumeric(int field_type) = 0;
+  virtual bool SqlBatchStart(JobControlRecord *jcr) = 0;
+  virtual bool SqlBatchEnd(JobControlRecord *jcr, const char *error) = 0;
+  virtual bool SqlBatchInsert(JobControlRecord *jcr, AttributesDbRecord *ar) = 0;
 
-public:
-   /*
-    * Methods
-    */
-   BareosDbPrivateInterface() {
-      queries = NULL;
-   }
-   virtual ~BareosDbPrivateInterface() {}
+ public:
+  /*
+   * Methods
+   */
+  BareosDbPrivateInterface() { queries = NULL; }
+  virtual ~BareosDbPrivateInterface() {}
 };
 #endif /* BAREOS_CATS_BDB_PRIV_H_ */

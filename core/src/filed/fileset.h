@@ -28,4 +28,3 @@ int AddWildToFileset(JobControlRecord *jcr, const char *item, int type);
 int AddOptionsToFileset(JobControlRecord *jcr, const char *item);
 void AddFileset(JobControlRecord *jcr, const char *item);
 bool TermFileset(JobControlRecord *jcr);
-

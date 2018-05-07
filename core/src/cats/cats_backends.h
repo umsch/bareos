@@ -31,19 +31,13 @@
 #define BAREOS_CATS_CATS_BACKENDS_H_ 1
 
 extern "C" {
-typedef BareosDb *(*t_backend_instantiate)(JobControlRecord *jcr,
-                                       const char *db_driver,
-                                       const char *db_name,
-                                       const char *db_user,
-                                       const char *db_password,
-                                       const char *db_address,
-                                       int db_port,
-                                       const char *db_socket,
-                                       bool mult_db_connections,
-                                       bool disable_batch_insert,
-                                       bool try_reconnect,
-                                       bool exit_on_fatal,
-                                       bool need_private);
+typedef BareosDb *(*t_backend_instantiate)(JobControlRecord *jcr, const char *db_driver,
+                                           const char *db_name, const char *db_user,
+                                           const char *db_password, const char *db_address,
+                                           int db_port, const char *db_socket,
+                                           bool mult_db_connections, bool disable_batch_insert,
+                                           bool try_reconnect, bool exit_on_fatal,
+                                           bool need_private);
 
 typedef void (*t_flush_backend)(void);
 }
@@ -52,13 +46,13 @@ typedef void (*t_flush_backend)(void);
  * Loaded shared library with a certain backend interface type.
  */
 struct backend_shared_library_t {
-   int interface_type_id;
-   void *handle;
-   /*
-    * Entry points into loaded shared library.
-    */
-   t_backend_instantiate backend_instantiate;
-   t_flush_backend flush_backend;
+  int interface_type_id;
+  void *handle;
+  /*
+   * Entry points into loaded shared library.
+   */
+  t_backend_instantiate backend_instantiate;
+  t_flush_backend flush_backend;
 };
 
 #if defined(HAVE_WIN32)
@@ -75,35 +69,24 @@ struct backend_shared_library_t {
  * Known backend to interface mappings.
  */
 static struct backend_interface_mapping_t {
-   const char *interface_name;
-   bool partly_compare;
-   int interface_type_id;
-} backend_interface_mappings[] = {
-   { "dbi", TRUE, SQL_INTERFACE_TYPE_DBI },
-   { "mysql", FALSE, SQL_INTERFACE_TYPE_MYSQL },
-   { "postgresql", FALSE, SQL_INTERFACE_TYPE_POSTGRESQL },
-   { "sqlite3", FALSE, SQL_INTERFACE_TYPE_SQLITE3 },
-   { NULL, FALSE, 0 }
-};
+  const char *interface_name;
+  bool partly_compare;
+  int interface_type_id;
+} backend_interface_mappings[] = {{"dbi", TRUE, SQL_INTERFACE_TYPE_DBI},
+                                  {"mysql", FALSE, SQL_INTERFACE_TYPE_MYSQL},
+                                  {"postgresql", FALSE, SQL_INTERFACE_TYPE_POSTGRESQL},
+                                  {"sqlite3", FALSE, SQL_INTERFACE_TYPE_SQLITE3},
+                                  {NULL, FALSE, 0}};
 
 #if defined(HAVE_DYNAMIC_CATS_BACKENDS)
 DLL_IMP_EXP void DbSetBackendDirs(alist *new_backend_dirs);
 #endif
 DLL_IMP_EXP void DbFlushBackends(void);
-DLL_IMP_EXP BareosDb *db_init_database(JobControlRecord *jcr,
-                       const char *db_driver,
-                       const char *db_name,
-                       const char *db_user,
-                       const char *db_password,
-                       const char *db_address,
-                       int db_port,
-                       const char *db_socket,
-                       bool mult_db_connections,
-                       bool disable_batch_insert,
-                       bool try_reconnect,
-                       bool exit_on_fatal,
-                       bool need_private = false);
-
-
+DLL_IMP_EXP BareosDb *db_init_database(JobControlRecord *jcr, const char *db_driver,
+                                       const char *db_name, const char *db_user,
+                                       const char *db_password, const char *db_address, int db_port,
+                                       const char *db_socket, bool mult_db_connections,
+                                       bool disable_batch_insert, bool try_reconnect,
+                                       bool exit_on_fatal, bool need_private = false);
 
 #endif /* BAREOS_CATS_CATS_BACKENDS_H_ */

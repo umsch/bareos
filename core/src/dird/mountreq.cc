@@ -43,8 +43,7 @@
 
 /* Responses  sent to Storage daemon */
 #ifdef xxx
-static char OK_mount[] =
-   "1000 OK MountVolume\n";
+static char OK_mount[] = "1000 OK MountVolume\n";
 #endif
 
 static BQUEUE mountq = {&mountq, &mountq};
@@ -52,22 +51,25 @@ static int num_reqs = 0;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct mnt_req_s {
-   BQUEUE bq;
-   BareosSocket *bs;
-   JobControlRecord *jcr;
+  BQUEUE bq;
+  BareosSocket *bs;
+  JobControlRecord *jcr;
 } MNT_REQ;
 
-void MountRequest(JobControlRecord *jcr, BareosSocket *bs, char *buf)
-{
-   MNT_REQ *mreq;
+void MountRequest(JobControlRecord *jcr, BareosSocket *bs, char *buf) {
 
-   mreq = (MNT_REQ *) malloc(sizeof(MNT_REQ));
-   memset(mreq, 0, sizeof(MNT_REQ));
-   mreq->jcr = jcr;
-   mreq->bs = bs;
-   P(mutex);
-   num_reqs++;
-   qinsert(&mountq, &mreq->bq);
-   V(mutex);
-   return;
+
+
+
+  MNT_REQ *mreq;
+
+  mreq = (MNT_REQ *)malloc(sizeof(MNT_REQ));
+  memset(mreq, 0, sizeof(MNT_REQ));
+  mreq->jcr = jcr;
+  mreq->bs = bs;
+  P(mutex);
+  num_reqs++;
+  qinsert(&mountq, &mreq->bq);
+  V(mutex);
+  return;
 }

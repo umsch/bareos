@@ -21,14 +21,14 @@
 #ifndef BAREOS_STORED_SPOOL_H_
 #define BAREOS_STORED_SPOOL_H_
 
-bool BeginDataSpool (DeviceControlRecord *dcr);
-bool DiscardDataSpool (DeviceControlRecord *dcr);
-bool CommitDataSpool (DeviceControlRecord *dcr);
-bool AreAttributesSpooled (JobControlRecord *jcr);
-bool BeginAttributeSpool (JobControlRecord *jcr);
-bool DiscardAttributeSpool (JobControlRecord *jcr);
-bool CommitAttributeSpool (JobControlRecord *jcr);
-bool WriteBlockToSpoolFile (DeviceControlRecord *dcr);
-void ListSpoolStats (void sendit(const char *msg, int len, void *sarg), void *arg);
+bool BeginDataSpool(DeviceControlRecord *dcr);
+bool DiscardDataSpool(DeviceControlRecord *dcr);
+bool CommitDataSpool(DeviceControlRecord *dcr);
+bool AreAttributesSpooled(JobControlRecord *jcr);
+bool BeginAttributeSpool(JobControlRecord *jcr);
+bool DiscardAttributeSpool(JobControlRecord *jcr);
+bool CommitAttributeSpool(JobControlRecord *jcr);
+bool WriteBlockToSpoolFile(DeviceControlRecord *dcr);
+void ListSpoolStats(void sendit(const char *msg, int len, void *sarg), void *arg);
 
-#endif // BAREOS_STORED_SPOOL_H_
+#endif  // BAREOS_STORED_SPOOL_H_

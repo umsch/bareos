@@ -24,4 +24,4 @@
 DLL_IMP_EXP void InitSignals(void Terminate(int sig));
 DLL_IMP_EXP void InitStackDump(void);
 
-#endif // BAREOS_LIB_BSIGNAL_H_
+#endif  // BAREOS_LIB_BSIGNAL_H_

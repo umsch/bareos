@@ -21,7 +21,7 @@
 
 #ifndef BAREOS_CONSOLE_CONIO_H_
 #define BAREOS_CONSOLE_CONIO_H_
-extern int  InputLine(char *line, int len);
+extern int InputLine(char *line, int len);
 extern void ConInit(FILE *input);
 
 extern "C" {
@@ -32,7 +32,7 @@ extern void ConSetZedKeys();
 extern void t_sendl(char *buf, int len);
 extern void t_send(char *buf);
 extern void t_char(char c);
-extern int  usrbrk(void);
+extern int usrbrk(void);
 extern void clrbrk(void);
 extern void trapctlc(void);
 #endif

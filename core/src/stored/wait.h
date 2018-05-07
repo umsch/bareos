@@ -26,4 +26,4 @@ int WaitForSysop(DeviceControlRecord *dcr);
 bool WaitForDevice(JobControlRecord *jcr, int &retries);
 void ReleaseDeviceCond();
 
-#endif // BAREOS_STORED_WAIT_H_
+#endif  // BAREOS_STORED_WAIT_H_

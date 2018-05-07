@@ -29,36 +29,37 @@
 #ifndef BAREOS_STORED_BLOCK_H_
 #define BAREOS_STORED_BLOCK_H_ 1
 
-#define MAX_BLOCK_LENGTH  20000000      /**< this is a sort of sanity check */
-#define DEFAULT_BLOCK_SIZE (512 * 126)  /**< 64,512 N.B. do not use 65,536 here
-                                           the POSIX standard defaults the size of a
-                                           tape record to 126 blocks (63k). */
+#define MAX_BLOCK_LENGTH 20000000 /**< this is a sort of sanity check */
+#define DEFAULT_BLOCK_SIZE                                 \
+  (512 * 126) /**< 64,512 N.B. do not use 65,536 here      \
+                 the POSIX standard defaults the size of a \
+                 tape record to 126 blocks (63k). */
 
 /* Block Header definitions. */
-#define BLKHDR1_ID                       "BB01"
-#define BLKHDR2_ID                       "BB02"
-#define BLKHDR_ID_LENGTH                  4
-#define BLKHDR_CS_LENGTH                  4     /**< checksum length */
-#define BLKHDR1_LENGTH                   16     /**< Total length */
-#define BLKHDR2_LENGTH                   24     /**< Total length */
+#define BLKHDR1_ID "BB01"
+#define BLKHDR2_ID "BB02"
+#define BLKHDR_ID_LENGTH 4
+#define BLKHDR_CS_LENGTH 4 /**< checksum length */
+#define BLKHDR1_LENGTH 16  /**< Total length */
+#define BLKHDR2_LENGTH 24  /**< Total length */
 
-#define WRITE_BLKHDR_ID     BLKHDR2_ID
+#define WRITE_BLKHDR_ID BLKHDR2_ID
 #define WRITE_BLKHDR_LENGTH BLKHDR2_LENGTH
-#define BLOCK_VER                        2
+#define BLOCK_VER 2
 
 /* Record header definitions */
-#define RECHDR1_LENGTH                   20
-#define RECHDR2_LENGTH                   12
+#define RECHDR1_LENGTH 20
+#define RECHDR2_LENGTH 12
 #define WRITE_RECHDR_LENGTH RECHDR2_LENGTH
 
 /* Tape label and version definitions */
-#define BareosId                         "Bareos 2.0 immortal\n"
-#define OldBaculaId                      "Bacula 1.0 immortal\n"
-#define OlderBaculaId                    "Bacula 0.9 mortal\n"
-#define BareosTapeVersion                20
-#define OldCompatibleBareosTapeVersion1  11
-#define OldCompatibleBareosTapeVersion2  10
-#define OldCompatibleBareosTapeVersion3  9
+#define BareosId "Bareos 2.0 immortal\n"
+#define OldBaculaId "Bacula 1.0 immortal\n"
+#define OlderBaculaId "Bacula 0.9 mortal\n"
+#define BareosTapeVersion 20
+#define OldCompatibleBareosTapeVersion1 11
+#define OldCompatibleBareosTapeVersion2 10
+#define OldCompatibleBareosTapeVersion3 9
 
 /**
  * This is the Media structure for a block header
@@ -75,7 +76,7 @@
    uint32_t VolSessionTime;
  */
 
-class Device;                         /* for forward reference */
+class Device; /* for forward reference */
 
 /**
  * DeviceBlock for reading and writing blocks.
@@ -87,27 +88,27 @@ class Device;                         /* for forward reference */
  *  This is the memory structure for a device block.
  */
 struct DeviceBlock {
-   DeviceBlock *next;                   /* pointer to next one */
-   Device *dev;                       /* pointer to device */
-   /* binbuf is the number of bytes remaining in the buffer.
-    *   For writes, it is bytes not yet written.
-    *   For reads, it is remaining bytes not yet read.
-    */
-   uint32_t binbuf;                   /* bytes in buffer */
-   uint32_t block_len;                /* length of current block read */
-   uint32_t buf_len;                  /* max/default block length */
-   uint32_t BlockNumber;              /* sequential Bareos block number */
-   uint32_t read_len;                 /* bytes read into buffer, if zero, block empty */
-   uint32_t VolSessionId;             /* */
-   uint32_t VolSessionTime;           /* */
-   uint32_t read_errors;              /* block errors (checksum, header, ...) */
-   int      BlockVer;                 /* block version 1 or 2 */
-   bool     write_failed;             /* set if write failed */
-   bool     block_read;               /* set when block read */
-   int32_t  FirstIndex;               /* first index this block */
-   int32_t  LastIndex;                /* last index this block */
-   char    *bufp;                     /* pointer into buffer */
-   POOLMEM *buf;                      /* actual data buffer */
+  DeviceBlock *next; /* pointer to next one */
+  Device *dev;       /* pointer to device */
+  /* binbuf is the number of bytes remaining in the buffer.
+   *   For writes, it is bytes not yet written.
+   *   For reads, it is remaining bytes not yet read.
+   */
+  uint32_t binbuf;         /* bytes in buffer */
+  uint32_t block_len;      /* length of current block read */
+  uint32_t buf_len;        /* max/default block length */
+  uint32_t BlockNumber;    /* sequential Bareos block number */
+  uint32_t read_len;       /* bytes read into buffer, if zero, block empty */
+  uint32_t VolSessionId;   /* */
+  uint32_t VolSessionTime; /* */
+  uint32_t read_errors;    /* block errors (checksum, header, ...) */
+  int BlockVer;            /* block version 1 or 2 */
+  bool write_failed;       /* set if write failed */
+  bool block_read;         /* set when block read */
+  int32_t FirstIndex;      /* first index this block */
+  int32_t LastIndex;       /* last index this block */
+  char *bufp;              /* pointer into buffer */
+  POOLMEM *buf;            /* actual data buffer */
 };
 
 #define BlockWriteNavail(block) ((block)->buf_len - (block)->binbuf)
@@ -121,6 +122,5 @@ void EmptyBlock(DeviceBlock *block);
 void FreeBlock(DeviceBlock *block);
 void PrintBlockReadErrors(JobControlRecord *jcr, DeviceBlock *block);
 void SerBlockHeader(DeviceBlock *block);
-
 
 #endif

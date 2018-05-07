@@ -28,8 +28,8 @@ DLL_IMP_EXP void AddFnameToExcludeList(FindFilesPacket *ff, const char *fname);
 DLL_IMP_EXP bool FileIsExcluded(FindFilesPacket *ff, const char *file);
 DLL_IMP_EXP bool FileIsIncluded(FindFilesPacket *ff, const char *file);
 DLL_IMP_EXP struct s_included_file *get_next_included_file(FindFilesPacket *ff,
-                                               struct s_included_file *inc);
+                                                           struct s_included_file *inc);
 DLL_IMP_EXP bool ParseSizeMatch(const char *size_match_pattern,
-                      struct s_sz_matching *size_matching);
+                                struct s_sz_matching *size_matching);
 
-#endif // BAREOS_FINDLIB_MATCH_H_
+#endif  // BAREOS_FINDLIB_MATCH_H_

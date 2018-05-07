@@ -19,6 +19,5 @@
    02110-1301, USA.
 */
 
-
 void TestFstype(void **state);
 void TestDrivetype(void **state);

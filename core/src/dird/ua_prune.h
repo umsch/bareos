@@ -33,4 +33,4 @@ int FileDeleteHandler(void *ctx, int num_fields, char **row);
 int GetPruneListForVolume(UaContext *ua, MediaDbRecord *mr, del_ctx *del);
 int ExcludeRunningJobsFromList(del_ctx *prune_list);
 
-#endif // BAREOS_DIRD_UA_PRUNE_H_
+#endif  // BAREOS_DIRD_UA_PRUNE_H_

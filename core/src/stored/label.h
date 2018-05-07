@@ -36,7 +36,7 @@ void DumpVolumeLabel(Device *dev);
 void DumpLabelRecord(Device *dev, DeviceRecord *rec, bool verbose);
 bool UnserVolumeLabel(Device *dev, DeviceRecord *rec);
 bool UnserSessionLabel(SESSION_LABEL *label, DeviceRecord *rec);
-bool WriteNewVolumeLabelToDev(DeviceControlRecord *dcr, const char *VolName,
-                                   const char *PoolName, bool relabel);
+bool WriteNewVolumeLabelToDev(DeviceControlRecord *dcr, const char *VolName, const char *PoolName,
+                              bool relabel);
 
-#endif // BAREOS_STORED_LABEL_H_
+#endif  // BAREOS_STORED_LABEL_H_

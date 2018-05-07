@@ -115,53 +115,55 @@
  * Default PEM encryption passphrase callback.
  * Returns an empty password.
  */
-int CryptoDefaultPemCallback(char *buf, int size, const void *userdata)
-{
-   bstrncpy(buf, "", size);
-   return (strlen(buf));
+int CryptoDefaultPemCallback(char *buf, int size, const void *userdata) {
+
+
+
+
+  bstrncpy(buf, "", size);
+  return (strlen(buf));
 }
 
 /*
  * Returns the ASCII name of the digest type.
  * Returns: ASCII name of digest type.
  */
-const char *crypto_digest_name(crypto_digest_t type)
-{
-   switch (type) {
-   case CRYPTO_DIGEST_MD5:
-      return "MD5";
-   case CRYPTO_DIGEST_SHA1:
-      return "SHA1";
-   case CRYPTO_DIGEST_SHA256:
-      return "SHA256";
-   case CRYPTO_DIGEST_SHA512:
-      return "SHA512";
-   case CRYPTO_DIGEST_NONE:
-      return "None";
-   default:
-      return "Invalid Digest Type";
-   }
+const char *crypto_digest_name(crypto_digest_t type) {
 
+  switch (type) {
+    case CRYPTO_DIGEST_MD5:
+      return "MD5";
+    case CRYPTO_DIGEST_SHA1:
+      return "SHA1";
+    case CRYPTO_DIGEST_SHA256:
+      return "SHA256";
+    case CRYPTO_DIGEST_SHA512:
+      return "SHA512";
+    case CRYPTO_DIGEST_NONE:
+      return "None";
+    default:
+      return "Invalid Digest Type";
+  }
 }
 
 /*
  * Given a stream type, returns the associated
  * crypto_digest_t value.
  */
-crypto_digest_t CryptoDigestStreamType(int stream)
-{
-   switch (stream) {
-   case STREAM_MD5_DIGEST:
+crypto_digest_t CryptoDigestStreamType(int stream) {
+
+  switch (stream) {
+    case STREAM_MD5_DIGEST:
       return CRYPTO_DIGEST_MD5;
-   case STREAM_SHA1_DIGEST:
+    case STREAM_SHA1_DIGEST:
       return CRYPTO_DIGEST_SHA1;
-   case STREAM_SHA256_DIGEST:
+    case STREAM_SHA256_DIGEST:
       return CRYPTO_DIGEST_SHA256;
-   case STREAM_SHA512_DIGEST:
+    case STREAM_SHA512_DIGEST:
       return CRYPTO_DIGEST_SHA512;
-   default:
+    default:
       return CRYPTO_DIGEST_NONE;
-   }
+  }
 }
 
 /*
@@ -169,25 +171,26 @@ crypto_digest_t CryptoDigestStreamType(int stream)
  *   * error string
  *    */
 const char *crypto_strerror(crypto_error_t error) {
-   switch (error) {
-   case CRYPTO_ERROR_NONE:
+
+  switch (error) {
+    case CRYPTO_ERROR_NONE:
       return _("No error");
-   case CRYPTO_ERROR_NOSIGNER:
+    case CRYPTO_ERROR_NOSIGNER:
       return _("Signer not found");
-   case CRYPTO_ERROR_NORECIPIENT:
+    case CRYPTO_ERROR_NORECIPIENT:
       return _("Recipient not found");
-   case CRYPTO_ERROR_INVALID_DIGEST:
+    case CRYPTO_ERROR_INVALID_DIGEST:
       return _("Unsupported digest algorithm");
-   case CRYPTO_ERROR_INVALID_CRYPTO:
+    case CRYPTO_ERROR_INVALID_CRYPTO:
       return _("Unsupported encryption algorithm");
-   case CRYPTO_ERROR_BAD_SIGNATURE:
+    case CRYPTO_ERROR_BAD_SIGNATURE:
       return _("Signature is invalid");
-   case CRYPTO_ERROR_DECRYPTION:
+    case CRYPTO_ERROR_DECRYPTION:
       return _("Decryption error");
-   case CRYPTO_ERROR_INTERNAL:
+    case CRYPTO_ERROR_INTERNAL:
       /* This shouldn't happen */
       return _("Internal error");
-   default:
+    default:
       return _("Unknown error");
-   }
+  }
 }

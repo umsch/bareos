@@ -27,12 +27,12 @@
 #ifndef BAREOS_PLUGINS_FILED_FD_COMMON_H_
 #define BAREOS_PLUGINS_FILED_FD_COMMON_H_
 
-#define JT_BACKUP                'B'  /* Backup Job */
-#define JT_RESTORE               'R'  /* Restore Job */
+#define JT_BACKUP 'B'  /* Backup Job */
+#define JT_RESTORE 'R' /* Restore Job */
 
-#define L_FULL                   'F'  /* Full backup */
-#define L_INCREMENTAL            'I'  /* since last backup */
-#define L_DIFFERENTIAL           'D'  /* since last full backup */
+#define L_FULL 'F'         /* Full backup */
+#define L_INCREMENTAL 'I'  /* since last backup */
+#define L_DIFFERENTIAL 'D' /* since last full backup */
 
 #ifndef DLL_IMP_EXP
 #if defined(BUILDING_DLL)
@@ -60,54 +60,52 @@ DLL_IMP_EXP void Reallyfree(const char *file, int line, void *fp);
 #undef free
 #endif
 
-#define malloc(s)    sm_malloc(__FILE__, __LINE__, (s))
-#define free(o)      sm_free(__FILE__, __LINE__, (o))
+#define malloc(s) sm_malloc(__FILE__, __LINE__, (s))
+#define free(o) sm_free(__FILE__, __LINE__, (o))
 
 DLL_IMP_EXP void *sm_malloc(const char *fname, int lineno, unsigned int nbytes);
 DLL_IMP_EXP void sm_free(const char *file, int line, void *fp);
 
-void *operator new(size_t size, char const * file, int line)
-{
-   void *pnew = sm_malloc(file,line, size);
-   memset((char *)pnew, 0, size);
-   return pnew;
+void *operator new(size_t size, char const *file, int line) {
+
+
+
+  void *pnew = sm_malloc(file, line, size);
+  memset((char *)pnew, 0, size);
+  return pnew;
 }
 
-void *operator new[](size_t size, char const * file, int line)
-{
-   void *pnew = sm_malloc(file, line, size);
-   memset((char *)pnew, 0, size);
-   return pnew;
+void *operator new[](size_t size, char const *file, int line) {
+  void *pnew = sm_malloc(file, line, size);
+  memset((char *)pnew, 0, size);
+  return pnew;
 }
 
-void *operator new(size_t size)
-{
-   void *pnew = sm_malloc(__FILE__, __LINE__, size);
-   memset((char *)pnew, 0, size);
-   return pnew;
+void *operator new(size_t size) {
+
+
+
+  void *pnew = sm_malloc(__FILE__, __LINE__, size);
+  memset((char *)pnew, 0, size);
+  return pnew;
 }
 
-void *operator new[](size_t size)
-{
-   void *pnew = sm_malloc(__FILE__, __LINE__, size);
-   memset((char *)pnew, 0, size);
-   return pnew;
+void *operator new[](size_t size) {
+  void *pnew = sm_malloc(__FILE__, __LINE__, size);
+  memset((char *)pnew, 0, size);
+  return pnew;
 }
 
-#define new   new(__FILE__, __LINE__)
+#define new new (__FILE__, __LINE__)
 
-void operator delete(void *buf) noexcept
-{
-   sm_free( __FILE__, __LINE__, buf);
-}
+void operator delete(void *buf) noexcept { sm_free(__FILE__, __LINE__, buf); }
 
-void operator delete[] (void *buf) noexcept
-{
-  sm_free(__FILE__, __LINE__, buf);
-}
+void operator delete[](void *buf) noexcept { sm_free(__FILE__, __LINE__, buf); }
 #endif
 
-#define Dmsg(context, level,  ...) bfuncs->DebugMessage(context, __FILE__, __LINE__, level, __VA_ARGS__ )
-#define Jmsg(context, type,  ...) bfuncs->JobMessage(context, __FILE__, __LINE__, type, 0, __VA_ARGS__ )
+#define Dmsg(context, level, ...) \
+  bfuncs->DebugMessage(context, __FILE__, __LINE__, level, __VA_ARGS__)
+#define Jmsg(context, type, ...) \
+  bfuncs->JobMessage(context, __FILE__, __LINE__, type, 0, __VA_ARGS__)
 
 #endif

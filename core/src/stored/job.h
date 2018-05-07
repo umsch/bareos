@@ -24,4 +24,4 @@
 
 void StoredFreeJcr(JobControlRecord *jcr);
 
-#endif // BAREOS_STORED_JOB_H_
+#endif  // BAREOS_STORED_JOB_H_

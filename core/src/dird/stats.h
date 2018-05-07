@@ -25,4 +25,4 @@ int StartStatisticsThread(void);
 void StopStatisticsThread();
 void stats_job_started();
 
-#endif // BAREOS_DIRD_STATS_H_
+#endif  // BAREOS_DIRD_STATS_H_

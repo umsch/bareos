@@ -23,4 +23,4 @@
 
 void *handle_director_connection(BareosSocket *dir);
 
-#endif // BAREOS_STORED_DIR_CMD_H_
+#endif  // BAREOS_STORED_DIR_CMD_H_

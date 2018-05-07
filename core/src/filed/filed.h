@@ -44,8 +44,8 @@
 #include "backup.h"
 #include "restore.h"
 
-extern ClientResource *me;                 /* "Global" Client resource */
-extern ConfigurationParser *my_config;             /* Our Global config */
+extern ClientResource *me;             /* "Global" Client resource */
+extern ConfigurationParser *my_config; /* Our Global config */
 
 void TerminateFiled(int sig);
 

@@ -29,12 +29,12 @@ DLL_IMP_EXP bool SkipSpaces(char **msg);
 DLL_IMP_EXP bool SkipNonspaces(char **msg);
 DLL_IMP_EXP int fstrsch(const char *a, const char *b);
 DLL_IMP_EXP char *next_arg(char **s);
-DLL_IMP_EXP int ParseArgs(POOLMEM *cmd, POOLMEM *&args, int *argc,
-               char **argk, char **argv, int max_args);
-DLL_IMP_EXP int ParseArgsOnly(POOLMEM *cmd, POOLMEM *&args, int *argc,
-                    char **argk, char **argv, int max_args);
-DLL_IMP_EXP void SplitPathAndFilename(const char *fname, POOLMEM *&path,
-                             int *pnl, POOLMEM *&file, int *fnl);
+DLL_IMP_EXP int ParseArgs(POOLMEM *cmd, POOLMEM *&args, int *argc, char **argk, char **argv,
+                          int max_args);
+DLL_IMP_EXP int ParseArgsOnly(POOLMEM *cmd, POOLMEM *&args, int *argc, char **argk, char **argv,
+                              int max_args);
+DLL_IMP_EXP void SplitPathAndFilename(const char *fname, POOLMEM *&path, int *pnl, POOLMEM *&file,
+                                      int *fnl);
 DLL_IMP_EXP int bsscanf(const char *buf, const char *fmt, ...);
 
-#endif // BAREOS_LIB_SCAN_H_
+#endif  // BAREOS_LIB_SCAN_H_

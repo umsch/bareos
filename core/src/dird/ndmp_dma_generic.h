@@ -26,4 +26,4 @@ bool NdmpValidateClient(JobControlRecord *jcr);
 bool NdmpValidateStorage(JobControlRecord *jcr);
 void DoNdmpClientStatus(UaContext *ua, ClientResource *client, char *cmd);
 
-#endif // BAREOS_DIRD_NDMP_DMA_GENERIC_H_
+#endif  // BAREOS_DIRD_NDMP_DMA_GENERIC_H_

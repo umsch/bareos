@@ -23,4 +23,4 @@
 
 bool MountNextReadVolume(DeviceControlRecord *dcr);
 
-#endif // BAREOS_STORED_MOUNT_H_
+#endif  // BAREOS_STORED_MOUNT_H_

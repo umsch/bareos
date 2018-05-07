@@ -33,4 +33,4 @@ void PurgeJobsFromCatalog(UaContext *ua, char *jobs);
 void PurgeJobListFromCatalog(UaContext *ua, del_ctx &del);
 void PurgeFilesFromJobList(UaContext *ua, del_ctx &del);
 
-#endif // BAREOS_DIRD_UA_PURGE_H_
+#endif  // BAREOS_DIRD_UA_PURGE_H_

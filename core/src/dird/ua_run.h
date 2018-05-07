@@ -28,4 +28,4 @@ bool reRunCmd(UaContext *ua, const char *cmd);
 bool RunCmd(UaContext *ua, const char *cmd);
 int DoRunCmd(UaContext *ua, const char *cmd);
 
-#endif // BAREOS_DIRD_UA_RUN_H_
+#endif  // BAREOS_DIRD_UA_RUN_H_

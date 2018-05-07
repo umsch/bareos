@@ -33,53 +33,54 @@
 /**
  * Loop var through each member of list
  */
-#define foreach_sellist(var, list) \
-        for((var)=(list)->first(); (var)>=0; (var)=(list)->next() )
-
+#define foreach_sellist(var, list) for ((var) = (list)->first(); (var) >= 0; (var) = (list)->next())
 
 class sellist : public SmartAlloc {
-   const char *errmsg;
-   char *p, *e, *h;
-   char esave, hsave;
-   int64_t beg, end;
-   int64_t max;
-   int num_items;
-   char *str;
-public:
-   sellist();
-   ~sellist();
-   bool SetString(char *string, bool scan);
-   int64_t first();
-   int64_t next();
-   void begin();
-   /* size() valid only if scan enabled on string */
-   int size() const { return num_items; }
-   char *get_list() { return str; }
-   /* if errmsg == NULL, no error */
-   const char *get_errmsg() { return errmsg; }
+  const char *errmsg;
+  char *p, *e, *h;
+  char esave, hsave;
+  int64_t beg, end;
+  int64_t max;
+  int num_items;
+  char *str;
+
+ public:
+  sellist();
+  ~sellist();
+  bool SetString(char *string, bool scan);
+  int64_t first();
+  int64_t next();
+  void begin();
+  /* size() valid only if scan enabled on string */
+  int size() const { return num_items; }
+  char *get_list() { return str; }
+  /* if errmsg == NULL, no error */
+  const char *get_errmsg() { return errmsg; }
 };
 
 /**
  * Initialize the list structure
  */
-inline sellist::sellist()
-{
-   num_items = 0;
-   max = 99999;
-   str = NULL;
-   e = NULL;
-   errmsg = NULL;
+inline sellist::sellist() {
+
+
+
+
+  num_items = 0;
+  max = 99999;
+  str = NULL;
+  e = NULL;
+  errmsg = NULL;
 }
 
 /**
  * Destroy the list
  */
-inline sellist::~sellist()
-{
-   if (str) {
-      free(str);
-      str = NULL;
-   }
+inline sellist::~sellist() {
+  if (str) {
+    free(str);
+    str = NULL;
+  }
 }
 
 /**
@@ -87,19 +88,21 @@ inline sellist::~sellist()
  *   error if returns -1 and errmsg set
  *   end of items if returns -1 and errmsg NULL
  */
-inline int64_t sellist::first()
-{
-   begin();
-   return next();
+inline int64_t sellist::first() {
+  begin();
+  return next();
 }
 
 /**
  * Reset to walk list from beginning
  */
-inline void sellist::begin()
-{
-   e = str;
-   end = 0;
-   beg = 1;
-   errmsg = NULL;
+inline void sellist::begin() {
+
+
+
+
+  e = str;
+  end = 0;
+  beg = 1;
+  errmsg = NULL;
 }

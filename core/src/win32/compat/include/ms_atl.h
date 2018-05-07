@@ -3,51 +3,33 @@
  * Based on common public IUnknown interface only
  */
 
-template <class T> class CComPtr
-{
+template <class T>
+class CComPtr {
 
-public:
+ public:
+  /* Attribute(s) ... */
+  T* p;
 
-/* Attribute(s) ... */
-        T* p;
+  /* Creation ... */
+  CComPtr() { p = NULL; }
 
-/* Creation ... */
-        CComPtr()
-        {
-           p = NULL;
-        }
-
-/* Destructor ... */
-        ~CComPtr()
-        {
-           if (p)
-              p->Release();
-        }
+  /* Destructor ... */
+  ~CComPtr() {
+    if (p) p->Release();
+  }
 };
 
-class CComBSTR
-{
+class CComBSTR {
 
-public:
+ public:
+  BSTR p;
 
-        BSTR p;
+  /* Creation ... */
+  CComBSTR() { p = NULL; }
 
-/* Creation ... */
-        CComBSTR()
-        {
-           p = NULL;
-        }
+  /* Destructor ... */
+  ~CComBSTR() { ::SysFreeString(p); }
 
-/* Destructor ... */
-        ~CComBSTR()
-        {
-             ::SysFreeString(p);
-        }
-
-/* Address-of operator */
-        BSTR* operator&()
-        {
-           return &p;
-        }
-
+  /* Address-of operator */
+  BSTR* operator&() { return &p; }
 };

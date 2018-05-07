@@ -22,23 +22,23 @@
 /*
  * Nic Bellamy <nic@bellamy.co.nz>, October 2003.
  *
-*/
+ */
 /**
  * @file
  * Process and thread timer routines, built on top of watchdogs.
-*/
+ */
 
 #ifndef BAREOS_LIB_BTIMERS_H_
 #define BAREOS_LIB_BTIMERS_H_
 
 struct btimer_t {
-   watchdog_t *wd;                    /**< Parent watchdog */
-   int type;
-   bool killed;
-   pid_t pid;                         /**< process id if TYPE_CHILD */
-   pthread_t tid;                     /**< thread id if TYPE_PTHREAD */
-   BareosSocket *bsock;                      /**< Pointer to BareosSocket */
-   JobControlRecord *jcr;                          /**< Pointer to job control record */
+  watchdog_t *wd; /**< Parent watchdog */
+  int type;
+  bool killed;
+  pid_t pid;             /**< process id if TYPE_CHILD */
+  pthread_t tid;         /**< thread id if TYPE_PTHREAD */
+  BareosSocket *bsock;   /**< Pointer to BareosSocket */
+  JobControlRecord *jcr; /**< Pointer to job control record */
 };
 
 DLL_IMP_EXP btimer_t *start_child_timer(JobControlRecord *jcr, pid_t pid, uint32_t wait);

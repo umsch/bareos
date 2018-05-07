@@ -43,7 +43,7 @@ void AddPrompt(UaContext *ua, const char *prompt);
 int DoPrompt(UaContext *ua, const char *automsg, const char *msg, char *prompt, int max_prompt);
 CatalogResource *get_catalog_resource(UaContext *ua);
 StorageResource *get_storage_resource(UaContext *ua, bool use_default = false,
-                               bool autochanger_only = false);
+                                      bool autochanger_only = false);
 drive_number_t GetStorageDrive(UaContext *ua, StorageResource *store);
 slot_number_t GetStorageSlot(UaContext *ua, StorageResource *store);
 int GetMediaType(UaContext *ua, char *MediaType, int max_media);
@@ -68,5 +68,4 @@ int DoKeywordPrompt(UaContext *ua, const char *msg, const char **list);
 bool ConfirmRetention(UaContext *ua, utime_t *ret, const char *msg);
 bool GetLevelFromName(JobControlRecord *jcr, const char *level_name);
 
-
-#endif // BAREOS_DIRD_UA_SELECT_H_
+#endif  // BAREOS_DIRD_UA_SELECT_H_

@@ -34,11 +34,9 @@
 #include "dird/ua_server.h"
 #include "lib/bnet_sever_tcp.h"
 
-static char hello_client_with_version[] =
-   "Hello Client %127s FdProtocolVersion=%d calling";
+static char hello_client_with_version[] = "Hello Client %127s FdProtocolVersion=%d calling";
 
-static char hello_client[] =
-   "Hello Client %127s calling";
+static char hello_client[] = "Hello Client %127s calling";
 
 /* Global variables */
 static workq_t socket_workq;
@@ -47,8 +45,8 @@ static pthread_t tcp_server_tid;
 static ConnectionPool *client_connections = NULL;
 
 struct s_addr_port {
-   char *addr;
-   char *port;
+  char *addr;
+  char *port;
 };
 
 /*
@@ -57,67 +55,59 @@ struct s_addr_port {
 #define MIN_MSG_LEN 15
 #define MAX_MSG_LEN (int)sizeof(name) + 25
 
-ConnectionPool *get_client_connections()
-{
-   return client_connections;
+ConnectionPool *get_client_connections() { return client_connections; }
+
+static void *handle_connection_request(void *arg) {
+
+  BareosSocket *bs = (BareosSocket *)arg;
+  char name[MAX_NAME_LENGTH];
+  char tbuf[MAX_TIME_LENGTH];
+  int fd_protocol_version = 0;
+
+  if (bs->recv() <= 0) {
+    Emsg1(M_ERROR, 0, _("Connection request from %s failed.\n"), bs->who());
+    Bmicrosleep(5, 0); /* make user wait 5 seconds */
+    bs->close();
+    return NULL;
+  }
+
+  /*
+   * Do a sanity check on the message received
+   */
+  if (bs->msglen < MIN_MSG_LEN || bs->msglen > MAX_MSG_LEN) {
+    Dmsg1(000, "<filed: %s", bs->msg);
+    Emsg2(M_ERROR, 0, _("Invalid connection from %s. Len=%d\n"), bs->who(), bs->msglen);
+    Bmicrosleep(5, 0); /* make user wait 5 seconds */
+    bs->close();
+    return NULL;
+  }
+
+  Dmsg1(110, "Conn: %s", bs->msg);
+
+  /*
+   * See if this is a File daemon connection. If so call FD handler.
+   */
+  if ((sscanf(bs->msg, hello_client_with_version, name, &fd_protocol_version) == 2) ||
+      (sscanf(bs->msg, hello_client, name) == 1)) {
+    Dmsg1(110, "Got a FD connection at %s\n", bstrftimes(tbuf, sizeof(tbuf), (utime_t)time(NULL)));
+    return handle_filed_connection(client_connections, bs, name, fd_protocol_version);
+  }
+
+  return handle_UA_client_request(bs);
 }
 
-static void *handle_connection_request(void *arg)
-{
-   BareosSocket *bs = (BareosSocket *)arg;
-   char name[MAX_NAME_LENGTH];
-   char tbuf[MAX_TIME_LENGTH];
-   int fd_protocol_version = 0;
+extern "C" void *connect_thread(void *arg) {
+  pthread_detach(pthread_self());
+  SetJcrInTsd(INVALID_JCR);
 
-   if (bs->recv() <= 0) {
-      Emsg1(M_ERROR, 0, _("Connection request from %s failed.\n"), bs->who());
-      Bmicrosleep(5, 0);   /* make user wait 5 seconds */
-      bs->close();
-      return NULL;
-   }
+  /*
+   * Permit MaxConnections connections.
+   */
+  sock_fds = New(alist(10, not_owned_by_alist));
+  bnet_thread_server_tcp((dlist *)arg, me->MaxConnections, sock_fds, &socket_workq, me->nokeepalive,
+                         handle_connection_request);
 
-   /*
-    * Do a sanity check on the message received
-    */
-   if (bs->msglen < MIN_MSG_LEN || bs->msglen > MAX_MSG_LEN) {
-      Dmsg1(000, "<filed: %s", bs->msg);
-      Emsg2(M_ERROR, 0, _("Invalid connection from %s. Len=%d\n"), bs->who(), bs->msglen);
-      Bmicrosleep(5, 0);   /* make user wait 5 seconds */
-      bs->close();
-      return NULL;
-   }
-
-   Dmsg1(110, "Conn: %s", bs->msg);
-
-   /*
-    * See if this is a File daemon connection. If so call FD handler.
-    */
-   if ((sscanf(bs->msg, hello_client_with_version, name, &fd_protocol_version) == 2) ||
-       (sscanf(bs->msg, hello_client, name) == 1)) {
-      Dmsg1(110, "Got a FD connection at %s\n", bstrftimes(tbuf, sizeof(tbuf), (utime_t)time(NULL)));
-      return handle_filed_connection(client_connections, bs, name, fd_protocol_version);
-   }
-
-   return handle_UA_client_request(bs);
-}
-
-extern "C" void *connect_thread(void *arg)
-{
-   pthread_detach(pthread_self());
-   SetJcrInTsd(INVALID_JCR);
-
-   /*
-    * Permit MaxConnections connections.
-    */
-   sock_fds = New(alist(10, not_owned_by_alist));
-   bnet_thread_server_tcp((dlist*)arg,
-                          me->MaxConnections,
-                          sock_fds,
-                          &socket_workq,
-                          me->nokeepalive,
-                          handle_connection_request);
-
-   return NULL;
+  return NULL;
 }
 
 /**
@@ -125,31 +115,37 @@ extern "C" void *connect_thread(void *arg)
  * command thread. This routine creates the thread and then
  * returns.
  */
-void StartSocketServer(dlist *addrs)
-{
-   int status;
-   static dlist *myaddrs = addrs;
+void StartSocketServer(dlist *addrs) {
 
-   if (client_connections == NULL) {
-      client_connections = New(ConnectionPool());
-   }
-   if ((status = pthread_create(&tcp_server_tid, NULL, connect_thread, (void *)myaddrs)) != 0) {
-      berrno be;
-      Emsg1(M_ABORT, 0, _("Cannot create UA thread: %s\n"), be.bstrerror(status));
-   }
 
-   return;
+
+
+  int status;
+  static dlist *myaddrs = addrs;
+
+  if (client_connections == NULL) {
+    client_connections = New(ConnectionPool());
+  }
+  if ((status = pthread_create(&tcp_server_tid, NULL, connect_thread, (void *)myaddrs)) != 0) {
+    berrno be;
+    Emsg1(M_ABORT, 0, _("Cannot create UA thread: %s\n"), be.bstrerror(status));
+  }
+
+  return;
 }
 
-void StopSocketServer()
-{
-   if (sock_fds) {
-      BnetStopThreadServerTcp(tcp_server_tid);
-      CleanupBnetThreadServerTcp(sock_fds, &socket_workq);
-      delete sock_fds;
-      sock_fds = NULL;
-   }
-   if (client_connections) {
-      delete(client_connections);
-   }
+void StopSocketServer() {
+
+
+
+
+  if (sock_fds) {
+    BnetStopThreadServerTcp(tcp_server_tid);
+    CleanupBnetThreadServerTcp(sock_fds, &socket_workq);
+    delete sock_fds;
+    sock_fds = NULL;
+  }
+  if (client_connections) {
+    delete (client_connections);
+  }
 }

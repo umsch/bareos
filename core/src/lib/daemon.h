@@ -23,4 +23,4 @@
 
 DLL_IMP_EXP void daemon_start();
 
-#endif // BAREOS_LIB_DAEMON_H_
+#endif  // BAREOS_LIB_DAEMON_H_

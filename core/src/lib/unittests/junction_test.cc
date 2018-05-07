@@ -30,7 +30,6 @@
 
 bool CreateJunction(const char *szJunction, const char *szPath);
 
-
 /*
  * Test the CreateJunction functionality
  * - create target directory
@@ -44,68 +43,70 @@ bool CreateJunction(const char *szJunction, const char *szPath);
 #define TESTSTRING "THIS_IS_A_JUNCTION_TEST"
 TEST(junction, junction) {
 
-   FILE* f;
-
-   POOLMEM *szJunctionW = GetPoolMemory(PM_FNAME);
-   POOLMEM *szTargetW = GetPoolMemory(PM_FNAME);
-   POOLMEM *szTestFileW = GetPoolMemory(PM_FNAME);
-   POOLMEM *s = GetPoolMemory(PM_FNAME);
-
-   const char *szJunction = "C:\\junction_with_öüäß";
-   const char *szTarget = "C:\\öäüß";
-   const char *szTestFile = "testfile";
-
-   debug_level = 500;
-   InitWinAPIWrapper();
-   /*
-    * convert names to wchar
-    */
-   if (!UTF8_2_wchar(szJunctionW, szJunction)) {
-      printf("error converting szJunction:%s\n", errorString());
-   }
-   make_win32_path_UTF8_2_wchar(szTargetW, szTarget);
-   make_win32_path_UTF8_2_wchar(szTestFileW, szTestFile);
 
 
-   if (!p_CreateDirectoryW((LPCWSTR)szTargetW, NULL)) {
-      printf("CreateDirectory Target Failed:%s\n", errorString());
-   }
 
-   BOOL WINAPI retval = SetCurrentDirectoryW( (LPCWSTR)szTargetW );
-   EXPECT_TRUE(retval);
+  FILE *f;
 
-   f = _wfopen( (LPCWSTR)szTestFileW, L"w" );
-   if (!f) printf("fopen Failed:%s\n", errorString());
-   EXPECT_TRUE(f);
-   fprintf(f, TESTSTRING);
-   fclose(f);
+  POOLMEM *szJunctionW = GetPoolMemory(PM_FNAME);
+  POOLMEM *szTargetW = GetPoolMemory(PM_FNAME);
+  POOLMEM *szTestFileW = GetPoolMemory(PM_FNAME);
+  POOLMEM *s = GetPoolMemory(PM_FNAME);
 
-   bool successful = CreateJunction(szJunction, szTarget);
+  const char *szJunction = "C:\\junction_with_öüäß";
+  const char *szTarget = "C:\\öäüß";
+  const char *szTestFile = "testfile";
 
-   retval = SetCurrentDirectoryW( (LPCWSTR)szJunctionW );
-   EXPECT_TRUE(retval);
+  debug_level = 500;
+  InitWinAPIWrapper();
+  /*
+   * convert names to wchar
+   */
+  if (!UTF8_2_wchar(szJunctionW, szJunction)) {
+    printf("error converting szJunction:%s\n", errorString());
+  }
+  make_win32_path_UTF8_2_wchar(szTargetW, szTarget);
+  make_win32_path_UTF8_2_wchar(szTestFileW, szTestFile);
 
-   f = _wfopen( (LPCWSTR)szTestFileW, L"r" );
-   if (!f) printf("fopen Failed:%s\n", errorString());
+  if (!p_CreateDirectoryW((LPCWSTR)szTargetW, NULL)) {
+    printf("CreateDirectory Target Failed:%s\n", errorString());
+  }
 
-   EXPECT_TRUE(f);
-   fscanf( f, "%s", s);
-   EXPECT_STREQ( TESTSTRING, s);
-   fclose(f);
+  BOOL WINAPI retval = SetCurrentDirectoryW((LPCWSTR)szTargetW);
+  EXPECT_TRUE(retval);
 
-   int unlinkresult = _wunlink((LPCWSTR)szTestFileW);
-   EXPECT_EQ(unlinkresult,0);
+  f = _wfopen((LPCWSTR)szTestFileW, L"w");
+  if (!f) printf("fopen Failed:%s\n", errorString());
+  EXPECT_TRUE(f);
+  fprintf(f, TESTSTRING);
+  fclose(f);
 
-   retval = SetCurrentDirectoryW( L"C:\\" );
-   EXPECT_TRUE(retval);
+  bool successful = CreateJunction(szJunction, szTarget);
 
-   if (!RemoveDirectoryW((LPCWSTR)szJunctionW)) {
-      printf("RemoveDirectory Junction Failed:%s\n", errorString());
-   }
-   if (!RemoveDirectoryW((LPCWSTR)szTargetW)) {
-      printf("RemoveDirectory Target Failed:%s\n", errorString());
-   }
-   sm_dump(false);
-   EXPECT_TRUE(successful);
+  retval = SetCurrentDirectoryW((LPCWSTR)szJunctionW);
+  EXPECT_TRUE(retval);
+
+  f = _wfopen((LPCWSTR)szTestFileW, L"r");
+  if (!f) printf("fopen Failed:%s\n", errorString());
+
+  EXPECT_TRUE(f);
+  fscanf(f, "%s", s);
+  EXPECT_STREQ(TESTSTRING, s);
+  fclose(f);
+
+  int unlinkresult = _wunlink((LPCWSTR)szTestFileW);
+  EXPECT_EQ(unlinkresult, 0);
+
+  retval = SetCurrentDirectoryW(L"C:\\");
+  EXPECT_TRUE(retval);
+
+  if (!RemoveDirectoryW((LPCWSTR)szJunctionW)) {
+    printf("RemoveDirectory Junction Failed:%s\n", errorString());
+  }
+  if (!RemoveDirectoryW((LPCWSTR)szTargetW)) {
+    printf("RemoveDirectory Target Failed:%s\n", errorString());
+  }
+  sm_dump(false);
+  EXPECT_TRUE(successful);
 }
 #endif

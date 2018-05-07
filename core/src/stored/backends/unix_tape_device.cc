@@ -46,38 +46,33 @@
 #include "generic_tape_device.h"
 #include "unix_tape_device.h"
 
-int unix_tape_device::d_ioctl(int fd, ioctl_req_t request, char *op)
-{
-   return ::ioctl(fd, request, op);
+int unix_tape_device::d_ioctl(int fd, ioctl_req_t request, char *op) {
+
+  return ::ioctl(fd, request, op);
 }
 
-unix_tape_device::~unix_tape_device()
-{
-}
+unix_tape_device::~unix_tape_device() {}
 
-unix_tape_device::unix_tape_device()
-{
-   SetCap(CAP_ADJWRITESIZE); /* Adjust write size to min/max */
+unix_tape_device::unix_tape_device() {
+
+  SetCap(CAP_ADJWRITESIZE); /* Adjust write size to min/max */
 }
 
 #ifdef HAVE_DYNAMIC_SD_BACKENDS
-extern "C" Device SD_IMP_EXP *backend_instantiate(JobControlRecord *jcr, int device_type)
-{
-   Device *dev = NULL;
+extern "C" Device SD_IMP_EXP *backend_instantiate(JobControlRecord *jcr, int device_type) {
+  Device *dev = NULL;
 
-   switch (device_type) {
-   case B_TAPE_DEV:
+  switch (device_type) {
+    case B_TAPE_DEV:
       dev = New(unix_tape_device);
       break;
-   default:
+    default:
       Jmsg(jcr, M_FATAL, 0, _("Request for unknown devicetype: %d\n"), device_type);
       break;
-   }
+  }
 
-   return dev;
+  return dev;
 }
 
-extern "C" void SD_IMP_EXP flush_backend(void)
-{
-}
+extern "C" void SD_IMP_EXP flush_backend(void) {}
 #endif

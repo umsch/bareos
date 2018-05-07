@@ -28,22 +28,22 @@
 #ifndef BAREOS_WIN32_STORED_BACKENDS_WIN32_FILE_DEVICE_H_
 #define BAREOS_WIN32_STORED_BACKENDS_WIN32_FILE_DEVICE_H_
 
-class win32_file_device: public Device {
-public:
-   win32_file_device();
-   ~win32_file_device();
+class win32_file_device : public Device {
+ public:
+  win32_file_device();
+  ~win32_file_device();
 
-   /*
-    * Interface from Device
-    */
-   bool MountBackend(DeviceControlRecord *dcr, int timeout);
-   bool UnmountBackend(DeviceControlRecord *dcr, int timeout);
-   int d_close(int);
-   int d_open(const char *pathname, int flags, int mode);
-   int d_ioctl(int fd, ioctl_req_t request, char *mt = NULL);
-   ssize_t d_read(int fd, void *buffer, size_t count);
-   ssize_t d_write(int fd, const void *buffer, size_t count);
-   boffset_t d_lseek(DeviceControlRecord *dcr, boffset_t offset, int whence);
-   bool d_truncate(DeviceControlRecord *dcr);
+  /*
+   * Interface from Device
+   */
+  bool MountBackend(DeviceControlRecord *dcr, int timeout);
+  bool UnmountBackend(DeviceControlRecord *dcr, int timeout);
+  int d_close(int);
+  int d_open(const char *pathname, int flags, int mode);
+  int d_ioctl(int fd, ioctl_req_t request, char *mt = NULL);
+  ssize_t d_read(int fd, void *buffer, size_t count);
+  ssize_t d_write(int fd, const void *buffer, size_t count);
+  boffset_t d_lseek(DeviceControlRecord *dcr, boffset_t offset, int whence);
+  bool d_truncate(DeviceControlRecord *dcr);
 };
 #endif /* BAREOS_WIN32_STORED_BACKENDS_WIN32_FILE_DEVICE_H_ */

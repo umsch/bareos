@@ -25,4 +25,4 @@
 bool UserSelectFilesFromTree(TreeContext *tree);
 int InsertTreeHandler(void *ctx, int num_fields, char **row);
 
-#endif // BAREOS_DIRD_UA_TREE_H_
+#endif  // BAREOS_DIRD_UA_TREE_H_

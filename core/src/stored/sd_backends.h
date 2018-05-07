@@ -39,13 +39,13 @@ typedef void (*t_flush_backend)(void);
  * Loaded shared library with a certain backend interface type.
  */
 struct backend_shared_library_t {
-   int interface_type_id;
-   void *handle;
-   /*
-    * Entry points into loaded shared library.
-    */
-   t_backend_instantiate backend_instantiate;
-   t_flush_backend flush_backend;
+  int interface_type_id;
+  void *handle;
+  /*
+   * Entry points into loaded shared library.
+   */
+  t_backend_instantiate backend_instantiate;
+  t_flush_backend flush_backend;
 };
 
 #if defined(HAVE_WIN32)
@@ -62,18 +62,12 @@ struct backend_shared_library_t {
  * Known backend to interface mappings.
  */
 static struct backend_interface_mapping_t {
-   int interface_type_id;
-   const char *interface_name;
-} backend_interface_mappings[] = {
-   { B_FIFO_DEV, "fifo" },
-   { B_TAPE_DEV, "tape" },
-   { B_GFAPI_DEV, "gfapi" },
-   { B_DROPLET_DEV, "droplet" },
-   { B_RADOS_DEV, "rados" },
-   { B_CEPHFS_DEV, "cephfs" },
-   { B_ELASTO_DEV, "elasto" },
-   { 0, NULL }
-};
+  int interface_type_id;
+  const char *interface_name;
+} backend_interface_mappings[] = {{B_FIFO_DEV, "fifo"},     {B_TAPE_DEV, "tape"},
+                                  {B_GFAPI_DEV, "gfapi"},   {B_DROPLET_DEV, "droplet"},
+                                  {B_RADOS_DEV, "rados"},   {B_CEPHFS_DEV, "cephfs"},
+                                  {B_ELASTO_DEV, "elasto"}, {0, NULL}};
 
 #if defined(HAVE_DYNAMIC_SD_BACKENDS)
 void SdSetBackendDirs(alist *new_backend_dirs);

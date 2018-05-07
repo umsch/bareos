@@ -7,4 +7,4 @@ class JobControlRecord;
 
 bool AuthenticateWithDaemon(MonitorItem *item, JobControlRecord *jcr);
 
-#endif // AUTHENTICATE_H_INCLUDED
+#endif  // AUTHENTICATE_H_INCLUDED

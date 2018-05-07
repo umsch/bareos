@@ -28,15 +28,17 @@ DLL_IMP_EXP void FreeTlsContext(std::shared_ptr<TLS_CONTEXT> &ctx);
 
 #ifdef HAVE_TLS
 DLL_IMP_EXP bool TlsPostconnectVerifyHost(JobControlRecord *jcr, TLS_CONNECTION *tls_conn,
-                                 const char *host);
+                                          const char *host);
 DLL_IMP_EXP bool TlsPostconnectVerifyCn(JobControlRecord *jcr, TLS_CONNECTION *tls_conn,
-                               alist *verify_list);
-DLL_IMP_EXP TLS_CONNECTION *new_tls_connection(std::shared_ptr<TlsContext> ctx, int fd, bool server);
+                                        alist *verify_list);
+DLL_IMP_EXP TLS_CONNECTION *new_tls_connection(std::shared_ptr<TlsContext> ctx, int fd,
+                                               bool server);
 DLL_IMP_EXP bool TlsBsockAccept(BareosSocket *bsock);
 DLL_IMP_EXP int TlsBsockWriten(BareosSocket *bsock, char *ptr, int32_t nbytes);
 DLL_IMP_EXP int TlsBsockReadn(BareosSocket *bsock, char *ptr, int32_t nbytes);
 #endif /* HAVE_TLS */
-DLL_IMP_EXP void TlsLogConninfo(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, const char *host, int port, const char *who);
+DLL_IMP_EXP void TlsLogConninfo(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, const char *host,
+                                int port, const char *who);
 DLL_IMP_EXP bool TlsBsockConnect(BareosSocket *bsock);
 DLL_IMP_EXP void TlsBsockShutdown(BareosSocket *bsock);
 DLL_IMP_EXP void FreeTlsConnection(TLS_CONNECTION *tls_conn);
@@ -46,5 +48,4 @@ DLL_IMP_EXP bool GetTlsEnable(TLS_CONTEXT *ctx);
 DLL_IMP_EXP void SetTlsEnable(TLS_CONTEXT *ctx, bool value);
 DLL_IMP_EXP bool GetTlsVerifyPeer(TLS_CONTEXT *ctx);
 
-
-#endif // BAREOS_LIB_TLS_OPENSSL_H_
+#endif  // BAREOS_LIB_TLS_OPENSSL_H_

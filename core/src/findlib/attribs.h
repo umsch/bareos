@@ -25,4 +25,4 @@ DLL_IMP_EXP int encode_attribsEx(JobControlRecord *jcr, char *attribsEx, FindFil
 DLL_IMP_EXP bool SetAttributes(JobControlRecord *jcr, Attributes *attr, BareosWinFilePacket *ofd);
 DLL_IMP_EXP int SelectDataStream(FindFilesPacket *ff_pkt, bool compatible);
 
-#endif // BAREOS_FINDLIB_ATTRIBS_H_
+#endif  // BAREOS_FINDLIB_ATTRIBS_H_

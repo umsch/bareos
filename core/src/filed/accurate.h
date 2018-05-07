@@ -44,111 +44,87 @@
 #include "hostconfig.h"
 
 #ifdef HAVE_HPUX_OS
-#pragma pack(push,4)
+#pragma pack(push, 4)
 #endif
 
 struct accurate_payload {
-   int64_t filenr;
-   int32_t delta_seq;
-   char *lstat;
-   char *chksum;
+  int64_t filenr;
+  int32_t delta_seq;
+  char *lstat;
+  char *chksum;
 };
-
 
 /*
  * Accurate payload storage abstraction classes.
  */
-class BareosAccurateFilelist: public SmartAlloc {
-protected:
-   int64_t filenr_;
-   char *seen_bitmap_;
-   JobControlRecord *jcr_;
-   int32_t number_of_previous_files_;
+class BareosAccurateFilelist : public SmartAlloc {
+ protected:
+  int64_t filenr_;
+  char *seen_bitmap_;
+  JobControlRecord *jcr_;
+  int32_t number_of_previous_files_;
 
-public:
-   /* methods */
-   BareosAccurateFilelist() {
-      filenr_ = 0;
-      seen_bitmap_ = NULL;
-      number_of_previous_files_ = 0;
-      jcr_ = NULL;
-   }
+ public:
+  /* methods */
+  BareosAccurateFilelist() {
+    filenr_ = 0;
+    seen_bitmap_ = NULL;
+    number_of_previous_files_ = 0;
+    jcr_ = NULL;
+  }
 
-   virtual ~BareosAccurateFilelist() {
-   }
+  virtual ~BareosAccurateFilelist() {}
 
-   virtual bool init() = 0;
-   virtual bool AddFile(char *fname,
-                         int fname_length,
-                         char *lstat,
-                         int lstat_length,
-                         char *chksum,
-                         int checksum_length,
-                         int32_t delta_seq) = 0;
-   virtual bool EndLoad() = 0;
-   virtual accurate_payload *lookup_payload(char *fname) = 0;
-   virtual bool UpdatePayload(char *fname, accurate_payload *payload) = 0;
-   virtual bool SendBaseFileList() = 0;
-   virtual bool SendDeletedList() = 0;
-   void MarkFileAsSeen(accurate_payload *payload) {
-      SetBit(payload->filenr, seen_bitmap_);
-   }
+  virtual bool init() = 0;
+  virtual bool AddFile(char *fname, int fname_length, char *lstat, int lstat_length, char *chksum,
+                       int checksum_length, int32_t delta_seq) = 0;
+  virtual bool EndLoad() = 0;
+  virtual accurate_payload *lookup_payload(char *fname) = 0;
+  virtual bool UpdatePayload(char *fname, accurate_payload *payload) = 0;
+  virtual bool SendBaseFileList() = 0;
+  virtual bool SendDeletedList() = 0;
+  void MarkFileAsSeen(accurate_payload *payload) { SetBit(payload->filenr, seen_bitmap_); }
 
-   void UnmarkFileAsSeen(accurate_payload *payload) {
-      ClearBit(payload->filenr, seen_bitmap_);
-   }
+  void UnmarkFileAsSeen(accurate_payload *payload) { ClearBit(payload->filenr, seen_bitmap_); }
 
-   void MarkAllFilesAsSeen() {
-      SetBits(0, filenr_ - 1, seen_bitmap_);
-   }
+  void MarkAllFilesAsSeen() { SetBits(0, filenr_ - 1, seen_bitmap_); }
 
-   void UnmarkAllFilesAsSeen() {
-      ClearBits(0, filenr_ - 1, seen_bitmap_);
-   }
+  void UnmarkAllFilesAsSeen() { ClearBits(0, filenr_ - 1, seen_bitmap_); }
 };
 
 /*
  * Hash table specific storage abstraction class using the internal htable datastructure.
  */
 struct CurFile {
-   hlink link;
-   char *fname;
-   accurate_payload payload;
+  hlink link;
+  char *fname;
+  accurate_payload payload;
 };
 
 #ifdef HAVE_HPUX_OS
 #pragma pack(pop)
 #endif
 
-class BareosAccurateFilelistHtable: public BareosAccurateFilelist {
-protected:
-   htable *file_list_;
-   void destroy();
+class BareosAccurateFilelistHtable : public BareosAccurateFilelist {
+ protected:
+  htable *file_list_;
+  void destroy();
 
-public:
-   /* methods */
-   BareosAccurateFilelistHtable() = delete;
-   BareosAccurateFilelistHtable(JobControlRecord *jcr, uint32_t number_of_files);
-   ~BareosAccurateFilelistHtable() {
-      destroy();
-   }
+ public:
+  /* methods */
+  BareosAccurateFilelistHtable() = delete;
+  BareosAccurateFilelistHtable(JobControlRecord *jcr, uint32_t number_of_files);
+  ~BareosAccurateFilelistHtable() { destroy(); }
 
-   bool init() {
-      return true;
-   }
+  bool init() { return true; }
 
-   bool AddFile(char *fname,
-                 int fname_length,
-                 char *lstat,
-                 int lstat_length,
-                 char *chksum,
-                 int checksum_length,
-                 int32_t delta_seq);
-   bool EndLoad();
-   accurate_payload *lookup_payload(char *fname);
-   bool UpdatePayload(char *fname, accurate_payload *payload);
-   bool SendBaseFileList();
-   bool SendDeletedList();
+  bool AddFile(char *fname, int fname_length, char *lstat, int lstat_length, char *chksum,
+               int checksum_length, int32_t delta_seq);
+  bool EndLoad();
+  accurate_payload *lookup_payload(char *fname);
+  bool UpdatePayload(char *fname, accurate_payload *payload);
+  bool SendBaseFileList();
+  bool SendDeletedList();
 };
 
 #ifdef HAVE_LMDB
@@ -158,38 +134,31 @@ public:
 /*
  * Lightning Memory DataBase (LMDB) specific storage abstraction class using the Symas LMDB.
  */
-class BareosAccurateFilelistLmdb: public BareosAccurateFilelist {
-protected:
-   int pay_load_length_;
-   POOLMEM *pay_load_;
-   POOLMEM *lmdb_name_;
-   MDB_env *db_env_;
-   MDB_dbi db_dbi_;
-   MDB_txn *db_rw_txn_;
-   MDB_txn *db_ro_txn_;
+class BareosAccurateFilelistLmdb : public BareosAccurateFilelist {
+ protected:
+  int pay_load_length_;
+  POOLMEM *pay_load_;
+  POOLMEM *lmdb_name_;
+  MDB_env *db_env_;
+  MDB_dbi db_dbi_;
+  MDB_txn *db_rw_txn_;
+  MDB_txn *db_ro_txn_;
 
-   void destroy();
+  void destroy();
 
-public:
-   /* methods */
-   BareosAccurateFilelistLmdb() = delete;
-   BareosAccurateFilelistLmdb(JobControlRecord *jcr, uint32_t number_of_files);
-   ~BareosAccurateFilelistLmdb() {
-      destroy();
-   }
-   bool init();
-   bool AddFile(char *fname,
-                 int fname_length,
-                 char *lstat,
-                 int lstat_length,
-                 char *chksum,
-                 int checksum_length,
-                 int32_t delta_seq);
-   bool EndLoad();
-   accurate_payload *lookup_payload(char *fname);
-   bool UpdatePayload(char *fname, accurate_payload *payload);
-   bool SendBaseFileList();
-   bool SendDeletedList();
+ public:
+  /* methods */
+  BareosAccurateFilelistLmdb() = delete;
+  BareosAccurateFilelistLmdb(JobControlRecord *jcr, uint32_t number_of_files);
+  ~BareosAccurateFilelistLmdb() { destroy(); }
+  bool init();
+  bool AddFile(char *fname, int fname_length, char *lstat, int lstat_length, char *chksum,
+               int checksum_length, int32_t delta_seq);
+  bool EndLoad();
+  accurate_payload *lookup_payload(char *fname);
+  bool UpdatePayload(char *fname, accurate_payload *payload);
+  bool SendBaseFileList();
+  bool SendDeletedList();
 };
 #endif /* HAVE_LMDB */
 
@@ -200,6 +169,5 @@ bool accurate_unMarkFileAsSeen(JobControlRecord *jcr, char *fname);
 bool AccurateMarkAllFilesAsSeen(JobControlRecord *jcr);
 bool accurate_unMarkAllFilesAsSeen(JobControlRecord *jcr);
 void AccurateFree(JobControlRecord *jcr);
-
 
 #endif /* BAREOS_FILED_ACCURATE_H_ */

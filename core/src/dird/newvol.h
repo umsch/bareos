@@ -24,4 +24,4 @@
 
 bool newVolume(JobControlRecord *jcr, MediaDbRecord *mr, StorageResource *store);
 
-#endif // BAREOS_DIRD_NEWVOL_H_
+#endif  // BAREOS_DIRD_NEWVOL_H_

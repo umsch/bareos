@@ -72,58 +72,56 @@
 #define BAREOS_ASN1_VERSION 0
 
 typedef struct {
-   ASN1_INTEGER *version;
-   ASN1_OCTET_STRING *subjectKeyIdentifier;
-   ASN1_OBJECT *digestAlgorithm;
-   ASN1_OBJECT *signatureAlgorithm;
-   ASN1_OCTET_STRING *signature;
+  ASN1_INTEGER *version;
+  ASN1_OCTET_STRING *subjectKeyIdentifier;
+  ASN1_OBJECT *digestAlgorithm;
+  ASN1_OBJECT *signatureAlgorithm;
+  ASN1_OCTET_STRING *signature;
 } SignerInfo;
 
 typedef struct {
-   ASN1_INTEGER *version;
-   ASN1_OCTET_STRING *subjectKeyIdentifier;
-   ASN1_OBJECT *keyEncryptionAlgorithm;
-   ASN1_OCTET_STRING *encryptedKey;
+  ASN1_INTEGER *version;
+  ASN1_OCTET_STRING *subjectKeyIdentifier;
+  ASN1_OBJECT *keyEncryptionAlgorithm;
+  ASN1_OCTET_STRING *encryptedKey;
 } RecipientInfo;
 
 ASN1_SEQUENCE(SignerInfo) = {
-   ASN1_SIMPLE(SignerInfo, version, ASN1_INTEGER),
-   ASN1_SIMPLE(SignerInfo, subjectKeyIdentifier, ASN1_OCTET_STRING),
-   ASN1_SIMPLE(SignerInfo, digestAlgorithm, ASN1_OBJECT),
-   ASN1_SIMPLE(SignerInfo, signatureAlgorithm, ASN1_OBJECT),
-   ASN1_SIMPLE(SignerInfo, signature, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(SignerInfo);
+    ASN1_SIMPLE(SignerInfo, version, ASN1_INTEGER),
+    ASN1_SIMPLE(SignerInfo, subjectKeyIdentifier, ASN1_OCTET_STRING),
+    ASN1_SIMPLE(SignerInfo, digestAlgorithm, ASN1_OBJECT),
+    ASN1_SIMPLE(SignerInfo, signatureAlgorithm, ASN1_OBJECT),
+    ASN1_SIMPLE(SignerInfo, signature, ASN1_OCTET_STRING)} ASN1_SEQUENCE_END(SignerInfo);
 
 ASN1_SEQUENCE(RecipientInfo) = {
-   ASN1_SIMPLE(RecipientInfo, version, ASN1_INTEGER),
-   ASN1_SIMPLE(RecipientInfo, subjectKeyIdentifier, ASN1_OCTET_STRING),
-   ASN1_SIMPLE(RecipientInfo, keyEncryptionAlgorithm, ASN1_OBJECT),
-   ASN1_SIMPLE(RecipientInfo, encryptedKey, ASN1_OCTET_STRING),
+    ASN1_SIMPLE(RecipientInfo, version, ASN1_INTEGER),
+    ASN1_SIMPLE(RecipientInfo, subjectKeyIdentifier, ASN1_OCTET_STRING),
+    ASN1_SIMPLE(RecipientInfo, keyEncryptionAlgorithm, ASN1_OBJECT),
+    ASN1_SIMPLE(RecipientInfo, encryptedKey, ASN1_OCTET_STRING),
 } ASN1_SEQUENCE_END(RecipientInfo);
 
 typedef struct {
-   ASN1_INTEGER *version;
-   STACK_OF(SignerInfo) *signerInfo;
+  ASN1_INTEGER *version;
+  STACK_OF(SignerInfo) * signerInfo;
 } SignatureData;
 
 typedef struct {
-   ASN1_INTEGER *version;
-   ASN1_OBJECT *contentEncryptionAlgorithm;
-   ASN1_OCTET_STRING *iv;
-   STACK_OF(RecipientInfo) *recipientInfo;
+  ASN1_INTEGER *version;
+  ASN1_OBJECT *contentEncryptionAlgorithm;
+  ASN1_OCTET_STRING *iv;
+  STACK_OF(RecipientInfo) * recipientInfo;
 } CryptoData;
 
 ASN1_SEQUENCE(SignatureData) = {
-   ASN1_SIMPLE(SignatureData, version, ASN1_INTEGER),
-   ASN1_SET_OF(SignatureData, signerInfo, SignerInfo),
+    ASN1_SIMPLE(SignatureData, version, ASN1_INTEGER),
+    ASN1_SET_OF(SignatureData, signerInfo, SignerInfo),
 } ASN1_SEQUENCE_END(SignatureData);
 
 ASN1_SEQUENCE(CryptoData) = {
-   ASN1_SIMPLE(CryptoData, version, ASN1_INTEGER),
-   ASN1_SIMPLE(CryptoData, contentEncryptionAlgorithm, ASN1_OBJECT),
-   ASN1_SIMPLE(CryptoData, iv, ASN1_OCTET_STRING),
-   ASN1_SET_OF(CryptoData, recipientInfo, RecipientInfo)
-} ASN1_SEQUENCE_END(CryptoData);
+    ASN1_SIMPLE(CryptoData, version, ASN1_INTEGER),
+    ASN1_SIMPLE(CryptoData, contentEncryptionAlgorithm, ASN1_OBJECT),
+    ASN1_SIMPLE(CryptoData, iv, ASN1_OCTET_STRING),
+    ASN1_SET_OF(CryptoData, recipientInfo, RecipientInfo)} ASN1_SEQUENCE_END(CryptoData);
 
 IMPLEMENT_ASN1_FUNCTIONS(SignerInfo)
 IMPLEMENT_ASN1_FUNCTIONS(RecipientInfo)
@@ -137,7 +135,7 @@ IMPLEMENT_ASN1_FUNCTIONS(CryptoData)
 #define OBJ_length(o) ((o)->length)
 
 #define X509_EXTENSION_get_data(ext) ((ext)->value)
-#define EVP_PKEY_id(key)             ((key)->type)
+#define EVP_PKEY_id(key) ((key)->type)
 
 #define EVP_PKEY_up_ref(x509_key) CRYPTO_add(&(x509_key->references), 1, CRYPTO_LOCK_EVP_PKEY)
 
@@ -194,125 +192,110 @@ IMPLEMENT_STACK_OF(RecipientInfo)
 DEFINE_STACK_OF(SignerInfo)
 DEFINE_STACK_OF(RecipientInfo)
 
-#define M_ASN1_OCTET_STRING_free(a)     ASN1_STRING_free((ASN1_STRING *)a)
-#define M_ASN1_OCTET_STRING_cmp(a,b)    ASN1_STRING_cmp((const ASN1_STRING *)a,(const ASN1_STRING *)b)
-#define M_ASN1_OCTET_STRING_dup(a)      (ASN1_OCTET_STRING *) ASN1_STRING_dup((const ASN1_STRING *)a)
-#define M_ASN1_OCTET_STRING_set(a,b,c)  ASN1_STRING_set((ASN1_STRING *)a,b,c)
+#define M_ASN1_OCTET_STRING_free(a) ASN1_STRING_free((ASN1_STRING *)a)
+#define M_ASN1_OCTET_STRING_cmp(a, b) \
+  ASN1_STRING_cmp((const ASN1_STRING *)a, (const ASN1_STRING *)b)
+#define M_ASN1_OCTET_STRING_dup(a) (ASN1_OCTET_STRING *)ASN1_STRING_dup((const ASN1_STRING *)a)
+#define M_ASN1_OCTET_STRING_set(a, b, c) ASN1_STRING_set((ASN1_STRING *)a, b, c)
 
-#define M_ASN1_STRING_length(x)         ((x)->length)
-#define M_ASN1_STRING_data(x)           ((x)->data)
+#define M_ASN1_STRING_length(x) ((x)->length)
+#define M_ASN1_STRING_data(x) ((x)->data)
 
 #endif
 
-#define d2i_ASN1_SET_OF_SignerInfo(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-        SKM_ASN1_SET_OF_d2i(SignerInfo, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class))
+#define d2i_ASN1_SET_OF_SignerInfo(st, pp, length, d2i_func, free_func, ex_tag, ex_class)  \
+  SKM_ASN1_SET_OF_d2i(SignerInfo, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), \
+                      (ex_class))
 #define i2d_ASN1_SET_OF_SignerInfo(st, pp, i2d_func, ex_tag, ex_class, is_set) \
-        SKM_ASN1_SET_OF_i2d(SignerInfo, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+  SKM_ASN1_SET_OF_i2d(SignerInfo, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
 #define ASN1_seq_pack_SignerInfo(st, i2d_func, buf, len) \
-        SKM_ASN1_seq_pack(SignerInfo, (st), (i2d_func), (buf), (len))
+  SKM_ASN1_seq_pack(SignerInfo, (st), (i2d_func), (buf), (len))
 #define ASN1_seq_unpack_SignerInfo(buf, len, d2i_func, free_func) \
-        SKM_ASN1_seq_unpack(SignerInfo, (buf), (len), (d2i_func), (free_func))
+  SKM_ASN1_seq_unpack(SignerInfo, (buf), (len), (d2i_func), (free_func))
 
-#define d2i_ASN1_SET_OF_RecipientInfo(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-        SKM_ASN1_SET_OF_d2i(RecipientInfo, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class))
+#define d2i_ASN1_SET_OF_RecipientInfo(st, pp, length, d2i_func, free_func, ex_tag, ex_class)  \
+  SKM_ASN1_SET_OF_d2i(RecipientInfo, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), \
+                      (ex_class))
 #define i2d_ASN1_SET_OF_RecipientInfo(st, pp, i2d_func, ex_tag, ex_class, is_set) \
-        SKM_ASN1_SET_OF_i2d(RecipientInfo, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+  SKM_ASN1_SET_OF_i2d(RecipientInfo, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
 #define ASN1_seq_pack_RecipientInfo(st, i2d_func, buf, len) \
-        SKM_ASN1_seq_pack(RecipientInfo, (st), (i2d_func), (buf), (len))
+  SKM_ASN1_seq_pack(RecipientInfo, (st), (i2d_func), (buf), (len))
 #define ASN1_seq_unpack_RecipientInfo(buf, len, d2i_func, free_func) \
-        SKM_ASN1_seq_unpack(RecipientInfo, (buf), (len), (d2i_func), (free_func))
+  SKM_ASN1_seq_unpack(RecipientInfo, (buf), (len), (d2i_func), (free_func))
 /* End of util/mkstack.pl block */
 
 /* X509 Public/Private Key Pair Structure */
 struct X509_Keypair {
-   ASN1_OCTET_STRING *keyid;
-   EVP_PKEY *pubkey;
-   EVP_PKEY *privkey;
+  ASN1_OCTET_STRING *keyid;
+  EVP_PKEY *pubkey;
+  EVP_PKEY *privkey;
 };
 
 /* Message Digest Structure */
 struct Digest {
-   JobControlRecord *jcr;
-   crypto_digest_t type;
+  JobControlRecord *jcr;
+  crypto_digest_t type;
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-   /* Openssl Version < 1.1 */
-   private:
-      EVP_MD_CTX ctx;
+  /* Openssl Version < 1.1 */
+ private:
+  EVP_MD_CTX ctx;
 
-   public:
-      Digest(JobControlRecord *jcr, crypto_digest_t type)
-         : jcr(jcr),
-         type(type)  {
-            EVP_MD_CTX_init(&ctx);
-         }
+ public:
+  Digest(JobControlRecord *jcr, crypto_digest_t type) : jcr(jcr), type(type) {
+    EVP_MD_CTX_init(&ctx);
+  }
 
-      ~Digest() {
-         EVP_MD_CTX_cleanup(&ctx);
-      }
+  ~Digest() { EVP_MD_CTX_cleanup(&ctx); }
 
-
-      EVP_MD_CTX& get_ctx() {
-         return ctx;
-      }
+  EVP_MD_CTX &get_ctx() { return ctx; }
 #else
-   /* Openssl Version >= 1.1 */
+  /* Openssl Version >= 1.1 */
 
-   private:
-      EVP_MD_CTX* ctx;
-   public:
-      EVP_MD_CTX& get_ctx() {
-         return *ctx;
-      }
+ private:
+  EVP_MD_CTX *ctx;
 
-      Digest(JobControlRecord *jcr, crypto_digest_t type)
-         : jcr(jcr),
-         type(type)  {
-            ctx = EVP_MD_CTX_new();
-            EVP_MD_CTX_init(ctx);
-         }
+ public:
+  EVP_MD_CTX &get_ctx() { return *ctx; }
 
-      ~Digest() {
-         EVP_MD_CTX_free(ctx);
-         ctx = NULL;
-      }
+  Digest(JobControlRecord *jcr, crypto_digest_t type) : jcr(jcr), type(type) {
+    ctx = EVP_MD_CTX_new();
+    EVP_MD_CTX_init(ctx);
+  }
+
+  ~Digest() {
+    EVP_MD_CTX_free(ctx);
+    ctx = NULL;
+  }
 #endif
 };
 
-
-
 /* Message Signature Structure */
 struct Signature {
-   SignatureData *sigData;
-   JobControlRecord *jcr;
+  SignatureData *sigData;
+  JobControlRecord *jcr;
 };
 
 /* Encryption Session Data */
 struct Crypto_Session {
-   CryptoData *cryptoData;                        /* ASN.1 Structure */
-   unsigned char *session_key;                    /* Private symmetric session key */
-   size_t session_key_len;                        /* Symmetric session key length */
+  CryptoData *cryptoData;     /* ASN.1 Structure */
+  unsigned char *session_key; /* Private symmetric session key */
+  size_t session_key_len;     /* Symmetric session key length */
 };
 
 /* Symmetric Cipher Context */
 struct Cipher_Context {
-   EVP_CIPHER_CTX* ctx;
+  EVP_CIPHER_CTX *ctx;
 
-   Cipher_Context() {
-      ctx = EVP_CIPHER_CTX_new();
-   }
+  Cipher_Context() { ctx = EVP_CIPHER_CTX_new(); }
 
-   ~Cipher_Context() {
-      EVP_CIPHER_CTX_free(ctx);
-   }
-
-
+  ~Cipher_Context() { EVP_CIPHER_CTX_free(ctx); }
 };
 
 /* PEM Password Dispatch Context */
 typedef struct PEM_CB_Context {
-   CRYPTO_PEM_PASSWD_CB *pem_callback;
-   const void *pem_userdata;
+  CRYPTO_PEM_PASSWD_CB *pem_callback;
+  const void *pem_userdata;
 } PEM_CB_CONTEXT;
 
 /*
@@ -321,53 +304,54 @@ typedef struct PEM_CB_Context {
  *          NULL on failure.
  */
 static ASN1_OCTET_STRING *openssl_cert_keyid(X509 *cert) {
-   X509_EXTENSION *ext = NULL;
-   const X509V3_EXT_METHOD *method;
-   ASN1_OCTET_STRING *keyid;
-   int i;
+  X509_EXTENSION *ext = NULL;
+  const X509V3_EXT_METHOD *method;
+  ASN1_OCTET_STRING *keyid;
+  int i;
 #if (OPENSSL_VERSION_NUMBER >= 0x0090800FL)
-   const unsigned char *ext_value_data;
+  const unsigned char *ext_value_data;
 #else
-   unsigned char *ext_value_data;
+  unsigned char *ext_value_data;
 #endif
 
+  /* Find the index to the subjectKeyIdentifier extension */
+  i = X509_get_ext_by_NID(cert, NID_subject_key_identifier, -1);
+  if (i < 0) {
+    /* Not found */
+    return NULL;
+  }
 
-   /* Find the index to the subjectKeyIdentifier extension */
-   i = X509_get_ext_by_NID(cert, NID_subject_key_identifier, -1);
-   if (i < 0) {
-      /* Not found */
-      return NULL;
-   }
+  /* Grab the extension */
+  ext = X509_get_ext(cert, i);
 
-   /* Grab the extension */
-   ext = X509_get_ext(cert, i);
+  /* Get x509 extension method structure */
+  if (!(method = X509V3_EXT_get(ext))) {
+    return NULL;
+  }
 
-   /* Get x509 extension method structure */
-   if (!(method = X509V3_EXT_get(ext))) {
-      return NULL;
-   }
-
-   ext_value_data = X509_EXTENSION_get_data(ext)->data;
+  ext_value_data = X509_EXTENSION_get_data(ext)->data;
 
 #if (OPENSSL_VERSION_NUMBER > 0x00907000L)
-   if (method->it) {
-      /* New style ASN1 */
+  if (method->it) {
+    /* New style ASN1 */
 
-      /* Decode ASN1 item in data */
-      keyid = (ASN1_OCTET_STRING *) ASN1_item_d2i(NULL, &ext_value_data, X509_EXTENSION_get_data(ext)->length,
-                                                  ASN1_ITEM_ptr(method->it));
-   } else {
-      /* Old style ASN1 */
+    /* Decode ASN1 item in data */
+    keyid = (ASN1_OCTET_STRING *)ASN1_item_d2i(
+        NULL, &ext_value_data, X509_EXTENSION_get_data(ext)->length, ASN1_ITEM_ptr(method->it));
+  } else {
+    /* Old style ASN1 */
 
-      /* Decode ASN1 item in data */
-      keyid = (ASN1_OCTET_STRING *) method->d2i(NULL, &ext_value_data, X509_EXTENSION_get_data(ext)->length);
-   }
+    /* Decode ASN1 item in data */
+    keyid = (ASN1_OCTET_STRING *)method->d2i(NULL, &ext_value_data,
+                                             X509_EXTENSION_get_data(ext)->length);
+  }
 
 #else
-   keyid = (ASN1_OCTET_STRING *) method->d2i(NULL, &ext_value_data, X509_EXTENSION_get_data(ext)->length);
+  keyid =
+      (ASN1_OCTET_STRING *)method->d2i(NULL, &ext_value_data, X509_EXTENSION_get_data(ext)->length);
 #endif
 
-   return keyid;
+  return keyid;
 }
 
 /*
@@ -375,19 +359,18 @@ static ASN1_OCTET_STRING *openssl_cert_keyid(X509 *cert) {
  *  Returns: A pointer to a X509 KEYPAIR object on success.
  *           NULL on failure.
  */
-X509_KEYPAIR *crypto_keypair_new(void)
-{
-   X509_KEYPAIR *keypair;
+X509_KEYPAIR *crypto_keypair_new(void) {
+  X509_KEYPAIR *keypair;
 
-   /* Allocate our keypair structure */
-   keypair = (X509_KEYPAIR *)malloc(sizeof(X509_KEYPAIR));
+  /* Allocate our keypair structure */
+  keypair = (X509_KEYPAIR *)malloc(sizeof(X509_KEYPAIR));
 
-   /* Initialize our keypair structure */
-   keypair->keyid = NULL;
-   keypair->pubkey = NULL;
-   keypair->privkey = NULL;
+  /* Initialize our keypair structure */
+  keypair->keyid = NULL;
+  keypair->pubkey = NULL;
+  keypair->privkey = NULL;
 
-   return keypair;
+  return keypair;
 }
 
 /*
@@ -397,102 +380,106 @@ X509_KEYPAIR *crypto_keypair_new(void)
  * incremented.
  */
 
-X509_KEYPAIR *crypto_keypair_dup(X509_KEYPAIR *keypair)
-{
-   X509_KEYPAIR *newpair;
+X509_KEYPAIR *crypto_keypair_dup(X509_KEYPAIR *keypair) {
+  X509_KEYPAIR *newpair;
 
-   newpair = crypto_keypair_new();
+  newpair = crypto_keypair_new();
 
-   if (!newpair) {
+  if (!newpair) {
+    /* Allocation failed */
+    return NULL;
+  }
+
+  /* Increment the public key ref count */
+  if (keypair->pubkey) {
+    EVP_PKEY_up_ref(keypair->pubkey);
+    newpair->pubkey = keypair->pubkey;
+  }
+
+  /* Increment the private key ref count */
+  if (keypair->privkey) {
+    EVP_PKEY_up_ref(keypair->privkey);
+    newpair->privkey = keypair->privkey;
+  }
+
+  /* Duplicate the keyid */
+  if (keypair->keyid) {
+    newpair->keyid = M_ASN1_OCTET_STRING_dup(keypair->keyid);
+    if (!newpair->keyid) {
       /* Allocation failed */
+      CryptoKeypairFree(newpair);
       return NULL;
-   }
+    }
+  }
 
-   /* Increment the public key ref count */
-   if (keypair->pubkey) {
-      EVP_PKEY_up_ref(keypair->pubkey);
-      newpair->pubkey = keypair->pubkey;
-   }
-
-   /* Increment the private key ref count */
-   if (keypair->privkey) {
-      EVP_PKEY_up_ref(keypair->privkey);
-      newpair->privkey = keypair->privkey;
-   }
-
-   /* Duplicate the keyid */
-   if (keypair->keyid) {
-      newpair->keyid = M_ASN1_OCTET_STRING_dup(keypair->keyid);
-      if (!newpair->keyid) {
-         /* Allocation failed */
-         CryptoKeypairFree(newpair);
-         return NULL;
-      }
-   }
-
-   return newpair;
+  return newpair;
 }
-
 
 /*
  * Load a public key from a PEM-encoded x509 certificate.
  *  Returns: true on success
  *           false on failure
  */
-int CryptoKeypairLoadCert(X509_KEYPAIR *keypair, const char *file)
-{
-   BIO *bio;
-   X509 *cert;
+int CryptoKeypairLoadCert(X509_KEYPAIR *keypair, const char *file) {
 
-   /* Open the file */
-   if (!(bio = BIO_new_file(file, "r"))) {
-      OpensslPostErrors(M_ERROR, _("Unable to open certificate file"));
-      return false;
-   }
 
-   cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-   BIO_free(bio);
-   if (!cert) {
-      OpensslPostErrors(M_ERROR, _("Unable to read certificate from file"));
-      return false;
-   }
 
-   /* Extract the public key */
-   if (!(keypair->pubkey = X509_get_pubkey(cert))) {
-      OpensslPostErrors(M_ERROR, _("Unable to extract public key from certificate"));
-      goto err;
-   }
 
-   /* Extract the subjectKeyIdentifier extension field */
-   if ((keypair->keyid = openssl_cert_keyid(cert)) == NULL) {
-      Jmsg0(NULL, M_ERROR, 0,
-         _("Provided certificate does not include the required subjectKeyIdentifier extension."));
-      goto err;
-   }
+  BIO *bio;
+  X509 *cert;
 
-   /* Validate the public key type (only RSA is supported) */
-   if (EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)) != EVP_PKEY_RSA) {
-       Jmsg1(NULL, M_ERROR, 0,
-             _("Unsupported key type provided: %d\n"), EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)));
-       goto err;
-   }
+  /* Open the file */
+  if (!(bio = BIO_new_file(file, "r"))) {
+    OpensslPostErrors(M_ERROR, _("Unable to open certificate file"));
+    return false;
+  }
 
-   X509_free(cert);
-   return true;
+  cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+  BIO_free(bio);
+  if (!cert) {
+    OpensslPostErrors(M_ERROR, _("Unable to read certificate from file"));
+    return false;
+  }
+
+  /* Extract the public key */
+  if (!(keypair->pubkey = X509_get_pubkey(cert))) {
+    OpensslPostErrors(M_ERROR, _("Unable to extract public key from certificate"));
+    goto err;
+  }
+
+  /* Extract the subjectKeyIdentifier extension field */
+  if ((keypair->keyid = openssl_cert_keyid(cert)) == NULL) {
+    Jmsg0(NULL, M_ERROR, 0,
+          _("Provided certificate does not include the required subjectKeyIdentifier extension."));
+    goto err;
+  }
+
+  /* Validate the public key type (only RSA is supported) */
+  if (EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)) != EVP_PKEY_RSA) {
+    Jmsg1(NULL, M_ERROR, 0, _("Unsupported key type provided: %d\n"),
+          EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)));
+    goto err;
+  }
+
+  X509_free(cert);
+  return true;
 
 err:
-   X509_free(cert);
-   if (keypair->pubkey) {
-      EVP_PKEY_free(keypair->pubkey);
-   }
-   return false;
+  X509_free(cert);
+  if (keypair->pubkey) {
+    EVP_PKEY_free(keypair->pubkey);
+  }
+  return false;
 }
 
 /* Dispatch user PEM encryption callbacks */
-static int CryptoPemCallbackDispatch(char *buf, int size, int rwflag, void *userdata)
-{
-   PEM_CB_CONTEXT *ctx = (PEM_CB_CONTEXT *) userdata;
-   return (ctx->pem_callback(buf, size, ctx->pem_userdata));
+static int CryptoPemCallbackDispatch(char *buf, int size, int rwflag, void *userdata) {
+
+
+
+
+  PEM_CB_CONTEXT *ctx = (PEM_CB_CONTEXT *)userdata;
+  return (ctx->pem_callback(buf, size, ctx->pem_userdata));
 }
 
 /*
@@ -502,46 +489,48 @@ static int CryptoPemCallbackDispatch(char *buf, int size, int rwflag, void *user
  *          false otherwise
  */
 bool CryptoKeypairHasKey(const char *file) {
-   BIO *bio;
-   char *name = NULL;
-   char *header = NULL;
-   unsigned char *data = NULL;
-   bool retval = false;
-   long len;
 
-   if (!(bio = BIO_new_file(file, "r"))) {
-      OpensslPostErrors(M_ERROR, _("Unable to open private key file"));
-      return false;
-   }
 
-   while (PEM_read_bio(bio, &name, &header, &data, &len)) {
-      /* We don't care what the data is, just that it's there */
-      OPENSSL_free(header);
-      OPENSSL_free(data);
 
-      /*
-       * PEM Header Found, check for a private key
-       * Due to OpenSSL limitations, we must specifically
-       * list supported PEM private key encodings.
-       */
-      if (bstrcmp(name, PEM_STRING_RSA) ||
-          bstrcmp(name, PEM_STRING_DSA) ||
-          bstrcmp(name, PEM_STRING_PKCS8) ||
-          bstrcmp(name, PEM_STRING_PKCS8INF)) {
-         retval = true;
-         OPENSSL_free(name);
-         break;
-      } else {
-         OPENSSL_free(name);
-      }
-   }
 
-   /* Free our bio */
-   BIO_free(bio);
+  BIO *bio;
+  char *name = NULL;
+  char *header = NULL;
+  unsigned char *data = NULL;
+  bool retval = false;
+  long len;
 
-   /* Post PEM-decoding error messages, if any */
-   OpensslPostErrors(M_ERROR, _("Unable to read private key from file"));
-   return retval;
+  if (!(bio = BIO_new_file(file, "r"))) {
+    OpensslPostErrors(M_ERROR, _("Unable to open private key file"));
+    return false;
+  }
+
+  while (PEM_read_bio(bio, &name, &header, &data, &len)) {
+    /* We don't care what the data is, just that it's there */
+    OPENSSL_free(header);
+    OPENSSL_free(data);
+
+    /*
+     * PEM Header Found, check for a private key
+     * Due to OpenSSL limitations, we must specifically
+     * list supported PEM private key encodings.
+     */
+    if (bstrcmp(name, PEM_STRING_RSA) || bstrcmp(name, PEM_STRING_DSA) ||
+        bstrcmp(name, PEM_STRING_PKCS8) || bstrcmp(name, PEM_STRING_PKCS8INF)) {
+      retval = true;
+      OPENSSL_free(name);
+      break;
+    } else {
+      OPENSSL_free(name);
+    }
+  }
+
+  /* Free our bio */
+  BIO_free(bio);
+
+  /* Post PEM-decoding error messages, if any */
+  OpensslPostErrors(M_ERROR, _("Unable to read private key from file"));
+  return retval;
 }
 
 /*
@@ -550,101 +539,101 @@ bool CryptoKeypairHasKey(const char *file) {
  *           false on failure
  */
 int CryptoKeypairLoadKey(X509_KEYPAIR *keypair, const char *file,
-                             CRYPTO_PEM_PASSWD_CB *pem_callback,
-                             const void *pem_userdata)
-{
-   BIO *bio;
-   PEM_CB_CONTEXT ctx;
+                         CRYPTO_PEM_PASSWD_CB *pem_callback, const void *pem_userdata) {
+  BIO *bio;
+  PEM_CB_CONTEXT ctx;
 
-   /* Open the file */
-   if (!(bio = BIO_new_file(file, "r"))) {
-      OpensslPostErrors(M_ERROR, _("Unable to open private key file"));
-      return false;
-   }
+  /* Open the file */
+  if (!(bio = BIO_new_file(file, "r"))) {
+    OpensslPostErrors(M_ERROR, _("Unable to open private key file"));
+    return false;
+  }
 
-   /* Set up PEM encryption callback */
-   if (pem_callback) {
-      ctx.pem_callback = pem_callback;
-      ctx.pem_userdata = pem_userdata;
-   } else {
-      ctx.pem_callback = CryptoDefaultPemCallback;
-      ctx.pem_userdata = NULL;
-   }
+  /* Set up PEM encryption callback */
+  if (pem_callback) {
+    ctx.pem_callback = pem_callback;
+    ctx.pem_userdata = pem_userdata;
+  } else {
+    ctx.pem_callback = CryptoDefaultPemCallback;
+    ctx.pem_userdata = NULL;
+  }
 
-   keypair->privkey = PEM_read_bio_PrivateKey(bio, NULL, CryptoPemCallbackDispatch, &ctx);
-   BIO_free(bio);
-   if (!keypair->privkey) {
-      OpensslPostErrors(M_ERROR, _("Unable to read private key from file"));
-      return false;
-   }
+  keypair->privkey = PEM_read_bio_PrivateKey(bio, NULL, CryptoPemCallbackDispatch, &ctx);
+  BIO_free(bio);
+  if (!keypair->privkey) {
+    OpensslPostErrors(M_ERROR, _("Unable to read private key from file"));
+    return false;
+  }
 
-   return true;
+  return true;
 }
 
 /*
  * Free memory associated with a keypair object.
  */
-void CryptoKeypairFree(X509_KEYPAIR *keypair)
-{
-   if (keypair->pubkey) {
-      EVP_PKEY_free(keypair->pubkey);
-   }
-   if (keypair->privkey) {
-      EVP_PKEY_free(keypair->privkey);
-   }
-   if (keypair->keyid) {
-      M_ASN1_OCTET_STRING_free(keypair->keyid);
-   }
-   free(keypair);
-}
+void CryptoKeypairFree(X509_KEYPAIR *keypair) {
 
+
+
+
+  if (keypair->pubkey) {
+    EVP_PKEY_free(keypair->pubkey);
+  }
+  if (keypair->privkey) {
+    EVP_PKEY_free(keypair->privkey);
+  }
+  if (keypair->keyid) {
+    M_ASN1_OCTET_STRING_free(keypair->keyid);
+  }
+  free(keypair);
+}
 
 /*
  * Create a new message digest context of the specified type
  *  Returns: A pointer to a DIGEST object on success.
  *           NULL on failure.
  */
-DIGEST *crypto_digest_new(JobControlRecord *jcr, crypto_digest_t type)
-{
-   DIGEST *digest = new DIGEST(jcr, type);
-   const EVP_MD *md = NULL; /* Quell invalid uninitialized warnings */
+DIGEST *crypto_digest_new(JobControlRecord *jcr, crypto_digest_t type) {
 
-   Dmsg1(150, "crypto_digest_new jcr=%p\n", jcr);
+  DIGEST *digest = new DIGEST(jcr, type);
+  const EVP_MD *md = NULL; /* Quell invalid uninitialized warnings */
 
-   /* Determine the correct OpenSSL message digest type */
-   switch (type) {
-   case CRYPTO_DIGEST_MD5:
+  Dmsg1(150, "crypto_digest_new jcr=%p\n", jcr);
+
+  /* Determine the correct OpenSSL message digest type */
+  switch (type) {
+    case CRYPTO_DIGEST_MD5:
       md = EVP_md5();
       break;
-   case CRYPTO_DIGEST_SHA1:
+    case CRYPTO_DIGEST_SHA1:
       md = EVP_sha1();
       break;
 #ifdef HAVE_SHA2
-   case CRYPTO_DIGEST_SHA256:
+    case CRYPTO_DIGEST_SHA256:
       md = EVP_sha256();
       break;
-   case CRYPTO_DIGEST_SHA512:
+    case CRYPTO_DIGEST_SHA512:
       md = EVP_sha512();
       break;
 #endif
-   default:
+    default:
       Jmsg1(jcr, M_ERROR, 0, _("Unsupported digest type: %d\n"), type);
       goto err;
-   }
+  }
 
-   /* Initialize the backing OpenSSL context */
-   if (EVP_DigestInit_ex(&digest->get_ctx(), md, NULL) == 0) {
-      goto err;
-   }
+  /* Initialize the backing OpenSSL context */
+  if (EVP_DigestInit_ex(&digest->get_ctx(), md, NULL) == 0) {
+    goto err;
+  }
 
-   return digest;
+  return digest;
 
 err:
-   /* This should not happen, but never say never ... */
-   Dmsg0(150, "Digest init failed.\n");
-   OpensslPostErrors(jcr, M_ERROR, _("OpenSSL digest initialization failed"));
-   CryptoDigestFree(digest);
-   return NULL;
+  /* This should not happen, but never say never ... */
+  Dmsg0(150, "Digest init failed.\n");
+  OpensslPostErrors(jcr, M_ERROR, _("OpenSSL digest initialization failed"));
+  CryptoDigestFree(digest);
+  return NULL;
 }
 
 /*
@@ -652,15 +641,18 @@ err:
  * Returns: true on success
  *          false on failure
  */
-bool CryptoDigestUpdate(DIGEST *digest, const uint8_t *data, uint32_t length)
-{
-   if (EVP_DigestUpdate(&digest->get_ctx(), data, length) == 0) {
-      Dmsg0(150, "digest update failed\n");
-      OpensslPostErrors(digest->jcr, M_ERROR, _("OpenSSL digest update failed"));
-      return false;
-   } else {
-      return true;
-   }
+bool CryptoDigestUpdate(DIGEST *digest, const uint8_t *data, uint32_t length) {
+
+
+
+
+  if (EVP_DigestUpdate(&digest->get_ctx(), data, length) == 0) {
+    Dmsg0(150, "digest update failed\n");
+    OpensslPostErrors(digest->jcr, M_ERROR, _("OpenSSL digest update failed"));
+    return false;
+  } else {
+    return true;
+  }
 }
 
 /*
@@ -670,53 +662,53 @@ bool CryptoDigestUpdate(DIGEST *digest, const uint8_t *data, uint32_t length)
  * Returns: true on success
  *          false on failure
  */
-bool CryptoDigestFinalize(DIGEST *digest, uint8_t *dest, uint32_t *length)
-{
-   if (!EVP_DigestFinal(&digest->get_ctx(), dest, (unsigned int *)length)) {
-      Dmsg0(150, "digest finalize failed\n");
-      OpensslPostErrors(digest->jcr, M_ERROR, _("OpenSSL digest finalize failed"));
-      return false;
-   } else {
-      return true;
-   }
+bool CryptoDigestFinalize(DIGEST *digest, uint8_t *dest, uint32_t *length) {
+
+
+
+
+  if (!EVP_DigestFinal(&digest->get_ctx(), dest, (unsigned int *)length)) {
+    Dmsg0(150, "digest finalize failed\n");
+    OpensslPostErrors(digest->jcr, M_ERROR, _("OpenSSL digest finalize failed"));
+    return false;
+  } else {
+    return true;
+  }
 }
 
 /*
  * Free memory associated with a digest object.
  */
-void CryptoDigestFree(DIGEST *digest)
-{
-   delete digest;
-}
+void CryptoDigestFree(DIGEST *digest) { delete digest; }
 
 /*
  * Create a new message signature context.
  *  Returns: A pointer to a SIGNATURE object on success.
  *           NULL on failure.
  */
-SIGNATURE *crypto_sign_new(JobControlRecord *jcr)
-{
-   SIGNATURE *sig;
+SIGNATURE *crypto_sign_new(JobControlRecord *jcr) {
 
-   sig = (SIGNATURE *)malloc(sizeof(SIGNATURE));
-   if (!sig) {
-      return NULL;
-   }
+  SIGNATURE *sig;
 
-   sig->sigData = SignatureData_new();
-   sig->jcr = jcr;
-   Dmsg1(150, "crypto_sign_new jcr=%p\n", jcr);
+  sig = (SIGNATURE *)malloc(sizeof(SIGNATURE));
+  if (!sig) {
+    return NULL;
+  }
 
-   if (!sig->sigData) {
-      /* Allocation failed in OpenSSL */
-      free(sig);
-      return NULL;
-   }
+  sig->sigData = SignatureData_new();
+  sig->jcr = jcr;
+  Dmsg1(150, "crypto_sign_new jcr=%p\n", jcr);
 
-   /* Set the ASN.1 structure version number */
-   ASN1_INTEGER_set(sig->sigData->version, BAREOS_ASN1_VERSION);
+  if (!sig->sigData) {
+    /* Allocation failed in OpenSSL */
+    free(sig);
+    return NULL;
+  }
 
-   return sig;
+  /* Set the ASN.1 structure version number */
+  ASN1_INTEGER_set(sig->sigData->version, BAREOS_ASN1_VERSION);
+
+  return sig;
 }
 
 /*
@@ -726,63 +718,61 @@ SIGNATURE *crypto_sign_new(JobControlRecord *jcr)
  * Returns: CRYPTO_ERROR_NONE on success, with the newly allocated DIGEST in digest.
  *          A crypto_error_t value on failure.
  */
-crypto_error_t CryptoSignGetDigest(SIGNATURE *sig, X509_KEYPAIR *keypair,
-                                      crypto_digest_t &type, DIGEST **digest)
-{
-   STACK_OF(SignerInfo) *signers;
-   SignerInfo *si;
-   int i;
+crypto_error_t CryptoSignGetDigest(SIGNATURE *sig, X509_KEYPAIR *keypair, crypto_digest_t &type,
+                                   DIGEST **digest) {
+  STACK_OF(SignerInfo) * signers;
+  SignerInfo *si;
+  int i;
 
-   signers = sig->sigData->signerInfo;
+  signers = sig->sigData->signerInfo;
 
-   for (i = 0; i < sk_SignerInfo_num(signers); i++) {
-      si = sk_SignerInfo_value(signers, i);
-      if (M_ASN1_OCTET_STRING_cmp(keypair->keyid, si->subjectKeyIdentifier) == 0) {
-         /* Get the digest algorithm and allocate a digest context */
-         Dmsg1(150, "CryptoSignGetDigest jcr=%p\n", sig->jcr);
-         switch (OBJ_obj2nid(si->digestAlgorithm)) {
-         case NID_md5:
-            Dmsg0(100, "sign digest algorithm is MD5\n");
-            type = CRYPTO_DIGEST_MD5;
-            *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_MD5);
-            break;
-         case NID_sha1:
-            Dmsg0(100, "sign digest algorithm is SHA1\n");
-            type = CRYPTO_DIGEST_SHA1;
-            *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_SHA1);
-            break;
+  for (i = 0; i < sk_SignerInfo_num(signers); i++) {
+    si = sk_SignerInfo_value(signers, i);
+    if (M_ASN1_OCTET_STRING_cmp(keypair->keyid, si->subjectKeyIdentifier) == 0) {
+      /* Get the digest algorithm and allocate a digest context */
+      Dmsg1(150, "CryptoSignGetDigest jcr=%p\n", sig->jcr);
+      switch (OBJ_obj2nid(si->digestAlgorithm)) {
+        case NID_md5:
+          Dmsg0(100, "sign digest algorithm is MD5\n");
+          type = CRYPTO_DIGEST_MD5;
+          *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_MD5);
+          break;
+        case NID_sha1:
+          Dmsg0(100, "sign digest algorithm is SHA1\n");
+          type = CRYPTO_DIGEST_SHA1;
+          *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_SHA1);
+          break;
 #ifdef HAVE_SHA2
-         case NID_sha256:
-            Dmsg0(100, "sign digest algorithm is SHA256\n");
-            type = CRYPTO_DIGEST_SHA256;
-            *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_SHA256);
-            break;
-         case NID_sha512:
-            Dmsg0(100, "sign digest algorithm is SHA512\n");
-            type = CRYPTO_DIGEST_SHA512;
-            *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_SHA512);
-            break;
+        case NID_sha256:
+          Dmsg0(100, "sign digest algorithm is SHA256\n");
+          type = CRYPTO_DIGEST_SHA256;
+          *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_SHA256);
+          break;
+        case NID_sha512:
+          Dmsg0(100, "sign digest algorithm is SHA512\n");
+          type = CRYPTO_DIGEST_SHA512;
+          *digest = crypto_digest_new(sig->jcr, CRYPTO_DIGEST_SHA512);
+          break;
 #endif
-         default:
-            type = CRYPTO_DIGEST_NONE;
-            *digest = NULL;
-            return CRYPTO_ERROR_INVALID_DIGEST;
-         }
-
-         /* Shouldn't happen */
-         if (*digest == NULL) {
-            OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL digest_new failed"));
-            return CRYPTO_ERROR_INVALID_DIGEST;
-         } else {
-            return CRYPTO_ERROR_NONE;
-         }
-      } else {
-         OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL sign get digest failed"));
+        default:
+          type = CRYPTO_DIGEST_NONE;
+          *digest = NULL;
+          return CRYPTO_ERROR_INVALID_DIGEST;
       }
 
-   }
+      /* Shouldn't happen */
+      if (*digest == NULL) {
+        OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL digest_new failed"));
+        return CRYPTO_ERROR_INVALID_DIGEST;
+      } else {
+        return CRYPTO_ERROR_NONE;
+      }
+    } else {
+      OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL sign get digest failed"));
+    }
+  }
 
-   return CRYPTO_ERROR_NOSIGNER;
+  return CRYPTO_ERROR_NOSIGNER;
 }
 
 /*
@@ -790,130 +780,131 @@ crypto_error_t CryptoSignGetDigest(SIGNATURE *sig, X509_KEYPAIR *keypair,
  * Returns: CRYPTO_ERROR_NONE on success.
  *          A crypto_error_t value on failure.
  */
-crypto_error_t CryptoSignVerify(SIGNATURE *sig, X509_KEYPAIR *keypair, DIGEST *digest)
-{
-   STACK_OF(SignerInfo) *signers;
-   SignerInfo *si;
-   int ok, i;
-   unsigned int sigLen;
+crypto_error_t CryptoSignVerify(SIGNATURE *sig, X509_KEYPAIR *keypair, DIGEST *digest) {
+
+  STACK_OF(SignerInfo) * signers;
+  SignerInfo *si;
+  int ok, i;
+  unsigned int sigLen;
 #if (OPENSSL_VERSION_NUMBER >= 0x0090800FL)
-   const unsigned char *sigData;
+  const unsigned char *sigData;
 #else
-   unsigned char *sigData;
+  unsigned char *sigData;
 #endif
 
-   signers = sig->sigData->signerInfo;
+  signers = sig->sigData->signerInfo;
 
-   /* Find the signer */
-   for (i = 0; i < sk_SignerInfo_num(signers); i++) {
-      si = sk_SignerInfo_value(signers, i);
-      if (M_ASN1_OCTET_STRING_cmp(keypair->keyid, si->subjectKeyIdentifier) == 0) {
-         /* Extract the signature data */
-         sigLen = M_ASN1_STRING_length(si->signature);
-         sigData = M_ASN1_STRING_data(si->signature);
+  /* Find the signer */
+  for (i = 0; i < sk_SignerInfo_num(signers); i++) {
+    si = sk_SignerInfo_value(signers, i);
+    if (M_ASN1_OCTET_STRING_cmp(keypair->keyid, si->subjectKeyIdentifier) == 0) {
+      /* Extract the signature data */
+      sigLen = M_ASN1_STRING_length(si->signature);
+      sigData = M_ASN1_STRING_data(si->signature);
 
-         ok = EVP_VerifyFinal(&digest->get_ctx(), sigData, sigLen, keypair->pubkey);
-         if (ok >= 1) {
-            return CRYPTO_ERROR_NONE;
-         } else if (ok == 0) {
-            OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL digest Verify final failed"));
-            return CRYPTO_ERROR_BAD_SIGNATURE;
-         } else if (ok < 0) {
-            /* Shouldn't happen */
-            OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL digest Verify final failed"));
-            return CRYPTO_ERROR_INTERNAL;
-         }
+      ok = EVP_VerifyFinal(&digest->get_ctx(), sigData, sigLen, keypair->pubkey);
+      if (ok >= 1) {
+        return CRYPTO_ERROR_NONE;
+      } else if (ok == 0) {
+        OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL digest Verify final failed"));
+        return CRYPTO_ERROR_BAD_SIGNATURE;
+      } else if (ok < 0) {
+        /* Shouldn't happen */
+        OpensslPostErrors(sig->jcr, M_ERROR, _("OpenSSL digest Verify final failed"));
+        return CRYPTO_ERROR_INTERNAL;
       }
-   }
-   Jmsg(sig->jcr, M_ERROR, 0, _("No signers found for crypto verify.\n"));
-   /* Signer wasn't found. */
-   return CRYPTO_ERROR_NOSIGNER;
+    }
+  }
+  Jmsg(sig->jcr, M_ERROR, 0, _("No signers found for crypto verify.\n"));
+  /* Signer wasn't found. */
+  return CRYPTO_ERROR_NOSIGNER;
 }
-
 
 /*
  * Add a new signer
  *  Returns: true on success
  *           false on failure
  */
-int CryptoSignAddSigner(SIGNATURE *sig, DIGEST *digest, X509_KEYPAIR *keypair)
-{
-   SignerInfo *si = NULL;
-   unsigned char *buf = NULL;
-   unsigned int len;
+int CryptoSignAddSigner(SIGNATURE *sig, DIGEST *digest, X509_KEYPAIR *keypair) {
 
-   si = SignerInfo_new();
 
-   if (!si) {
-      /* Allocation failed in OpenSSL */
-      return false;
-   }
 
-   /* Set the ASN.1 structure version number */
-   ASN1_INTEGER_set(si->version, BAREOS_ASN1_VERSION);
 
-   /* Set the digest algorithm identifier */
-   switch (digest->type) {
-   case CRYPTO_DIGEST_MD5:
+  SignerInfo *si = NULL;
+  unsigned char *buf = NULL;
+  unsigned int len;
+
+  si = SignerInfo_new();
+
+  if (!si) {
+    /* Allocation failed in OpenSSL */
+    return false;
+  }
+
+  /* Set the ASN.1 structure version number */
+  ASN1_INTEGER_set(si->version, BAREOS_ASN1_VERSION);
+
+  /* Set the digest algorithm identifier */
+  switch (digest->type) {
+    case CRYPTO_DIGEST_MD5:
       si->digestAlgorithm = OBJ_nid2obj(NID_md5);
       break;
-   case CRYPTO_DIGEST_SHA1:
+    case CRYPTO_DIGEST_SHA1:
       si->digestAlgorithm = OBJ_nid2obj(NID_sha1);
       break;
 #ifdef HAVE_SHA2
-   case CRYPTO_DIGEST_SHA256:
+    case CRYPTO_DIGEST_SHA256:
       si->digestAlgorithm = OBJ_nid2obj(NID_sha256);
       break;
-   case CRYPTO_DIGEST_SHA512:
+    case CRYPTO_DIGEST_SHA512:
       si->digestAlgorithm = OBJ_nid2obj(NID_sha512);
       break;
 #endif
-   default:
+    default:
       /* This should never happen */
       goto err;
-   }
+  }
 
-   /* Drop the string allocated by OpenSSL, and add our subjectKeyIdentifier */
-   M_ASN1_OCTET_STRING_free(si->subjectKeyIdentifier);
-   si->subjectKeyIdentifier = M_ASN1_OCTET_STRING_dup(keypair->keyid);
+  /* Drop the string allocated by OpenSSL, and add our subjectKeyIdentifier */
+  M_ASN1_OCTET_STRING_free(si->subjectKeyIdentifier);
+  si->subjectKeyIdentifier = M_ASN1_OCTET_STRING_dup(keypair->keyid);
 
+  /* Set our signature algorithm. We currently require RSA */
+  assert(EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)) == EVP_PKEY_RSA);
+  /* This is slightly evil. Reach into the BAREOS_LIB_MD_H_ structure and grab the key type */
+  si->signatureAlgorithm = OBJ_nid2obj(EVP_MD_CTX_type(&digest->get_ctx()));
 
-   /* Set our signature algorithm. We currently require RSA */
-   assert(EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)) == EVP_PKEY_RSA);
-   /* This is slightly evil. Reach into the BAREOS_LIB_MD_H_ structure and grab the key type */
-   si->signatureAlgorithm = OBJ_nid2obj(EVP_MD_CTX_type(&digest->get_ctx()));
+  /* Finalize/Sign our Digest */
+  len = EVP_PKEY_size(keypair->privkey);
+  buf = (unsigned char *)malloc(len);
+  if (!EVP_SignFinal(&digest->get_ctx(), buf, &len, keypair->privkey)) {
+    OpensslPostErrors(M_ERROR, _("Signature creation failed"));
+    goto err;
+  }
 
-   /* Finalize/Sign our Digest */
-   len = EVP_PKEY_size(keypair->privkey);
-   buf = (unsigned char *) malloc(len);
-   if (!EVP_SignFinal(&digest->get_ctx(), buf, &len, keypair->privkey)) {
-      OpensslPostErrors(M_ERROR, _("Signature creation failed"));
-      goto err;
-   }
+  /* Add the signature to the SignerInfo structure */
+  if (!M_ASN1_OCTET_STRING_set(si->signature, buf, len)) {
+    /* Allocation failed in OpenSSL */
+    goto err;
+  }
 
-   /* Add the signature to the SignerInfo structure */
-   if (!M_ASN1_OCTET_STRING_set(si->signature, buf, len)) {
-      /* Allocation failed in OpenSSL */
-      goto err;
-   }
+  /* No longer needed */
+  free(buf);
 
-   /* No longer needed */
-   free(buf);
+  /* Push the new SignerInfo structure onto the stack */
+  sk_SignerInfo_push(sig->sigData->signerInfo, si);
 
-   /* Push the new SignerInfo structure onto the stack */
-   sk_SignerInfo_push(sig->sigData->signerInfo, si);
-
-   return true;
+  return true;
 
 err:
-   if (si) {
-      SignerInfo_free(si);
-   }
-   if (buf) {
-      free(buf);
-   }
+  if (si) {
+    SignerInfo_free(si);
+  }
+  if (buf) {
+    free(buf);
+  }
 
-   return false;
+  return false;
 }
 
 /*
@@ -925,15 +916,18 @@ err:
  * Returns: true on success, stores the encoded data in dest, and the size in length.
  *          false on failure.
  */
-int CryptoSignEncode(SIGNATURE *sig, uint8_t *dest, uint32_t *length)
-{
-   if (*length == 0) {
-      *length = i2d_SignatureData(sig->sigData, NULL);
-      return true;
-   }
+int CryptoSignEncode(SIGNATURE *sig, uint8_t *dest, uint32_t *length) {
 
-   *length = i2d_SignatureData(sig->sigData, (unsigned char **)&dest);
-   return true;
+
+
+
+  if (*length == 0) {
+    *length = i2d_SignatureData(sig->sigData, NULL);
+    return true;
+  }
+
+  *length = i2d_SignatureData(sig->sigData, (unsigned char **)&dest);
+  return true;
 }
 
 /*
@@ -945,41 +939,44 @@ int CryptoSignEncode(SIGNATURE *sig, uint8_t *dest, uint32_t *length)
 
  */
 
-SIGNATURE *crypto_sign_decode(JobControlRecord *jcr, const uint8_t *sigData, uint32_t length)
-{
-   SIGNATURE *sig;
+SIGNATURE *crypto_sign_decode(JobControlRecord *jcr, const uint8_t *sigData, uint32_t length) {
+
+  SIGNATURE *sig;
 #if (OPENSSL_VERSION_NUMBER >= 0x0090800FL)
-   const unsigned char *p = (const unsigned char *) sigData;
+  const unsigned char *p = (const unsigned char *)sigData;
 #else
-   unsigned char *p = (unsigned char *)sigData;
+  unsigned char *p = (unsigned char *)sigData;
 #endif
 
-   sig = (SIGNATURE *)malloc(sizeof(SIGNATURE));
-   if (!sig) {
-      return NULL;
-   }
-   sig->jcr = jcr;
+  sig = (SIGNATURE *)malloc(sizeof(SIGNATURE));
+  if (!sig) {
+    return NULL;
+  }
+  sig->jcr = jcr;
 
-   /* d2i_SignatureData modifies the supplied pointer */
-   sig->sigData  = d2i_SignatureData(NULL, &p, length);
+  /* d2i_SignatureData modifies the supplied pointer */
+  sig->sigData = d2i_SignatureData(NULL, &p, length);
 
-   if (!sig->sigData) {
-      /* Allocation / Decoding failed in OpenSSL */
-      OpensslPostErrors(jcr, M_ERROR, _("Signature decoding failed"));
-      free(sig);
-      return NULL;
-   }
+  if (!sig->sigData) {
+    /* Allocation / Decoding failed in OpenSSL */
+    OpensslPostErrors(jcr, M_ERROR, _("Signature decoding failed"));
+    free(sig);
+    return NULL;
+  }
 
-   return sig;
+  return sig;
 }
 
 /*
  * Free memory associated with a signature object.
  */
-void CryptoSignFree(SIGNATURE *sig)
-{
-   SignatureData_free(sig->sigData);
-   free (sig);
+void CryptoSignFree(SIGNATURE *sig) {
+
+
+
+
+  SignatureData_free(sig->sigData);
+  free(sig);
 }
 
 /*
@@ -989,62 +986,62 @@ void CryptoSignFree(SIGNATURE *sig)
  *
  *  Note! BAREOS malloc() fails if out of memory.
  */
-CRYPTO_SESSION *crypto_session_new(crypto_cipher_t cipher, alist *pubkeys)
-{
-   CRYPTO_SESSION *cs;
-   X509_KEYPAIR *keypair;
-   const EVP_CIPHER *ec;
-   unsigned char *iv;
-   int iv_len;
+CRYPTO_SESSION *crypto_session_new(crypto_cipher_t cipher, alist *pubkeys) {
 
-   /* Allocate our session description structures */
-   cs = (CRYPTO_SESSION *)malloc(sizeof(CRYPTO_SESSION));
+  CRYPTO_SESSION *cs;
+  X509_KEYPAIR *keypair;
+  const EVP_CIPHER *ec;
+  unsigned char *iv;
+  int iv_len;
 
-   /* Initialize required fields */
-   cs->session_key = NULL;
+  /* Allocate our session description structures */
+  cs = (CRYPTO_SESSION *)malloc(sizeof(CRYPTO_SESSION));
 
-   /* Allocate a CryptoData structure */
-   cs->cryptoData = CryptoData_new();
+  /* Initialize required fields */
+  cs->session_key = NULL;
 
-   if (!cs->cryptoData) {
-      /* Allocation failed in OpenSSL */
-      free(cs);
-      return NULL;
-   }
+  /* Allocate a CryptoData structure */
+  cs->cryptoData = CryptoData_new();
 
-   /* Set the ASN.1 structure version number */
-   ASN1_INTEGER_set(cs->cryptoData->version, BAREOS_ASN1_VERSION);
+  if (!cs->cryptoData) {
+    /* Allocation failed in OpenSSL */
+    free(cs);
+    return NULL;
+  }
 
-   /*
-    * Acquire a cipher instance and set the ASN.1 cipher NID
-    */
-   switch (cipher) {
-   case CRYPTO_CIPHER_BLOWFISH_CBC:
+  /* Set the ASN.1 structure version number */
+  ASN1_INTEGER_set(cs->cryptoData->version, BAREOS_ASN1_VERSION);
+
+  /*
+   * Acquire a cipher instance and set the ASN.1 cipher NID
+   */
+  switch (cipher) {
+    case CRYPTO_CIPHER_BLOWFISH_CBC:
       /* Blowfish CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_bf_cbc);
       ec = EVP_bf_cbc();
       break;
-   case CRYPTO_CIPHER_3DES_CBC:
+    case CRYPTO_CIPHER_3DES_CBC:
       /* 3DES CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_des_ede3_cbc);
       ec = EVP_des_ede3_cbc();
       break;
 #ifndef OPENSSL_NO_AES
-   case CRYPTO_CIPHER_AES_128_CBC:
+    case CRYPTO_CIPHER_AES_128_CBC:
       /* AES 128 bit CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_aes_128_cbc);
       ec = EVP_aes_128_cbc();
       break;
 #ifndef HAVE_OPENSSL_EXPORT_LIBRARY
 #ifdef NID_aes_192_cbc
-   case CRYPTO_CIPHER_AES_192_CBC:
+    case CRYPTO_CIPHER_AES_192_CBC:
       /* AES 192 bit CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_aes_192_cbc);
       ec = EVP_aes_192_cbc();
       break;
 #endif
 #ifdef NID_aes_256_cbc
-   case CRYPTO_CIPHER_AES_256_CBC:
+    case CRYPTO_CIPHER_AES_256_CBC:
       /* AES 256 bit CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_aes_256_cbc);
       ec = EVP_aes_256_cbc();
@@ -1054,7 +1051,7 @@ CRYPTO_SESSION *crypto_session_new(crypto_cipher_t cipher, alist *pubkeys)
 #endif /* OPENSSL_NO_AES */
 #ifndef OPENSSL_NO_CAMELLIA
 #ifdef NID_camellia_128_cbc
-   case CRYPTO_CIPHER_CAMELLIA_128_CBC:
+    case CRYPTO_CIPHER_CAMELLIA_128_CBC:
       /* Camellia 128 bit CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_camellia_128_cbc);
       ec = EVP_camellia_128_cbc();
@@ -1062,14 +1059,14 @@ CRYPTO_SESSION *crypto_session_new(crypto_cipher_t cipher, alist *pubkeys)
 #endif
 #ifndef HAVE_OPENSSL_EXPORT_LIBRARY
 #ifdef NID_camellia_192_cbc
-   case CRYPTO_CIPHER_CAMELLIA_192_CBC:
+    case CRYPTO_CIPHER_CAMELLIA_192_CBC:
       /* Camellia 192 bit CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_camellia_192_cbc);
       ec = EVP_camellia_192_cbc();
       break;
 #endif
 #ifdef NID_camellia_256_cbc
-   case CRYPTO_CIPHER_CAMELLIA_256_CBC:
+    case CRYPTO_CIPHER_CAMELLIA_256_CBC:
       /* Camellia 256 bit CBC */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_camellia_256_cbc);
       ec = EVP_camellia_256_cbc();
@@ -1079,112 +1076,113 @@ CRYPTO_SESSION *crypto_session_new(crypto_cipher_t cipher, alist *pubkeys)
 #endif /* HAVE_OPENSSL_EXPORT_LIBRARY */
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 #ifdef NID_aes_128_cbc_hmac_sha1
-   case CRYPTO_CIPHER_AES_128_CBC_HMAC_SHA1:
+    case CRYPTO_CIPHER_AES_128_CBC_HMAC_SHA1:
       /* AES 128 bit CBC HMAC SHA1 */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_aes_128_cbc_hmac_sha1);
       ec = EVP_aes_128_cbc_hmac_sha1();
       break;
 #endif
 #ifdef NID_aes_256_cbc_hmac_sha1
-   case CRYPTO_CIPHER_AES_256_CBC_HMAC_SHA1:
+    case CRYPTO_CIPHER_AES_256_CBC_HMAC_SHA1:
       /* AES 256 bit CBC HMAC SHA1 */
       cs->cryptoData->contentEncryptionAlgorithm = OBJ_nid2obj(NID_aes_256_cbc_hmac_sha1);
       ec = EVP_aes_256_cbc_hmac_sha1();
       break;
 #endif
 #endif /* !OPENSSL_NO_SHA && !OPENSSL_NO_SHA1 */
-   default:
+    default:
       Jmsg0(NULL, M_ERROR, 0, _("Unsupported cipher type specified\n"));
       CryptoSessionFree(cs);
       return NULL;
-   }
+  }
 
-   /* Generate a symmetric session key */
-   cs->session_key_len = EVP_CIPHER_key_length(ec);
-   cs->session_key = (unsigned char *) malloc(cs->session_key_len);
-   if (RAND_bytes(cs->session_key, cs->session_key_len) <= 0) {
+  /* Generate a symmetric session key */
+  cs->session_key_len = EVP_CIPHER_key_length(ec);
+  cs->session_key = (unsigned char *)malloc(cs->session_key_len);
+  if (RAND_bytes(cs->session_key, cs->session_key_len) <= 0) {
+    /* OpenSSL failure */
+    CryptoSessionFree(cs);
+    return NULL;
+  }
+
+  /* Generate an IV if possible */
+  if ((iv_len = EVP_CIPHER_iv_length(ec))) {
+    iv = (unsigned char *)malloc(iv_len);
+
+    /* Generate random IV */
+    if (RAND_bytes(iv, iv_len) <= 0) {
       /* OpenSSL failure */
       CryptoSessionFree(cs);
-      return NULL;
-   }
-
-   /* Generate an IV if possible */
-   if ((iv_len = EVP_CIPHER_iv_length(ec))) {
-      iv = (unsigned char *)malloc(iv_len);
-
-      /* Generate random IV */
-      if (RAND_bytes(iv, iv_len) <= 0) {
-         /* OpenSSL failure */
-         CryptoSessionFree(cs);
-         free(iv);
-         return NULL;
-      }
-
-      /* Store it in our ASN.1 structure */
-      if (!M_ASN1_OCTET_STRING_set(cs->cryptoData->iv, iv, iv_len)) {
-         /* Allocation failed in OpenSSL */
-         CryptoSessionFree(cs);
-         free(iv);
-         return NULL;
-      }
       free(iv);
-   }
+      return NULL;
+    }
 
-   /*
-    * Create RecipientInfo structures for supplied
-    * public keys.
-    */
-   foreach_alist(keypair, pubkeys) {
-      RecipientInfo *ri;
-      unsigned char *ekey;
-      int ekey_len;
+    /* Store it in our ASN.1 structure */
+    if (!M_ASN1_OCTET_STRING_set(cs->cryptoData->iv, iv, iv_len)) {
+      /* Allocation failed in OpenSSL */
+      CryptoSessionFree(cs);
+      free(iv);
+      return NULL;
+    }
+    free(iv);
+  }
 
-      ri = RecipientInfo_new();
-      if (!ri) {
-         /* Allocation failed in OpenSSL */
-         CryptoSessionFree(cs);
-         return NULL;
-      }
+  /*
+   * Create RecipientInfo structures for supplied
+   * public keys.
+   */
+  foreach_alist(keypair, pubkeys) {
+    RecipientInfo *ri;
+    unsigned char *ekey;
+    int ekey_len;
 
-      /* Set the ASN.1 structure version number */
-      ASN1_INTEGER_set(ri->version, BAREOS_ASN1_VERSION);
+    ri = RecipientInfo_new();
+    if (!ri) {
+      /* Allocation failed in OpenSSL */
+      CryptoSessionFree(cs);
+      return NULL;
+    }
 
-      /* Drop the string allocated by OpenSSL, and add our subjectKeyIdentifier */
-      M_ASN1_OCTET_STRING_free(ri->subjectKeyIdentifier);
-      ri->subjectKeyIdentifier = M_ASN1_OCTET_STRING_dup(keypair->keyid);
+    /* Set the ASN.1 structure version number */
+    ASN1_INTEGER_set(ri->version, BAREOS_ASN1_VERSION);
 
-      /* Set our key encryption algorithm. We currently require RSA */
-      assert(keypair->pubkey && EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)) == EVP_PKEY_RSA);
-      ri->keyEncryptionAlgorithm = OBJ_nid2obj(NID_rsaEncryption);
+    /* Drop the string allocated by OpenSSL, and add our subjectKeyIdentifier */
+    M_ASN1_OCTET_STRING_free(ri->subjectKeyIdentifier);
+    ri->subjectKeyIdentifier = M_ASN1_OCTET_STRING_dup(keypair->keyid);
 
-      /* Encrypt the session key */
-      ekey = (unsigned char *)malloc(EVP_PKEY_size(keypair->pubkey));
+    /* Set our key encryption algorithm. We currently require RSA */
+    assert(keypair->pubkey && EVP_PKEY_type(EVP_PKEY_id(keypair->pubkey)) == EVP_PKEY_RSA);
+    ri->keyEncryptionAlgorithm = OBJ_nid2obj(NID_rsaEncryption);
 
-      if ((ekey_len = EVP_PKEY_encrypt(ekey, cs->session_key, cs->session_key_len, keypair->pubkey)) <= 0) {
-         /* OpenSSL failure */
-         RecipientInfo_free(ri);
-         CryptoSessionFree(cs);
-         free(ekey);
-         return NULL;
-      }
+    /* Encrypt the session key */
+    ekey = (unsigned char *)malloc(EVP_PKEY_size(keypair->pubkey));
 
-      /* Store it in our ASN.1 structure */
-      if (!M_ASN1_OCTET_STRING_set(ri->encryptedKey, ekey, ekey_len)) {
-         /* Allocation failed in OpenSSL */
-         RecipientInfo_free(ri);
-         CryptoSessionFree(cs);
-         free(ekey);
-         return NULL;
-      }
-
-      /* Free the encrypted key buffer */
+    if ((ekey_len =
+             EVP_PKEY_encrypt(ekey, cs->session_key, cs->session_key_len, keypair->pubkey)) <= 0) {
+      /* OpenSSL failure */
+      RecipientInfo_free(ri);
+      CryptoSessionFree(cs);
       free(ekey);
+      return NULL;
+    }
 
-      /* Push the new RecipientInfo structure onto the stack */
-      sk_RecipientInfo_push(cs->cryptoData->recipientInfo, ri);
-   }
+    /* Store it in our ASN.1 structure */
+    if (!M_ASN1_OCTET_STRING_set(ri->encryptedKey, ekey, ekey_len)) {
+      /* Allocation failed in OpenSSL */
+      RecipientInfo_free(ri);
+      CryptoSessionFree(cs);
+      free(ekey);
+      return NULL;
+    }
 
-   return cs;
+    /* Free the encrypted key buffer */
+    free(ekey);
+
+    /* Push the new RecipientInfo structure onto the stack */
+    sk_RecipientInfo_push(cs->cryptoData->recipientInfo, ri);
+  }
+
+  return cs;
 }
 
 /*
@@ -1196,15 +1194,18 @@ CRYPTO_SESSION *crypto_session_new(crypto_cipher_t cipher, alist *pubkeys)
  * Returns: true on success, stores the encoded data in dest, and the size in length.
  *          false on failure.
  */
-bool CryptoSessionEncode(CRYPTO_SESSION *cs, uint8_t *dest, uint32_t *length)
-{
-   if (*length == 0) {
-      *length = i2d_CryptoData(cs->cryptoData, NULL);
-      return true;
-   }
+bool CryptoSessionEncode(CRYPTO_SESSION *cs, uint8_t *dest, uint32_t *length) {
 
-   *length = i2d_CryptoData(cs->cryptoData, &dest);
-   return true;
+
+
+
+  if (*length == 0) {
+    *length = i2d_CryptoData(cs->cryptoData, NULL);
+    return true;
+  }
+
+  *length = i2d_CryptoData(cs->cryptoData, &dest);
+  return true;
 }
 
 /*
@@ -1213,172 +1214,177 @@ bool CryptoSessionEncode(CRYPTO_SESSION *cs, uint8_t *dest, uint32_t *length)
  *
  * Returns: CRYPTO_SESSION instance on success.
  *          NULL on failure.
- * Returns: CRYPTO_ERROR_NONE and a pointer to a newly allocated CRYPTO_SESSION structure in *session on success.
- *          A crypto_error_t value on failure.
+ * Returns: CRYPTO_ERROR_NONE and a pointer to a newly allocated CRYPTO_SESSION structure in
+ * *session on success. A crypto_error_t value on failure.
  */
-crypto_error_t CryptoSessionDecode(const uint8_t *data, uint32_t length, alist *keypairs, CRYPTO_SESSION **session)
-{
-   CRYPTO_SESSION *cs;
-   X509_KEYPAIR *keypair;
-   STACK_OF(RecipientInfo) *recipients;
-   crypto_error_t retval = CRYPTO_ERROR_NONE;
+crypto_error_t CryptoSessionDecode(const uint8_t *data, uint32_t length, alist *keypairs,
+                                   CRYPTO_SESSION **session) {
+  CRYPTO_SESSION *cs;
+  X509_KEYPAIR *keypair;
+  STACK_OF(RecipientInfo) * recipients;
+  crypto_error_t retval = CRYPTO_ERROR_NONE;
 #if (OPENSSL_VERSION_NUMBER >= 0x0090800FL)
-   const unsigned char *p = (const unsigned char *)data;
+  const unsigned char *p = (const unsigned char *)data;
 #else
-   unsigned char *p = (unsigned char *)data;
+  unsigned char *p = (unsigned char *)data;
 #endif
 
-   /* bareos-fd.conf doesn't contains any key */
-   if (!keypairs) {
-      return CRYPTO_ERROR_NORECIPIENT;
-   }
+  /* bareos-fd.conf doesn't contains any key */
+  if (!keypairs) {
+    return CRYPTO_ERROR_NORECIPIENT;
+  }
 
-   cs = (CRYPTO_SESSION *)malloc(sizeof(CRYPTO_SESSION));
+  cs = (CRYPTO_SESSION *)malloc(sizeof(CRYPTO_SESSION));
 
-   /* Initialize required fields */
-   cs->session_key = NULL;
+  /* Initialize required fields */
+  cs->session_key = NULL;
 
-   /* d2i_CryptoData modifies the supplied pointer */
-   cs->cryptoData = d2i_CryptoData(NULL, &p, length);
+  /* d2i_CryptoData modifies the supplied pointer */
+  cs->cryptoData = d2i_CryptoData(NULL, &p, length);
 
-   if (!cs->cryptoData) {
-      /* Allocation / Decoding failed in OpenSSL */
-      OpensslPostErrors(M_ERROR, _("CryptoData decoding failed"));
-      retval = CRYPTO_ERROR_INTERNAL;
-      goto err;
-   }
+  if (!cs->cryptoData) {
+    /* Allocation / Decoding failed in OpenSSL */
+    OpensslPostErrors(M_ERROR, _("CryptoData decoding failed"));
+    retval = CRYPTO_ERROR_INTERNAL;
+    goto err;
+  }
 
-   recipients = cs->cryptoData->recipientInfo;
+  recipients = cs->cryptoData->recipientInfo;
 
-   /*
-    * Find a matching RecipientInfo structure for a supplied
-    * public key
-    */
-   foreach_alist(keypair, keypairs) {
-      RecipientInfo *ri;
-      int i;
+  /*
+   * Find a matching RecipientInfo structure for a supplied
+   * public key
+   */
+  foreach_alist(keypair, keypairs) {
+    RecipientInfo *ri;
+    int i;
 
-      /* Private key available? */
-      if (keypair->privkey == NULL) {
-         continue;
+    /* Private key available? */
+    if (keypair->privkey == NULL) {
+      continue;
+    }
+
+    for (i = 0; i < sk_RecipientInfo_num(recipients); i++) {
+      ri = sk_RecipientInfo_value(recipients, i);
+
+      /* Match against the subjectKeyIdentifier */
+      if (M_ASN1_OCTET_STRING_cmp(keypair->keyid, ri->subjectKeyIdentifier) == 0) {
+        /* Match found, extract symmetric encryption session data */
+
+        /* RSA is required. */
+        assert(EVP_PKEY_type(EVP_PKEY_id(keypair->privkey)) == EVP_PKEY_RSA);
+
+        /* If we recieve a RecipientInfo structure that does not use
+         * RSA, return an error */
+        if (OBJ_obj2nid(ri->keyEncryptionAlgorithm) != NID_rsaEncryption) {
+          retval = CRYPTO_ERROR_INVALID_CRYPTO;
+          goto err;
+        }
+
+        /* Decrypt the session key */
+        /* Allocate sufficient space for the largest possible decrypted data */
+        cs->session_key = (unsigned char *)malloc(EVP_PKEY_size(keypair->privkey));
+        cs->session_key_len =
+            EVP_PKEY_decrypt(cs->session_key, M_ASN1_STRING_data(ri->encryptedKey),
+                             M_ASN1_STRING_length(ri->encryptedKey), keypair->privkey);
+
+        if (cs->session_key_len <= 0) {
+          OpensslPostErrors(M_ERROR, _("Failure decrypting the session key"));
+          retval = CRYPTO_ERROR_DECRYPTION;
+          goto err;
+        }
+
+        /* Session key successfully extracted, return the CRYPTO_SESSION structure */
+        *session = cs;
+        return CRYPTO_ERROR_NONE;
       }
+    }
+  }
 
-      for (i = 0; i < sk_RecipientInfo_num(recipients); i++) {
-         ri = sk_RecipientInfo_value(recipients, i);
-
-         /* Match against the subjectKeyIdentifier */
-         if (M_ASN1_OCTET_STRING_cmp(keypair->keyid, ri->subjectKeyIdentifier) == 0) {
-            /* Match found, extract symmetric encryption session data */
-
-            /* RSA is required. */
-            assert(EVP_PKEY_type(EVP_PKEY_id(keypair->privkey)) == EVP_PKEY_RSA);
-
-            /* If we recieve a RecipientInfo structure that does not use
-             * RSA, return an error */
-            if (OBJ_obj2nid(ri->keyEncryptionAlgorithm) != NID_rsaEncryption) {
-               retval = CRYPTO_ERROR_INVALID_CRYPTO;
-               goto err;
-            }
-
-            /* Decrypt the session key */
-            /* Allocate sufficient space for the largest possible decrypted data */
-            cs->session_key = (unsigned char *)malloc(EVP_PKEY_size(keypair->privkey));
-            cs->session_key_len = EVP_PKEY_decrypt(cs->session_key, M_ASN1_STRING_data(ri->encryptedKey),
-                                  M_ASN1_STRING_length(ri->encryptedKey), keypair->privkey);
-
-            if (cs->session_key_len <= 0) {
-               OpensslPostErrors(M_ERROR, _("Failure decrypting the session key"));
-               retval = CRYPTO_ERROR_DECRYPTION;
-               goto err;
-            }
-
-            /* Session key successfully extracted, return the CRYPTO_SESSION structure */
-            *session = cs;
-            return CRYPTO_ERROR_NONE;
-         }
-      }
-   }
-
-   /* No matching recipient found */
-   return CRYPTO_ERROR_NORECIPIENT;
+  /* No matching recipient found */
+  return CRYPTO_ERROR_NORECIPIENT;
 
 err:
-   CryptoSessionFree(cs);
-   return retval;
+  CryptoSessionFree(cs);
+  return retval;
 }
 
 /*
  * Free memory associated with a crypto session object.
  */
-void CryptoSessionFree(CRYPTO_SESSION *cs)
-{
-   if (cs->cryptoData) {
-      CryptoData_free(cs->cryptoData);
-   }
-   if (cs->session_key){
-      free(cs->session_key);
-   }
-   free(cs);
+void CryptoSessionFree(CRYPTO_SESSION *cs) {
+
+
+
+
+  if (cs->cryptoData) {
+    CryptoData_free(cs->cryptoData);
+  }
+  if (cs->session_key) {
+    free(cs->session_key);
+  }
+  free(cs);
 }
 
 /*
  * Create a new crypto cipher context with the specified session object
- *  Returns: A pointer to a CIPHER_CONTEXT object on success. The cipher block size is returned in blocksize.
- *           NULL on failure.
+ *  Returns: A pointer to a CIPHER_CONTEXT object on success. The cipher block size is returned in
+ * blocksize. NULL on failure.
  */
-CIPHER_CONTEXT *crypto_cipher_new(CRYPTO_SESSION *cs, bool encrypt, uint32_t *blocksize)
-{
-   CIPHER_CONTEXT *cipher_ctx = new CIPHER_CONTEXT;
-   const EVP_CIPHER *ec;
+CIPHER_CONTEXT *crypto_cipher_new(CRYPTO_SESSION *cs, bool encrypt, uint32_t *blocksize) {
 
-   /*
-    * Acquire a cipher instance for the given ASN.1 cipher NID
-    */
-   if ((ec = EVP_get_cipherbyobj(cs->cryptoData->contentEncryptionAlgorithm)) == NULL) {
-      Jmsg1(NULL, M_ERROR, 0,
-         _("Unsupported contentEncryptionAlgorithm: %d\n"), OBJ_obj2nid(cs->cryptoData->contentEncryptionAlgorithm));
-      delete cipher_ctx;
-      return NULL;
-   }
+  CIPHER_CONTEXT *cipher_ctx = new CIPHER_CONTEXT;
+  const EVP_CIPHER *ec;
 
-   if (encrypt) {
-      /* Initialize for encryption */
-      if (!EVP_CipherInit_ex(cipher_ctx->ctx, ec, NULL, NULL, NULL, 1)) {
-         OpensslPostErrors(M_ERROR, _("OpenSSL cipher context initialization failed"));
-         goto err;
-      }
-   } else {
-      /* Initialize for decryption */
-      if (!EVP_CipherInit_ex(cipher_ctx->ctx, ec, NULL, NULL, NULL, 0)) {
-         OpensslPostErrors(M_ERROR, _("OpenSSL cipher context initialization failed"));
-         goto err;
-      }
-   }
+  /*
+   * Acquire a cipher instance for the given ASN.1 cipher NID
+   */
+  if ((ec = EVP_get_cipherbyobj(cs->cryptoData->contentEncryptionAlgorithm)) == NULL) {
+    Jmsg1(NULL, M_ERROR, 0, _("Unsupported contentEncryptionAlgorithm: %d\n"),
+          OBJ_obj2nid(cs->cryptoData->contentEncryptionAlgorithm));
+    delete cipher_ctx;
+    return NULL;
+  }
 
-   /* Set the key size */
-   if (!EVP_CIPHER_CTX_set_key_length(cipher_ctx->ctx, cs->session_key_len)) {
-      OpensslPostErrors(M_ERROR, _("Encryption session provided an invalid symmetric key"));
+  if (encrypt) {
+    /* Initialize for encryption */
+    if (!EVP_CipherInit_ex(cipher_ctx->ctx, ec, NULL, NULL, NULL, 1)) {
+      OpensslPostErrors(M_ERROR, _("OpenSSL cipher context initialization failed"));
       goto err;
-   }
-
-   /* Validate the IV length */
-   if (EVP_CIPHER_iv_length(ec) != M_ASN1_STRING_length(cs->cryptoData->iv)) {
-      OpensslPostErrors(M_ERROR, _("Encryption session provided an invalid IV"));
+    }
+  } else {
+    /* Initialize for decryption */
+    if (!EVP_CipherInit_ex(cipher_ctx->ctx, ec, NULL, NULL, NULL, 0)) {
+      OpensslPostErrors(M_ERROR, _("OpenSSL cipher context initialization failed"));
       goto err;
-   }
+    }
+  }
 
-   /* Add the key and IV to the cipher context */
-   if (!EVP_CipherInit_ex(cipher_ctx->ctx, NULL, NULL, cs->session_key, M_ASN1_STRING_data(cs->cryptoData->iv), -1)) {
-      OpensslPostErrors(M_ERROR, _("OpenSSL cipher context key/IV initialization failed"));
-      goto err;
-   }
+  /* Set the key size */
+  if (!EVP_CIPHER_CTX_set_key_length(cipher_ctx->ctx, cs->session_key_len)) {
+    OpensslPostErrors(M_ERROR, _("Encryption session provided an invalid symmetric key"));
+    goto err;
+  }
 
-   *blocksize = EVP_CIPHER_CTX_block_size(cipher_ctx->ctx);
-   return cipher_ctx;
+  /* Validate the IV length */
+  if (EVP_CIPHER_iv_length(ec) != M_ASN1_STRING_length(cs->cryptoData->iv)) {
+    OpensslPostErrors(M_ERROR, _("Encryption session provided an invalid IV"));
+    goto err;
+  }
+
+  /* Add the key and IV to the cipher context */
+  if (!EVP_CipherInit_ex(cipher_ctx->ctx, NULL, NULL, cs->session_key,
+                         M_ASN1_STRING_data(cs->cryptoData->iv), -1)) {
+    OpensslPostErrors(M_ERROR, _("OpenSSL cipher context key/IV initialization failed"));
+    goto err;
+  }
+
+  *blocksize = EVP_CIPHER_CTX_block_size(cipher_ctx->ctx);
+  return cipher_ctx;
 
 err:
-   delete cipher_ctx;
-   return NULL;
+  delete cipher_ctx;
+  return NULL;
 }
 
 /*
@@ -1386,14 +1392,15 @@ err:
  * Returns: true on success, number of bytes output in written
  *          false on failure
  */
-bool CryptoCipherUpdate(CIPHER_CONTEXT *cipher_ctx, const uint8_t *data, uint32_t length, const uint8_t *dest, uint32_t *written)
-{
-   if (!EVP_CipherUpdate(cipher_ctx->ctx, (unsigned char *)dest, (int *)written, (const unsigned char *)data, length)) {
-      /* This really shouldn't fail */
-      return false;
-   } else {
-      return true;
-   }
+bool CryptoCipherUpdate(CIPHER_CONTEXT *cipher_ctx, const uint8_t *data, uint32_t length,
+                        const uint8_t *dest, uint32_t *written) {
+  if (!EVP_CipherUpdate(cipher_ctx->ctx, (unsigned char *)dest, (int *)written,
+                        (const unsigned char *)data, length)) {
+    /* This really shouldn't fail */
+    return false;
+  } else {
+    return true;
+  }
 }
 
 /*
@@ -1404,28 +1411,25 @@ bool CryptoCipherUpdate(CIPHER_CONTEXT *cipher_ctx, const uint8_t *data, uint32_
  * Returns: true on success
  *          false on failure
  */
-bool CryptoCipherFinalize(CIPHER_CONTEXT *cipher_ctx, uint8_t *dest, uint32_t *written)
-{
-   if (!EVP_CipherFinal_ex(cipher_ctx->ctx, (unsigned char *)dest, (int *) written)) {
-      /* This really shouldn't fail */
-      return false;
-   } else {
-      return true;
-   }
+bool CryptoCipherFinalize(CIPHER_CONTEXT *cipher_ctx, uint8_t *dest, uint32_t *written) {
+
+
+
+
+  if (!EVP_CipherFinal_ex(cipher_ctx->ctx, (unsigned char *)dest, (int *)written)) {
+    /* This really shouldn't fail */
+    return false;
+  } else {
+    return true;
+  }
 }
 
 /*
  * Free memory associated with a cipher context.
  */
-void CryptoCipherFree(CIPHER_CONTEXT *cipher_ctx)
-{
-   delete cipher_ctx;
-}
+void CryptoCipherFree(CIPHER_CONTEXT *cipher_ctx) { delete cipher_ctx; }
 
-const char *crypto_digest_name(DIGEST *digest)
-{
-   return crypto_digest_name(digest->type);
-}
+const char *crypto_digest_name(DIGEST *digest) { return crypto_digest_name(digest->type); }
 
 #endif /* HAVE_CRYPTO */
 
@@ -1441,45 +1445,47 @@ static int crypto_initialized = false;
  *  Returns: 0 on success
  *           errno on failure
  */
-int InitCrypto(void)
-{
-   int status;
+int InitCrypto(void) {
 
-   if ((status = OpensslInitThreads()) != 0) {
-      berrno be;
-      Jmsg1(NULL, M_ABORT, 0,
-        _("Unable to init OpenSSL threading: ERR=%s\n"), be.bstrerror(status));
-   }
 
-   /* Load libssl and libcrypto human-readable error strings */
-   SSL_load_error_strings();
 
-   /* Initialize OpenSSL SSL  library */
-   SSL_library_init();
 
-   /* Register OpenSSL ciphers and digests */
-   OpenSSL_add_all_algorithms();
+  int status;
 
-   if (!OpensslSeedPrng()) {
-      Jmsg0(NULL, M_ERROR_TERM, 0, _("Failed to seed OpenSSL PRNG\n"));
-   }
+  if ((status = OpensslInitThreads()) != 0) {
+    berrno be;
+    Jmsg1(NULL, M_ABORT, 0, _("Unable to init OpenSSL threading: ERR=%s\n"), be.bstrerror(status));
+  }
+
+  /* Load libssl and libcrypto human-readable error strings */
+  SSL_load_error_strings();
+
+  /* Initialize OpenSSL SSL  library */
+  SSL_library_init();
+
+  /* Register OpenSSL ciphers and digests */
+  OpenSSL_add_all_algorithms();
+
+  if (!OpensslSeedPrng()) {
+    Jmsg0(NULL, M_ERROR_TERM, 0, _("Failed to seed OpenSSL PRNG\n"));
+  }
 
 #ifdef HAVE_ENGINE_LOAD_PK11
-   /*
-    * FIXME: Until https://www.illumos.org/issues/1667 is solved.
-    */
-   ENGINE_load_pk11();
+  /*
+   * FIXME: Until https://www.illumos.org/issues/1667 is solved.
+   */
+  ENGINE_load_pk11();
 #else
-   /*
-    * Load all the builtin engines.
-    */
-   ENGINE_load_builtin_engines();
-   ENGINE_register_all_complete();
+  /*
+   * Load all the builtin engines.
+   */
+  ENGINE_load_builtin_engines();
+  ENGINE_register_all_complete();
 #endif
 
-   crypto_initialized = true;
+  crypto_initialized = true;
 
-   return status;
+  return status;
 }
 
 /*
@@ -1489,41 +1495,44 @@ int InitCrypto(void)
  *  Returns: 0 on success
  *           errno on failure
  */
-int CleanupCrypto(void)
-{
-   /*
-    * Ensure that we've actually been initialized; Doing this here decreases the
-    * complexity of client's termination/cleanup code.
-    */
-   if (!crypto_initialized) {
-      return 0;
-   }
+int CleanupCrypto(void) {
+
+
+
+
+  /*
+   * Ensure that we've actually been initialized; Doing this here decreases the
+   * complexity of client's termination/cleanup code.
+   */
+  if (!crypto_initialized) {
+    return 0;
+  }
 
 #ifndef HAVE_SUN_OS /* FIXME: Until https://www.illumos.org/issues/1667 is solved. */
-   /*
-    * Cleanup the builtin engines.
-    */
-   ENGINE_cleanup();
+  /*
+   * Cleanup the builtin engines.
+   */
+  ENGINE_cleanup();
 #endif
 
-   if (!OpensslSavePrng()) {
-      Jmsg0(NULL, M_ERROR, 0, _("Failed to save OpenSSL PRNG\n"));
-   }
+  if (!OpensslSavePrng()) {
+    Jmsg0(NULL, M_ERROR, 0, _("Failed to save OpenSSL PRNG\n"));
+  }
 
-   OpensslCleanupThreads();
+  OpensslCleanupThreads();
 
-   /* Free libssl and libcrypto error strings */
-   ERR_free_strings();
+  /* Free libssl and libcrypto error strings */
+  ERR_free_strings();
 
-   /* Free all ciphers and digests */
-   EVP_cleanup();
+  /* Free all ciphers and digests */
+  EVP_cleanup();
 
-   /* Free memory used by PRNG */
-   RAND_cleanup();
+  /* Free memory used by PRNG */
+  RAND_cleanup();
 
-   crypto_initialized = false;
+  crypto_initialized = false;
 
-   return 0;
+  return 0;
 }
 
 /* Array of mutexes for use with OpenSSL static locking */
@@ -1531,7 +1540,7 @@ static pthread_mutex_t *mutexes;
 
 /* OpenSSL dynamic locking structure */
 struct CRYPTO_dynlock_value {
-   pthread_mutex_t mutex;
+  pthread_mutex_t mutex;
 };
 
 /*
@@ -1540,26 +1549,32 @@ struct CRYPTO_dynlock_value {
  *   a NULL.  Passing a NULL causes the messages to be
  *   printed by the daemon -- not very good :-(
  */
-void OpensslPostErrors(int code, const char *errstring)
-{
-   OpensslPostErrors(NULL, code, errstring);
+void OpensslPostErrors(int code, const char *errstring) {
+
+
+
+
+  OpensslPostErrors(NULL, code, errstring);
 }
 
 /*
  * Post all per-thread openssl errors
  */
-void OpensslPostErrors(JobControlRecord *jcr, int code, const char *errstring)
-{
-   char buf[512];
-   unsigned long sslerr;
+void OpensslPostErrors(JobControlRecord *jcr, int code, const char *errstring) {
 
-   /* Pop errors off of the per-thread queue */
-   while((sslerr = ERR_get_error()) != 0) {
-      /* Acquire the human readable string */
-      ERR_error_string_n(sslerr, buf, sizeof(buf));
-      Dmsg3(50, "jcr=%p %s: ERR=%s\n", jcr, errstring, buf);
-      Qmsg2(jcr, M_ERROR, 0, "%s: ERR=%s\n", errstring, buf);
-   }
+
+
+
+  char buf[512];
+  unsigned long sslerr;
+
+  /* Pop errors off of the per-thread queue */
+  while ((sslerr = ERR_get_error()) != 0) {
+    /* Acquire the human readable string */
+    ERR_error_string_n(sslerr, buf, sizeof(buf));
+    Dmsg3(50, "jcr=%p %s: ERR=%s\n", jcr, errstring, buf);
+    Qmsg2(jcr, M_ERROR, 0, "%s: ERR=%s\n", errstring, buf);
+  }
 }
 
 /*
@@ -1567,70 +1582,73 @@ void OpensslPostErrors(JobControlRecord *jcr, int code, const char *errstring)
  *  Returns: thread ID
  *
  */
-static unsigned long GetOpensslThreadId(void)
-{
+static unsigned long GetOpensslThreadId(void) {
+
+
+
+
 #ifdef HAVE_WIN32
-   return (unsigned long)getpid();
+  return (unsigned long)getpid();
 #else
-   /*
-    * Comparison without use of pthread_equal() is mandated by the OpenSSL API
-    *
-    * Note: this creates problems with the new Win32 pthreads
-    *   emulation code, which defines pthread_t as a structure.
-    */
-   return ((unsigned long)pthread_self());
+  /*
+   * Comparison without use of pthread_equal() is mandated by the OpenSSL API
+   *
+   * Note: this creates problems with the new Win32 pthreads
+   *   emulation code, which defines pthread_t as a structure.
+   */
+  return ((unsigned long)pthread_self());
 #endif
 }
 
 /*
  * Allocate a dynamic OpenSSL mutex
  */
-static struct CRYPTO_dynlock_value *openssl_create_dynamic_mutex (const char *file, int line)
-{
-   struct CRYPTO_dynlock_value *dynlock;
-   int status;
+static struct CRYPTO_dynlock_value *openssl_create_dynamic_mutex(const char *file, int line) {
 
-   dynlock = (struct CRYPTO_dynlock_value *)malloc(sizeof(struct CRYPTO_dynlock_value));
+  struct CRYPTO_dynlock_value *dynlock;
+  int status;
 
-   if ((status = pthread_mutex_init(&dynlock->mutex, NULL)) != 0) {
-      berrno be;
-      Jmsg1(NULL, M_ABORT, 0, _("Unable to init mutex: ERR=%s\n"), be.bstrerror(status));
-   }
+  dynlock = (struct CRYPTO_dynlock_value *)malloc(sizeof(struct CRYPTO_dynlock_value));
 
-   return dynlock;
+  if ((status = pthread_mutex_init(&dynlock->mutex, NULL)) != 0) {
+    berrno be;
+    Jmsg1(NULL, M_ABORT, 0, _("Unable to init mutex: ERR=%s\n"), be.bstrerror(status));
+  }
+
+  return dynlock;
 }
 
-static void OpensslUpdateDynamicMutex(int mode, struct CRYPTO_dynlock_value *dynlock, const char *file, int line)
-{
-   if (mode & CRYPTO_LOCK) {
-      P(dynlock->mutex);
-   } else {
-      V(dynlock->mutex);
-   }
+static void OpensslUpdateDynamicMutex(int mode, struct CRYPTO_dynlock_value *dynlock,
+                                      const char *file, int line) {
+  if (mode & CRYPTO_LOCK) {
+    P(dynlock->mutex);
+  } else {
+    V(dynlock->mutex);
+  }
 }
 
-static void OpensslDestroyDynamicMutex(struct CRYPTO_dynlock_value *dynlock, const char *file, int line)
-{
-   int status;
+static void OpensslDestroyDynamicMutex(struct CRYPTO_dynlock_value *dynlock, const char *file,
+                                       int line) {
+  int status;
 
-   if ((status = pthread_mutex_destroy(&dynlock->mutex)) != 0) {
-      berrno be;
-      Jmsg1(NULL, M_ABORT, 0, _("Unable to destroy mutex: ERR=%s\n"), be.bstrerror(status));
-   }
+  if ((status = pthread_mutex_destroy(&dynlock->mutex)) != 0) {
+    berrno be;
+    Jmsg1(NULL, M_ABORT, 0, _("Unable to destroy mutex: ERR=%s\n"), be.bstrerror(status));
+  }
 
-   free(dynlock);
+  free(dynlock);
 }
 
 /*
  * (Un)Lock a static OpenSSL mutex
  */
-static void openssl_update_static_mutex (int mode, int i, const char *file, int line)
-{
-   if (mode & CRYPTO_LOCK) {
-      P(mutexes[i]);
-   } else {
-      V(mutexes[i]);
-   }
+static void openssl_update_static_mutex(int mode, int i, const char *file, int line) {
+
+  if (mode & CRYPTO_LOCK) {
+    P(mutexes[i]);
+  } else {
+    V(mutexes[i]);
+  }
 }
 
 /*
@@ -1638,77 +1656,82 @@ static void openssl_update_static_mutex (int mode, int i, const char *file, int 
  *  Returns: 0 on success
  *           errno on failure
  */
-int OpensslInitThreads (void)
-{
-   int i, numlocks;
-   int status;
+int OpensslInitThreads(void) {
 
 
-   /* Set thread ID callback */
-   CRYPTO_set_id_callback(GetOpensslThreadId);
 
-   /* Initialize static locking */
-   numlocks = CRYPTO_num_locks();
-   mutexes = (pthread_mutex_t *) malloc(numlocks * sizeof(pthread_mutex_t));
-   for (i = 0; i < numlocks; i++) {
-      if ((status = pthread_mutex_init(&mutexes[i], NULL)) != 0) {
-         berrno be;
-         Jmsg1(NULL, M_FATAL, 0, _("Unable to init mutex: ERR=%s\n"), be.bstrerror(status));
-         return status;
-      }
-   }
 
-   /* Set static locking callback */
-   CRYPTO_set_locking_callback(openssl_update_static_mutex);
+  int i, numlocks;
+  int status;
 
-   /* Initialize dyanmic locking */
-   CRYPTO_set_dynlock_create_callback(openssl_create_dynamic_mutex);
-   CRYPTO_set_dynlock_lock_callback(OpensslUpdateDynamicMutex);
-   CRYPTO_set_dynlock_destroy_callback(OpensslDestroyDynamicMutex);
+  /* Set thread ID callback */
+  CRYPTO_set_id_callback(GetOpensslThreadId);
 
-   return 0;
+  /* Initialize static locking */
+  numlocks = CRYPTO_num_locks();
+  mutexes = (pthread_mutex_t *)malloc(numlocks * sizeof(pthread_mutex_t));
+  for (i = 0; i < numlocks; i++) {
+    if ((status = pthread_mutex_init(&mutexes[i], NULL)) != 0) {
+      berrno be;
+      Jmsg1(NULL, M_FATAL, 0, _("Unable to init mutex: ERR=%s\n"), be.bstrerror(status));
+      return status;
+    }
+  }
+
+  /* Set static locking callback */
+  CRYPTO_set_locking_callback(openssl_update_static_mutex);
+
+  /* Initialize dyanmic locking */
+  CRYPTO_set_dynlock_create_callback(openssl_create_dynamic_mutex);
+  CRYPTO_set_dynlock_lock_callback(OpensslUpdateDynamicMutex);
+  CRYPTO_set_dynlock_destroy_callback(OpensslDestroyDynamicMutex);
+
+  return 0;
 }
 
 /*
  * Clean up OpenSSL threading support
  */
-void OpensslCleanupThreads(void)
-{
-   int i, numlocks;
-   int status;
+void OpensslCleanupThreads(void) {
 
-   /* Unset thread ID callback */
-   CRYPTO_set_id_callback(NULL);
 
-   /* Deallocate static lock mutexes */
-   numlocks = CRYPTO_num_locks();
-   for (i = 0; i < numlocks; i++) {
-      if ((status = pthread_mutex_destroy(&mutexes[i])) != 0) {
-         berrno be;
 
-         switch (status) {
-         case EPERM:
-            /* No need to report errors when we get an EPERM */
-            break;
-         default:
-            /* We don't halt execution, reporting the error should be sufficient */
-            Jmsg2(NULL, M_ERROR, 0, _("Unable to destroy mutex: %d ERR=%s\n"),
-                  status, be.bstrerror(status));
-            break;
-         }
+
+  int i, numlocks;
+  int status;
+
+  /* Unset thread ID callback */
+  CRYPTO_set_id_callback(NULL);
+
+  /* Deallocate static lock mutexes */
+  numlocks = CRYPTO_num_locks();
+  for (i = 0; i < numlocks; i++) {
+    if ((status = pthread_mutex_destroy(&mutexes[i])) != 0) {
+      berrno be;
+
+      switch (status) {
+        case EPERM:
+          /* No need to report errors when we get an EPERM */
+          break;
+        default:
+          /* We don't halt execution, reporting the error should be sufficient */
+          Jmsg2(NULL, M_ERROR, 0, _("Unable to destroy mutex: %d ERR=%s\n"), status,
+                be.bstrerror(status));
+          break;
       }
-   }
+    }
+  }
 
-   /* Unset static locking callback */
-   CRYPTO_set_locking_callback(NULL);
+  /* Unset static locking callback */
+  CRYPTO_set_locking_callback(NULL);
 
-   /* Free static lock array */
-   free(mutexes);
+  /* Free static lock array */
+  free(mutexes);
 
-   /* Unset dynamic locking callbacks */
-   CRYPTO_set_dynlock_create_callback(NULL);
-   CRYPTO_set_dynlock_lock_callback(NULL);
-   CRYPTO_set_dynlock_destroy_callback(NULL);
+  /* Unset dynamic locking callbacks */
+  CRYPTO_set_dynlock_create_callback(NULL);
+  CRYPTO_set_dynlock_lock_callback(NULL);
+  CRYPTO_set_dynlock_destroy_callback(NULL);
 }
 
 /*
@@ -1716,24 +1739,27 @@ void OpensslCleanupThreads(void)
  *  Returns: 1 on success
  *           0 on failure
  */
-int OpensslSeedPrng (void)
-{
-   const char *names[]  = { "/dev/urandom", "/dev/random", NULL };
-   int i;
+int OpensslSeedPrng(void) {
 
-   // ***FIXME***
-   // Win32 Support
-   // Read saved entropy?
 
-   for (i = 0; names[i]; i++) {
-      if (RAND_load_file(names[i], 1024) != -1) {
-         /* Success */
-         return 1;
-      }
-   }
 
-   /* Fail */
-   return 0;
+
+  const char *names[] = {"/dev/urandom", "/dev/random", NULL};
+  int i;
+
+  // ***FIXME***
+  // Win32 Support
+  // Read saved entropy?
+
+  for (i = 0; names[i]; i++) {
+    if (RAND_load_file(names[i], 1024) != -1) {
+      /* Success */
+      return 1;
+    }
+  }
+
+  /* Fail */
+  return 0;
 }
 
 /*
@@ -1741,10 +1767,13 @@ int OpensslSeedPrng (void)
  *  Returns: 1 on success
  *           0 on failure
  */
-int OpensslSavePrng (void)
-{
-   // ***FIXME***
-   // Implement PRNG state save
-   return 1;
+int OpensslSavePrng(void) {
+
+
+
+
+  // ***FIXME***
+  // Implement PRNG state save
+  return 1;
 }
 #endif /* HAVE_OPENSSL */

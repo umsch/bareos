@@ -42,8 +42,8 @@
  * that open source software gives you.
  *
  * @section binaries
- * In addition to the source code, Bareos GmbH & Co. KG releases binary packages of every major release.
- * Usually, a major release is released once a year.
+ * In addition to the source code, Bareos GmbH & Co. KG releases binary packages of every major
+ * release. Usually, a major release is released once a year.
  *
  * The binary packages can be downloaded on http://download.bareos.org/bareos/release/
  *
@@ -51,7 +51,8 @@
  *
  * Binary packages of maintenance releases are available in the Bareos Subscription repositories.
  *
- * For more information about subscriptions, consulting, funded development and trainings please see http://www.bareos.com
+ * For more information about subscriptions, consulting, funded development and trainings please see
+ * http://www.bareos.com
  *
  * @section developer documentation
  * @author Bareos GmbH & Co. KG and others, see
@@ -88,8 +89,8 @@
 #undef HAVE_POSIX_FADVISE
 #endif
 
-#define _REENTRANT    1
-#define _THREAD_SAFE  1
+#define _REENTRANT 1
+#define _THREAD_SAFE 1
 #define _POSIX_PTHREAD_SEMANTICS 1
 
 /* System includes */
@@ -181,7 +182,6 @@ extern "C" {
 #include <windows.h>
 #endif
 
-
 /**
  * Local Bareos includes. Be sure to put all the system includes before these.
  */
@@ -199,7 +199,6 @@ extern "C" {
 #include <string>
 #include <memory>
 #include "lib/attribs.h"
-
 
 #include "streams.h"
 #include "filetypes.h"
@@ -231,7 +230,7 @@ extern "C" {
 #endif
 
 #ifndef HAVE_ZLIB_H
-#undef HAVE_LIBZ                      /* no good without headers */
+#undef HAVE_LIBZ /* no good without headers */
 #endif
 
 #endif

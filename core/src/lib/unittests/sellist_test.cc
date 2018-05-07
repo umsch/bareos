@@ -36,48 +36,51 @@ extern "C" {
 
 #include "include/bareos.h"
 
-
 void TestSellist(void **state) {
-   (void) state; /* unused */
 
-   char *str1 =           "1,4,5,7,12,12321,1231,99999";
-   uint32_t resarray1[] = {1,4,5,7,12,12321,1231,99999};
-   char *str2           = "1,2,3,4,5";
-   uint32_t resarray2[] = {1,2,3,4,5};
-   const char *msg;
-   sellist sl;
-   int i;
-   int c;
 
-   sl.SetString(str1, true);
 
-   msg = sl.get_errmsg();
 
-   //printf("%s", msg);
+  (void)state; /* unused */
 
-   assert_null(msg);
-   c = 0;
-   while ((i=sl.next()) >= 0) {
-      assert_int_equal(i, resarray1[c]);
-      //printf("%d\t", i);
-      //printf("%d\n", resarray1[c]);
-      c++;
-   }
+  char *str1 = "1,4,5,7,12,12321,1231,99999";
+  uint32_t resarray1[] = {1, 4, 5, 7, 12, 12321, 1231, 99999};
+  char *str2 = "1,2,3,4,5";
+  uint32_t resarray2[] = {1, 2, 3, 4, 5};
+  const char *msg;
+  sellist sl;
+  int i;
+  int c;
 
-   msg = sl.get_errmsg();
+  sl.SetString(str1, true);
 
-   assert_null(msg);
+  msg = sl.get_errmsg();
 
-   sl.SetString(str2, true);
-   c = 0;
-   while ((i=sl.next()) >= 0) {
-      assert_int_equal(i, resarray2[c]);
-      //printf("%d\t", i);
-      //printf("%d\n", resarray2[c]);
-      c++;
-   }
+  // printf("%s", msg);
 
-   msg = sl.get_errmsg();
+  assert_null(msg);
+  c = 0;
+  while ((i = sl.next()) >= 0) {
+    assert_int_equal(i, resarray1[c]);
+    // printf("%d\t", i);
+    // printf("%d\n", resarray1[c]);
+    c++;
+  }
 
-   assert_null(msg);
+  msg = sl.get_errmsg();
+
+  assert_null(msg);
+
+  sl.SetString(str2, true);
+  c = 0;
+  while ((i = sl.next()) >= 0) {
+    assert_int_equal(i, resarray2[c]);
+    // printf("%d\t", i);
+    // printf("%d\n", resarray2[c]);
+    c++;
+  }
+
+  msg = sl.get_errmsg();
+
+  assert_null(msg);
 }

@@ -20,49 +20,28 @@
 */
 #ifndef BAREOS_CATS_SQL_POOLING_H_
 #define BAREOS_CATS_SQL_POOLING_H_
-DLL_IMP_EXP bool db_sql_pool_initialize(const char *db_drivername,
-                            const char *db_name,
-                            const char *db_user,
-                            const char *db_password,
-                            const char *db_address,
-                            int db_port,
-                            const char *db_socket,
-                            bool disable_batch_insert,
-                            bool try_reconnect,
-                            bool exit_on_fatal,
-                            int min_connections,
-                            int max_connections,
-                            int increment_connections,
-                            int idle_timeout,
-                            int validate_timeout);
+DLL_IMP_EXP bool db_sql_pool_initialize(const char *db_drivername, const char *db_name,
+                                        const char *db_user, const char *db_password,
+                                        const char *db_address, int db_port, const char *db_socket,
+                                        bool disable_batch_insert, bool try_reconnect,
+                                        bool exit_on_fatal, int min_connections,
+                                        int max_connections, int increment_connections,
+                                        int idle_timeout, int validate_timeout);
 DLL_IMP_EXP void DbSqlPoolDestroy(void);
 DLL_IMP_EXP void DbSqlPoolFlush(void);
-DLL_IMP_EXP BareosDb *db_sql_get_non_pooled_connection(JobControlRecord *jcr,
-                                       const char *db_drivername,
-                                       const char *db_name,
-                                       const char *db_user,
-                                       const char *db_password,
-                                       const char *db_address,
-                                       int db_port,
-                                       const char *db_socket,
-                                       bool mult_db_connections,
-                                       bool disable_batch_insert,
-                                       bool try_reconnect,
-                                       bool exit_on_fatal,
-                                       bool need_private = false);
-DLL_IMP_EXP BareosDb *db_sql_get_pooled_connection(JobControlRecord *jcr,
-                                   const char *db_drivername,
-                                   const char *db_name,
-                                   const char *db_user,
-                                   const char *db_password,
-                                   const char *db_address,
-                                   int db_port,
-                                   const char *db_socket,
-                                   bool mult_db_connections,
-                                   bool disable_batch_insert,
-                                   bool try_reconnect,
-                                   bool exit_on_fatal,
-                                   bool need_private = false);
-DLL_IMP_EXP void DbSqlClosePooledConnection(JobControlRecord *jcr, BareosDb *mdb, bool abort = false);
+DLL_IMP_EXP BareosDb *db_sql_get_non_pooled_connection(
+    JobControlRecord *jcr, const char *db_drivername, const char *db_name, const char *db_user,
+    const char *db_password, const char *db_address, int db_port, const char *db_socket,
+    bool mult_db_connections, bool disable_batch_insert, bool try_reconnect, bool exit_on_fatal,
+    bool need_private = false);
+DLL_IMP_EXP BareosDb *db_sql_get_pooled_connection(JobControlRecord *jcr, const char *db_drivername,
+                                                   const char *db_name, const char *db_user,
+                                                   const char *db_password, const char *db_address,
+                                                   int db_port, const char *db_socket,
+                                                   bool mult_db_connections,
+                                                   bool disable_batch_insert, bool try_reconnect,
+                                                   bool exit_on_fatal, bool need_private = false);
+DLL_IMP_EXP void DbSqlClosePooledConnection(JobControlRecord *jcr, BareosDb *mdb,
+                                            bool abort = false);
 
-#endif // BAREOS_CATS_SQL_POOLING_H_
+#endif  // BAREOS_CATS_SQL_POOLING_H_

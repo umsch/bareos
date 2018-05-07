@@ -37,111 +37,115 @@
 #include <stdio.h>
 #include "lib/breg.h"
 
-static void usage()
-{
-   fprintf(stderr,
-"\n"
-"Usage: bregtest [-d debug_level] [-s] -f <data-file> -e /test/test2/\n"
-"       -f          specify file of data to be matched\n"
-"       -e          specify expression\n"
-"       -s          sed output\n"
-"       -d <nn>     set debug level to <nn>\n"
-"       -dt         print timestamp in debug output\n"
-"       -?          print this message.\n"
-"\n");
+static void usage() {
 
-   exit(1);
+
+
+
+  fprintf(stderr,
+          "\n"
+          "Usage: bregtest [-d debug_level] [-s] -f <data-file> -e /test/test2/\n"
+          "       -f          specify file of data to be matched\n"
+          "       -e          specify expression\n"
+          "       -s          sed output\n"
+          "       -d <nn>     set debug level to <nn>\n"
+          "       -dt         print timestamp in debug output\n"
+          "       -?          print this message.\n"
+          "\n");
+
+  exit(1);
 }
 
+int main(int argc, char *const *argv) {
 
-int main(int argc, char *const *argv)
-{
-   char *fname = NULL;
-   char *expr = NULL;
-   int ch;
-   bool sed=false;
-   char data[1000];
-   FILE *fd;
 
-   setlocale(LC_ALL, "");
-   bindtextdomain("bareos", LOCALEDIR);
-   textdomain("bareos");
 
-   while ((ch = getopt(argc, argv, "sd:f:e:")) != -1) {
-      switch (ch) {
-      case 'd':                       /* set debug level */
-         if (*optarg == 't') {
-            dbg_timestamp = true;
-         } else {
-            debug_level = atoi(optarg);
-            if (debug_level <= 0) {
-               debug_level = 1;
-            }
-         }
-         break;
 
-      case 'f':                       /* data */
-         fname = optarg;
-         break;
+  char *fname = NULL;
+  char *expr = NULL;
+  int ch;
+  bool sed = false;
+  char data[1000];
+  FILE *fd;
+
+  setlocale(LC_ALL, "");
+  bindtextdomain("bareos", LOCALEDIR);
+  textdomain("bareos");
+
+  while ((ch = getopt(argc, argv, "sd:f:e:")) != -1) {
+    switch (ch) {
+      case 'd': /* set debug level */
+        if (*optarg == 't') {
+          dbg_timestamp = true;
+        } else {
+          debug_level = atoi(optarg);
+          if (debug_level <= 0) {
+            debug_level = 1;
+          }
+        }
+        break;
+
+      case 'f': /* data */
+        fname = optarg;
+        break;
 
       case 'e':
-         expr = optarg;
-         break;
+        expr = optarg;
+        break;
 
       case 's':
-         sed=true;
-         break;
+        sed = true;
+        break;
 
       case '?':
       default:
-         usage();
+        usage();
+    }
+  }
+  argc -= optind;
+  argv += optind;
 
-      }
-   }
-   argc -= optind;
-   argv += optind;
+  if (!fname) {
+    printf("A data file must be specified.\n");
+    usage();
+  }
 
-   if (!fname) {
-      printf("A data file must be specified.\n");
-      usage();
-   }
+  if (!expr) {
+    printf("An expression must be specified.\n");
+    usage();
+  }
 
-   if (!expr) {
-      printf("An expression must be specified.\n");
-      usage();
-   }
+  OSDependentInit();
 
-   OSDependentInit();
+  alist *list;
+  char *p;
 
-   alist *list;
-   char *p;
+  list = get_bregexps(expr);
 
-   list = get_bregexps(expr);
+  if (!list) {
+    printf("Can't use %s as 'sed' expression\n", expr);
+    exit(1);
+  }
 
-   if (!list) {
-      printf("Can't use %s as 'sed' expression\n", expr);
-      exit (1);
-   }
+  fd = fopen(fname, "r");
+  if (!fd) {
+    printf(_("Could not open data file: %s\n"), fname);
+    exit(1);
+  }
 
-   fd = fopen(fname, "r");
-   if (!fd) {
-      printf(_("Could not open data file: %s\n"), fname);
-      exit(1);
-   }
-
-   while (fgets(data, sizeof(data)-1, fd)) {
-      StripTrailingNewline(data);
-      ApplyBregexps(data, list, &p);
-      if (sed) {
-         printf("%s\n", p);
-      } else {
-         printf("%s => %s\n", data, p);
-      }
-   }
-   fclose(fd);
-   FreeBregexps(list);
-   delete list;
-   exit(0);
+  while (fgets(data, sizeof(data) - 1, fd)) {
+    StripTrailingNewline(data);
+    ApplyBregexps(data, list, &p);
+    if (sed) {
+      printf("%s\n", p);
+    } else {
+      printf("%s => %s\n", data, p);
+    }
+  }
+  fclose(fd);
+  FreeBregexps(list);
+  delete list;
+  exit(0);
 }
 /*
   TODO:

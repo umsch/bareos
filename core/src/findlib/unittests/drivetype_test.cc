@@ -40,19 +40,23 @@ extern "C" {
 #include "findlib/find.h"
 
 void TestDrivetype(void **state) {
+
+
+
+
 #ifdef HAVE_WIN32
-   char *driveletters_to_check[] = {"/" , "c:\\", "d:\\", NULL};
+  char *driveletters_to_check[] = {"/", "c:\\", "d:\\", NULL};
 
-   char **p = driveletters_to_check;
+  char **p = driveletters_to_check;
 
-   char dt[1000];
+  char dt[1000];
 
-   while (*p) {
-      assert_true(Drivetype(*p, dt, sizeof(dt)));
-      printf("%s\t%s\n", dt, *p);
-      p++;
-   }
+  while (*p) {
+    assert_true(Drivetype(*p, dt, sizeof(dt)));
+    printf("%s\t%s\n", dt, *p);
+    p++;
+  }
 #else
-   printf ("Drivetype only makes sense on windows, doing nothing on UNIX/Linux\n");
+  printf("Drivetype only makes sense on windows, doing nothing on UNIX/Linux\n");
 #endif
 }

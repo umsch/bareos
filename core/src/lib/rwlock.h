@@ -33,31 +33,32 @@
 #define BAREOS_LIB_RWLOCK_H_ 1
 
 typedef struct s_rwlock_tag {
-   pthread_mutex_t   mutex;
-   pthread_cond_t    read;            /* wait for read */
-   pthread_cond_t    write;           /* wait for write */
-   pthread_t         writer_id;       /* writer's thread id */
-   int               priority;        /* used in deadlock detection */
-   int               valid;           /* set when valid */
-   int               r_active;        /* readers active */
-   int               w_active;        /* writers active */
-   int               r_wait;          /* readers waiting */
-   int               w_wait;          /* writers waiting */
+  pthread_mutex_t mutex;
+  pthread_cond_t read;  /* wait for read */
+  pthread_cond_t write; /* wait for write */
+  pthread_t writer_id;  /* writer's thread id */
+  int priority;         /* used in deadlock detection */
+  int valid;            /* set when valid */
+  int r_active;         /* readers active */
+  int w_active;         /* writers active */
+  int r_wait;           /* readers waiting */
+  int w_wait;           /* writers waiting */
 } brwlock_t;
 
 typedef struct s_rwsteal_tag {
-   pthread_t         writer_id;       /* writer's thread id */
-   int               state;
+  pthread_t writer_id; /* writer's thread id */
+  int state;
 } brwsteal_t;
 
+#define RWLOCK_VALID 0xfacade
 
-#define RWLOCK_VALID  0xfacade
+#define RWL_INIIALIZER                                                                           \
+  {                                                                                              \
+    PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, PTHREAD_COND_INITIALIZER, RWLOCK_VALID, \
+        0, 0, 0, 0                                                                               \
+  }
 
-#define RWL_INIIALIZER \
-   { PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, \
-     PTHREAD_COND_INITIALIZER, RWLOCK_VALID, 0, 0, 0, 0 }
-
-#define RwlWritelock(x)     RwlWritelock_p((x), __FILE__, __LINE__)
+#define RwlWritelock(x) RwlWritelock_p((x), __FILE__, __LINE__)
 
 /**
  * read/write lock prototypes
@@ -68,9 +69,7 @@ DLL_IMP_EXP extern bool RwlIsInit(brwlock_t *rwl);
 DLL_IMP_EXP extern int RwlReadlock(brwlock_t *rwl);
 DLL_IMP_EXP extern int RwlReadtrylock(brwlock_t *rwl);
 DLL_IMP_EXP extern int RwlReadunlock(brwlock_t *rwl);
-DLL_IMP_EXP extern int RwlWritelock_p(brwlock_t *rwl,
-                           const char *file = "*unknown*",
-                           int line = 0);
+DLL_IMP_EXP extern int RwlWritelock_p(brwlock_t *rwl, const char *file = "*unknown*", int line = 0);
 DLL_IMP_EXP extern int RwlWritetrylock(brwlock_t *rwl);
 DLL_IMP_EXP extern int RwlWriteunlock(brwlock_t *rwl);
 

@@ -26,38 +26,34 @@
 #include <QWidget>
 #include <QDebug>
 
-TrayMenu::TrayMenu(QWidget* mainWindow)
-   : QMenu(mainWindow)
-{
-   setObjectName("TrayMenu");
+TrayMenu::TrayMenu(QWidget* mainWindow) : QMenu(mainWindow) {
+  setObjectName("TrayMenu");
 
-   createAction("Display", "Display",  mainWindow);
-   createAction("About",   "About",    mainWindow);
-   addSeparator();
-   createAction("Quit",    "Quit",     mainWindow);
+  createAction("Display", "Display", mainWindow);
+  createAction("About", "About", mainWindow);
+  addSeparator();
+  createAction("Quit", "Quit", mainWindow);
 }
 
-TrayMenu::~TrayMenu()
-{
-   return;
-}
+TrayMenu::~TrayMenu() { return; }
 
-void TrayMenu::createAction(QString objName, QString text, QWidget* mainWindow)
-{
-   const QString& translate = QApplication::translate("TrayMonitor",
-                                                       text.toUtf8(),
-                                                       0,
-                                                       QApplication::UnicodeUTF8);
+void TrayMenu::createAction(QString objName, QString text, QWidget* mainWindow) {
 
-   QAction *action = new QAction(translate, mainWindow);
 
-   /* QActions are connected to the mainWindow with their
-    * name-signals-schema i.e. "on_Display_triggered()"
-    * using QMetaObject::connectSlotsByName(mainWindow)
-    * during SetupUi of the mainWindow */
 
-   const QString& objNameForSignal = QString("TrayMenu_%1").arg(objName);
-   action->setObjectName(objNameForSignal);
 
-   addAction(action);
+  const QString& translate =
+      QApplication::translate("TrayMonitor", text.toUtf8(), 0, QApplication::UnicodeUTF8);
+
+  QAction* action = new QAction(translate, mainWindow);
+
+  /* QActions are connected to the mainWindow with their
+   * name-signals-schema i.e. "on_Display_triggered()"
+   * using QMetaObject::connectSlotsByName(mainWindow)
+   * during SetupUi of the mainWindow */
+
+  const QString& objNameForSignal = QString("TrayMenu_%1").arg(objName);
+  action->setObjectName(objNameForSignal);
+
+  addAction(action);
 }

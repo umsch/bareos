@@ -30,94 +30,66 @@
 #ifndef HAVE_TLS
 
 /* Dummy routines */
-TLS_CONTEXT *new_tls_context(const char *cipherlist) {
-   return nullptr;
-}
+TLS_CONTEXT *new_tls_context(const char *cipherlist) { return nullptr; }
 
-TLS_CONTEXT *new_tls_context(const char *CaCertfile,
-                             const char *CaCertdir,
-                             const char *crlfile,
-                             const char *certfile,
-                             const char *keyfile,
-                             CRYPTO_PEM_PASSWD_CB *pem_callback,
-                             const void *pem_userdata,
-                             const char *dhfile,
-                             const char *cipherlist,
-                             bool VerifyPeer) {
-   return nullptr;
+TLS_CONTEXT *new_tls_context(const char *CaCertfile, const char *CaCertdir, const char *crlfile,
+                             const char *certfile, const char *keyfile,
+                             CRYPTO_PEM_PASSWD_CB *pem_callback, const void *pem_userdata,
+                             const char *dhfile, const char *cipherlist, bool VerifyPeer) {
+  return nullptr;
 }
 
 /**
  * Get connection info and log it into joblog
  */
-void TlsLogConninfo(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, const char *host, int port, const char *who) {
-   Qmsg(jcr, M_INFO, 0, _("Cleartext connection to %s at %s:%d established\n"), who, host, port);
+void TlsLogConninfo(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, const char *host, int port,
+                    const char *who) {
+  Qmsg(jcr, M_INFO, 0, _("Cleartext connection to %s at %s:%d established\n"), who, host, port);
 }
 
 std::shared_ptr<TLS_CONTEXT> tls_cert_t::CreateClientContext(
-   std::shared_ptr<PskCredentials> /* credentials */) const {
-   return nullptr;
+    std::shared_ptr<PskCredentials> /* credentials */) const {
+  return nullptr;
 }
 
 std::shared_ptr<TLS_CONTEXT> tls_cert_t::CreateServerContext(
-   std::shared_ptr<PskCredentials> /* credentials */) const {
-   return nullptr;
+    std::shared_ptr<PskCredentials> /* credentials */) const {
+  return nullptr;
 }
 
-bool tls_cert_t::enabled(u_int32_t policy) {
-   return false;
-}
+bool tls_cert_t::enabled(u_int32_t policy) { return false; }
 
-bool tls_cert_t::required(u_int32_t policy) {
-   return false;
-}
+bool tls_cert_t::required(u_int32_t policy) { return false; }
 
-bool tls_psk_t::enabled(u_int32_t policy) {
-   return false;
-}
+bool tls_psk_t::enabled(u_int32_t policy) { return false; }
 
-bool tls_psk_t::required(u_int32_t policy) {
-   return false;
-}
+bool tls_psk_t::required(u_int32_t policy) { return false; }
 
 std::shared_ptr<TLS_CONTEXT> tls_psk_t::CreateClientContext(
-   std::shared_ptr<PskCredentials> credentials) const {
-   return nullptr;
+    std::shared_ptr<PskCredentials> credentials) const {
+  return nullptr;
 }
 
 std::shared_ptr<TLS_CONTEXT> tls_psk_t::CreateServerContext(
-   std::shared_ptr<PskCredentials> credentials) const {
-   return nullptr;
+    std::shared_ptr<PskCredentials> credentials) const {
+  return nullptr;
 }
 
-void FreeTlsContext(TLS_CONTEXT *ctx) {
-}
+void FreeTlsContext(TLS_CONTEXT *ctx) {}
 
-bool GetTlsRequire(TLS_CONTEXT *ctx) {
-   return false;
-}
+bool GetTlsRequire(TLS_CONTEXT *ctx) { return false; }
 
-void SetTlsRequire(TLS_CONTEXT *ctx, bool value) {
-}
+void SetTlsRequire(TLS_CONTEXT *ctx, bool value) {}
 
-bool GetTlsEnable(TLS_CONTEXT *ctx) {
-   return false;
-}
+bool GetTlsEnable(TLS_CONTEXT *ctx) { return false; }
 
-void SetTlsEnable(TLS_CONTEXT *ctx, bool value) {
-}
+void SetTlsEnable(TLS_CONTEXT *ctx, bool value) {}
 
-bool GetTlsVerifyPeer(TLS_CONTEXT *ctx) {
-   return false;
-}
+bool GetTlsVerifyPeer(TLS_CONTEXT *ctx) { return false; }
 
-TLS_CONNECTION *new_tls_connection(TLS_CONTEXT *ctx, int fd, bool server) {
-   return NULL;
-}
+TLS_CONNECTION *new_tls_connection(TLS_CONTEXT *ctx, int fd, bool server) { return NULL; }
 
-void FreeTlsConnection(TLS_CONNECTION *tls_conn) {
-}
+void FreeTlsConnection(TLS_CONNECTION *tls_conn) {}
 
-void TlsBsockShutdown(BareosSocket *bsock) {
-}
+void TlsBsockShutdown(BareosSocket *bsock) {}
 #endif /* HAVE_TLS */

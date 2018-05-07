@@ -50,45 +50,43 @@
  * RunScript->when can take following bit values:
  */
 enum {
-   SCRIPT_Never = 0,
-   SCRIPT_After = (1<<0),       /* AfterJob */
-   SCRIPT_Before = (1<<1),      /* BeforeJob */
-   SCRIPT_AfterVSS = (1<<2),	/* BeforeJob and After VSS */
-   SCRIPT_Any = SCRIPT_Before | SCRIPT_After
+  SCRIPT_Never = 0,
+  SCRIPT_After = (1 << 0),    /* AfterJob */
+  SCRIPT_Before = (1 << 1),   /* BeforeJob */
+  SCRIPT_AfterVSS = (1 << 2), /* BeforeJob and After VSS */
+  SCRIPT_Any = SCRIPT_Before | SCRIPT_After
 };
 
-enum {
-   SHELL_CMD   = '|',
-   CONSOLE_CMD = '@'
-};
+enum { SHELL_CMD = '|', CONSOLE_CMD = '@' };
 
 /**
  * Structure for RunScript ressource
  */
 class DLL_IMP_EXP RunScript {
-public:
-   POOLMEM *command;            /* Command string */
-   POOLMEM *target;             /* Host target */
-   int  when;                   /* SCRIPT_Before|Script_After BEFORE/AFTER JOB*/
-   int  cmd_type;               /* Command type -- Shell, Console */
-   char level;                  /* Base|Full|Incr...|All (NYI) */
-   bool short_form;             /* Run Script in short form */
-   bool from_jobdef;            /* This RUN script comes from JobDef */
-   bool on_success;             /* Execute command on job success (After) */
-   bool on_failure;             /* Execute command on job failure (After) */
-   bool fail_on_error;          /* Abort job on error (Before) */
-   job_code_callback_t job_code_callback;
-                                /* Optional callback function passed to edit_job_code */
-   alist *commands;             /* Use during parsing */
-   bool run(JobControlRecord *job, const char *name=""); /* name must contain "Before" or "After" keyword */
-   bool CanRunAtLevel(int JobLevel) { return true;}        /* TODO */
-   void SetCommand(const char *cmd, int cmd_type = SHELL_CMD);
-   void SetTarget(const char *client_name);
-   void ResetDefault(bool free_string = false);
-   bool IsLocal();             /* True if running on local host */
-   void debug();
+ public:
+  POOLMEM *command;   /* Command string */
+  POOLMEM *target;    /* Host target */
+  int when;           /* SCRIPT_Before|Script_After BEFORE/AFTER JOB*/
+  int cmd_type;       /* Command type -- Shell, Console */
+  char level;         /* Base|Full|Incr...|All (NYI) */
+  bool short_form;    /* Run Script in short form */
+  bool from_jobdef;   /* This RUN script comes from JobDef */
+  bool on_success;    /* Execute command on job success (After) */
+  bool on_failure;    /* Execute command on job failure (After) */
+  bool fail_on_error; /* Abort job on error (Before) */
+  job_code_callback_t job_code_callback;
+  /* Optional callback function passed to edit_job_code */
+  alist *commands; /* Use during parsing */
+  bool run(JobControlRecord *job,
+           const char *name = ""); /* name must contain "Before" or "After" keyword */
+  bool CanRunAtLevel(int JobLevel) { return true; } /* TODO */
+  void SetCommand(const char *cmd, int cmd_type = SHELL_CMD);
+  void SetTarget(const char *client_name);
+  void ResetDefault(bool free_string = false);
+  bool IsLocal(); /* True if running on local host */
+  void debug();
 
-   void SetJobCodeCallback(job_code_callback_t job_code_callback);
+  void SetJobCodeCallback(job_code_callback_t job_code_callback);
 };
 
 /* create new RunScript (set all value to 0) */
@@ -99,7 +97,7 @@ DLL_IMP_EXP RunScript *copy_runscript(RunScript *src);
 
 /* launch each script from runscripts*/
 DLL_IMP_EXP int RunScripts(JobControlRecord *jcr, alist *runscripts, const char *name,
-                alist *allowed_script_dirs = NULL);
+                           alist *allowed_script_dirs = NULL);
 
 /* free RunScript (and all POOLMEM) */
 DLL_IMP_EXP void FreeRunscript(RunScript *script);

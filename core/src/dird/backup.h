@@ -29,10 +29,10 @@ void NativeBackupCleanup(JobControlRecord *jcr, int TermCode);
 void UpdateBootstrapFile(JobControlRecord *jcr);
 bool SendAccurateCurrentFiles(JobControlRecord *jcr);
 void GenerateBackupSummary(JobControlRecord *jcr, ClientDbRecord *cr, int msg_type,
-                             const char *TermMsg);
+                           const char *TermMsg);
 
-char* StorageAddressToContact(ClientResource *client, StorageResource *store);
-char* ClientAddressToContact(ClientResource *client, StorageResource *store);
-char* StorageAddressToContact(StorageResource *rstore, StorageResource *wstore);
+char *StorageAddressToContact(ClientResource *client, StorageResource *store);
+char *ClientAddressToContact(ClientResource *client, StorageResource *store);
+char *StorageAddressToContact(StorageResource *rstore, StorageResource *wstore);
 
-#endif // BAREOS_DIRD_BACKUP_H_
+#endif  // BAREOS_DIRD_BACKUP_H_

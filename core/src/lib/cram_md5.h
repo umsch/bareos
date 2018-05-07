@@ -21,8 +21,10 @@
 #ifndef LIB_CRAM_MD5_H_
 #define LIB_CRAM_MD5_H_
 
-DLL_IMP_EXP bool cram_md5_respond(BareosSocket *bs, const char *password, uint32_t *remote_tls_policy, bool *compatible);
-DLL_IMP_EXP bool cram_md5_challenge(BareosSocket *bs, const char *password, uint32_t local_tls_policy, bool compatible);
+DLL_IMP_EXP bool cram_md5_respond(BareosSocket *bs, const char *password,
+                                  uint32_t *remote_tls_policy, bool *compatible);
+DLL_IMP_EXP bool cram_md5_challenge(BareosSocket *bs, const char *password,
+                                    uint32_t local_tls_policy, bool compatible);
 DLL_IMP_EXP void hmac_md5(uint8_t *text, int text_len, uint8_t *key, int key_len, uint8_t *hmac);
 
-#endif // LIB_CRAM_MD5_H_
+#endif  // LIB_CRAM_MD5_H_

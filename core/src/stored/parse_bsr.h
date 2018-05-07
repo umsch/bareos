@@ -27,4 +27,4 @@ DLL_IMP_EXP void FreeBsr(BootStrapRecord *bsr);
 void FreeRestoreVolumeList(JobControlRecord *jcr);
 void CreateRestoreVolumeList(JobControlRecord *jcr);
 
-#endif // BAREOS_STORED_PARSE_BSR_H_
+#endif  // BAREOS_STORED_PARSE_BSR_H_

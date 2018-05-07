@@ -22,4 +22,3 @@
 bool AdjustCompressionBuffers(JobControlRecord *jcr);
 bool AdjustDecompressionBuffers(JobControlRecord *jcr);
 bool SetupCompressionContext(b_ctx &bctx);
-

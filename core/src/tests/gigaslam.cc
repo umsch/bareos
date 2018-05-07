@@ -22,7 +22,7 @@
 /* Define to make fseeko etc. visible, on some hosts e.g. HP-UX */
 #define _LARGEFILE_SOURCE 1
 
-#define HOW_BIG   1000000000ll
+#define HOW_BIG 1000000000ll
 
 #ifdef __GNUC__
 #ifndef _GNU_SOURCE
@@ -37,17 +37,19 @@
 #include <unistd.h>
 #include <string.h>
 
-int main(int argc, char *const *argv)
-{
-    FILE *fp = fopen("gigaslam.gif", "w");
-    char header[] = "<html>\n<table>\n<tr><td>\n";
-    char trailer[] = "</html>\n";
-    off_t howBig = HOW_BIG;
+int main(int argc, char *const *argv) {
 
-    fwrite(header, sizeof header, 1, fp);
-    fseeko(fp, howBig - strlen(trailer), 0);
-    fwrite(trailer, strlen(trailer), 1, fp);
-    fclose(fp);
-    return 0;
 
+
+
+  FILE *fp = fopen("gigaslam.gif", "w");
+  char header[] = "<html>\n<table>\n<tr><td>\n";
+  char trailer[] = "</html>\n";
+  off_t howBig = HOW_BIG;
+
+  fwrite(header, sizeof header, 1, fp);
+  fseeko(fp, howBig - strlen(trailer), 0);
+  fwrite(trailer, strlen(trailer), 1, fp);
+  fclose(fp);
+  return 0;
 }

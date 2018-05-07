@@ -27,4 +27,4 @@ bool AuthenticateWithFileDaemon(JobControlRecord *jcr);
 bool AuthenticateFileDaemon(BareosSocket *fd, char *client_name);
 bool AuthenticateUserAgent(UaContext *ua);
 
-#endif // BAREOS_DIRD_AUTHENTICATE_H_
+#endif  // BAREOS_DIRD_AUTHENTICATE_H_

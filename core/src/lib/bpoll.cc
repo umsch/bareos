@@ -38,43 +38,46 @@
  *            0 if timeout
  *           -1 if error
  */
-int WaitForReadableFd(int fd, int msec, bool ignore_interupts)
-{
-   struct pollfd pfds[1];
-   int events;
+int WaitForReadableFd(int fd, int msec, bool ignore_interupts) {
 
-   events = POLLIN;
+
+
+
+  struct pollfd pfds[1];
+  int events;
+
+  events = POLLIN;
 #if defined(POLLRDNORM)
-   events |= POLLRDNORM;
+  events |= POLLRDNORM;
 #endif
 #if defined(POLLRDBAND)
-   events |= POLLRDBAND;
+  events |= POLLRDBAND;
 #endif
 #if defined(POLLPRI)
-   events |= POLLPRI;
+  events |= POLLPRI;
 #endif
 
-   memset(pfds, 0, sizeof(pfds));
-   pfds[0].fd = fd;
-   pfds[0].events = events;
+  memset(pfds, 0, sizeof(pfds));
+  pfds[0].fd = fd;
+  pfds[0].events = events;
 
-   for ( ;; ) {
-      switch(poll(pfds, 1, msec)) {
-      case 0:                         /* timeout */
-         return 0;
+  for (;;) {
+    switch (poll(pfds, 1, msec)) {
+      case 0: /* timeout */
+        return 0;
       case -1:
-         if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
-            continue;
-         }
-         return -1;                  /* error return */
+        if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
+          continue;
+        }
+        return -1; /* error return */
       default:
-         if (pfds[0].revents & events) {
-            return 1;
-         } else {
-            return 0;
-         }
-      }
-   }
+        if (pfds[0].revents & events) {
+          return 1;
+        } else {
+          return 0;
+        }
+    }
+  }
 }
 
 /*
@@ -82,40 +85,43 @@ int WaitForReadableFd(int fd, int msec, bool ignore_interupts)
  *            0 if timeout
  *           -1 if error
  */
-int WaitForWritableFd(int fd, int msec, bool ignore_interupts)
-{
-   struct pollfd pfds[1];
-   int events;
+int WaitForWritableFd(int fd, int msec, bool ignore_interupts) {
 
-   events = POLLOUT;
+
+
+
+  struct pollfd pfds[1];
+  int events;
+
+  events = POLLOUT;
 #if defined(POLLWRNORM)
-   events |= POLLWRNORM;
+  events |= POLLWRNORM;
 #endif
 #if defined POLLWRBAND
-   events |= POLLWRBAND;
+  events |= POLLWRBAND;
 #endif
 
-   memset(pfds, 0, sizeof(pfds));
-   pfds[0].fd = fd;
-   pfds[0].events = events;
+  memset(pfds, 0, sizeof(pfds));
+  pfds[0].fd = fd;
+  pfds[0].events = events;
 
-   for ( ;; ) {
-      switch(poll(pfds, 1, msec)) {
-      case 0:                         /* timeout */
-         return 0;
+  for (;;) {
+    switch (poll(pfds, 1, msec)) {
+      case 0: /* timeout */
+        return 0;
       case -1:
-         if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
-            continue;
-         }
-         return -1;                  /* error return */
+        if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
+          continue;
+        }
+        return -1; /* error return */
       default:
-         if (pfds[0].revents & events) {
-            return 1;
-         } else {
-            return 0;
-         }
-      }
-   }
+        if (pfds[0].revents & events) {
+          return 1;
+        } else {
+          return 0;
+        }
+    }
+  }
 }
 #else
 /*
@@ -123,29 +129,32 @@ int WaitForWritableFd(int fd, int msec, bool ignore_interupts)
  *            0 if timeout
  *           -1 if error
  */
-int WaitForReadableFd(int fd, int msec, bool ignore_interupts)
-{
-   fd_set fdset;
-   struct timeval tv;
+int WaitForReadableFd(int fd, int msec, bool ignore_interupts) {
 
-   tv.tv_sec = msec / 1000;
-   tv.tv_usec = (msec % 1000) * 1000;
 
-   for ( ;; ) {
-      FD_ZERO(&fdset);
-      FD_SET((unsigned)fd, &fdset);
-      switch(select(fd + 1, &fdset, NULL, NULL, &tv)) {
-      case 0:                         /* timeout */
-         return 0;
+
+
+  fd_set fdset;
+  struct timeval tv;
+
+  tv.tv_sec = msec / 1000;
+  tv.tv_usec = (msec % 1000) * 1000;
+
+  for (;;) {
+    FD_ZERO(&fdset);
+    FD_SET((unsigned)fd, &fdset);
+    switch (select(fd + 1, &fdset, NULL, NULL, &tv)) {
+      case 0: /* timeout */
+        return 0;
       case -1:
-         if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
-            continue;
-         }
-         return -1;                  /* error return */
+        if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
+          continue;
+        }
+        return -1; /* error return */
       default:
-         return 1;
-      }
-   }
+        return 1;
+    }
+  }
 }
 
 /*
@@ -153,32 +162,35 @@ int WaitForReadableFd(int fd, int msec, bool ignore_interupts)
  *            0 if timeout
  *           -1 if error
  */
-int WaitForWritableFd(int fd, int msec, bool ignore_interupts)
-{
+int WaitForWritableFd(int fd, int msec, bool ignore_interupts) {
+
+
+
+
 #if defined(HAVE_WIN32)
-   return 1;
+  return 1;
 #else
-   fd_set fdset;
-   struct timeval tv;
+  fd_set fdset;
+  struct timeval tv;
 
-   tv.tv_sec = msec / 1000;
-   tv.tv_usec = (msec % 1000) * 1000;
+  tv.tv_sec = msec / 1000;
+  tv.tv_usec = (msec % 1000) * 1000;
 
-   for ( ;; ) {
-      FD_ZERO(&fdset);
-      FD_SET((unsigned)fd, &fdset);
-      switch(select(fd + 1, NULL, &fdset, NULL, &tv)) {
-      case 0:                         /* timeout */
-         return 0;
+  for (;;) {
+    FD_ZERO(&fdset);
+    FD_SET((unsigned)fd, &fdset);
+    switch (select(fd + 1, NULL, &fdset, NULL, &tv)) {
+      case 0: /* timeout */
+        return 0;
       case -1:
-         if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
-            continue;
-         }
-         return -1;                  /* error return */
+        if (ignore_interupts && (errno == EINTR || errno == EAGAIN)) {
+          continue;
+        }
+        return -1; /* error return */
       default:
-         return 1;
-      }
-   }
+        return 1;
+    }
+  }
 #endif /* defined(HAVE_WIN32) */
 }
 #endif /* HAVE_POLL */

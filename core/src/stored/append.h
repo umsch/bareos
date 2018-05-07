@@ -24,4 +24,4 @@
 bool DoAppendData(JobControlRecord *jcr, BareosSocket *bs, const char *what);
 bool SendAttrsToDir(JobControlRecord *jcr, DeviceRecord *rec);
 
-#endif // BAREOS_STORED_APPEND_H_
+#endif  // BAREOS_STORED_APPEND_H_

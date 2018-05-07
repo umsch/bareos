@@ -31,4 +31,4 @@ int GetEnabled(UaContext *ua, const char *val);
 void ParseUaArgs(UaContext *ua);
 bool IsCommentLegal(UaContext *ua, const char *name);
 
-#endif // BAREOS_DIRD_UA_INPUT_H_
+#endif  // BAREOS_DIRD_UA_INPUT_H_

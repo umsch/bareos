@@ -25,4 +25,4 @@
 void StartSocketServer(dlist *addrs);
 void StopSocketServer();
 
-#endif // BAREOS_DIRD_SOCKET_SERVER_H_
+#endif  // BAREOS_DIRD_SOCKET_SERVER_H_

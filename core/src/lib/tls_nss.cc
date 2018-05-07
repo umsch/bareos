@@ -31,12 +31,11 @@
 
 /* TLS Context Structure */
 struct TlsContext {
-   bool tls_enable;
-   bool tls_require;
+  bool tls_enable;
+  bool tls_require;
 };
 
-struct TlsConnection {
-};
+struct TlsConnection {};
 
 TLS_CONTEXT *new_tls_context(const char *cipherlist, CRYPTO_TLS_PSK_CB) {}
 
@@ -45,52 +44,40 @@ TLS_CONTEXT *new_tls_context(const char *cipherlist, CRYPTO_TLS_PSK_CB) {}
  *  Returns: Pointer to TLS_CONTEXT instance on success
  *           NULL on failure;
  */
-TLS_CONTEXT *new_tls_context(const char *CaCertfile,
-                             const char *CaCertdir,
-                             const char *crlfile,
-                             const char *certfile,
-                             const char *keyfile,
-                             CRYPTO_PEM_PASSWD_CB *pem_callback,
-                             const void *pem_userdata,
-                             const char *dhfile,
-                             const char *cipherlist,
-                             bool VerifyPeer)
-{
-   return NULL;
+TLS_CONTEXT *new_tls_context(const char *CaCertfile, const char *CaCertdir, const char *crlfile,
+                             const char *certfile, const char *keyfile,
+                             CRYPTO_PEM_PASSWD_CB *pem_callback, const void *pem_userdata,
+                             const char *dhfile, const char *cipherlist, bool VerifyPeer) {
+  return NULL;
 }
 
-void FreeTlsContext(TLS_CONTEXT *ctx)
-{
+void FreeTlsContext(TLS_CONTEXT *ctx) {}
+
+bool GetTlsRequire(TLS_CONTEXT *ctx) { return (ctx) ? ctx->tls_require : false; }
+
+void SetTlsRequire(TLS_CONTEXT *ctx, bool value) {
+
+
+
+
+  if (ctx) {
+    ctx->tls_require = value;
+  }
 }
 
-bool GetTlsRequire(TLS_CONTEXT *ctx)
-{
-   return (ctx) ? ctx->tls_require : false;
+bool GetTlsEnable(TLS_CONTEXT *ctx) { return (ctx) ? ctx->tls_enable : false; }
+
+void SetTlsEnable(TLS_CONTEXT *ctx, bool value) {
+
+
+
+
+  if (ctx) {
+    ctx->tls_enable = value;
+  }
 }
 
-void SetTlsRequire(TLS_CONTEXT *ctx, bool value)
-{
-   if (ctx) {
-      ctx->tls_require = value;
-   }
-}
-
-bool GetTlsEnable(TLS_CONTEXT *ctx)
-{
-   return (ctx) ? ctx->tls_enable : false;
-}
-
-void SetTlsEnable(TLS_CONTEXT *ctx, bool value)
-{
-   if (ctx) {
-      ctx->tls_enable = value;
-   }
-}
-
-bool GetTlsVerifyPeer(TLS_CONTEXT *ctx)
-{
-   return (ctx) ? ctx->VerifyPeer : false;
-}
+bool GetTlsVerifyPeer(TLS_CONTEXT *ctx) { return (ctx) ? ctx->VerifyPeer : false; }
 
 /*
  * Verifies a list of common names against the certificate commonName attribute.
@@ -98,9 +85,12 @@ bool GetTlsVerifyPeer(TLS_CONTEXT *ctx)
  * Returns: true on success
  *          false on failure
  */
-bool TlsPostconnectVerifyCn(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, alist *verify_list)
-{
-   return true;
+bool TlsPostconnectVerifyCn(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, alist *verify_list) {
+
+
+
+
+  return true;
 }
 
 /*
@@ -109,9 +99,12 @@ bool TlsPostconnectVerifyCn(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, ali
  * Returns: true on success
  *          false on failure
  */
-bool TlsPostconnectVerifyHost(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, const char *host)
-{
-   return true;
+bool TlsPostconnectVerifyHost(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, const char *host) {
+
+
+
+
+  return true;
 }
 
 /*
@@ -120,46 +113,27 @@ bool TlsPostconnectVerifyHost(JobControlRecord *jcr, TLS_CONNECTION *tls_conn, c
  * Returns: Pointer to TLS_CONNECTION instance on success
  *          NULL on failure;
  */
-TLS_CONNECTION *new_tls_connection(TLS_CONTEXT *ctx, int fd, bool server)
-{
-      return NULL;
-}
+TLS_CONNECTION *new_tls_connection(TLS_CONTEXT *ctx, int fd, bool server) { return NULL; }
 
-void FreeTlsConnection(TLS_CONNECTION *tls_conn)
-{
-}
+void FreeTlsConnection(TLS_CONNECTION *tls_conn) {}
 
 /*
  * Initiates a TLS connection with the server.
  *  Returns: true on success
  *           false on failure
  */
-bool TlsBsockConnect(BareosSocket *bsock)
-{
-   return false;
-}
+bool TlsBsockConnect(BareosSocket *bsock) { return false; }
 
 /*
  * Listens for a TLS connection from a client.
  *  Returns: true on success
  *           false on failure
  */
-bool TlsBsockAccept(BareosSocket *bsock)
-{
-   return false;
-}
+bool TlsBsockAccept(BareosSocket *bsock) { return false; }
 
-void TlsBsockShutdown(BareosSocket *bsock)
-{
-}
+void TlsBsockShutdown(BareosSocket *bsock) {}
 
-int TlsBsockWriten(BareosSocket *bsock, char *ptr, int32_t nbytes)
-{
-   return -1;
-}
+int TlsBsockWriten(BareosSocket *bsock, char *ptr, int32_t nbytes) { return -1; }
 
-int TlsBsockReadn(BareosSocket *bsock, char *ptr, int32_t nbytes)
-{
-   return -1;
-}
+int TlsBsockReadn(BareosSocket *bsock, char *ptr, int32_t nbytes) { return -1; }
 #endif /* HAVE_TLS && HAVE_NSS */

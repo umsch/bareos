@@ -28,11 +28,11 @@
 #ifndef BAREOS_STORED_BACKENDS_UNIX_TAPE_DEVICE_H_
 #define BAREOS_STORED_BACKENDS_UNIX_TAPE_DEVICE_H_
 
-class unix_tape_device: public generic_tape_device {
-public:
-   unix_tape_device();
-   ~unix_tape_device();
+class unix_tape_device : public generic_tape_device {
+ public:
+  unix_tape_device();
+  ~unix_tape_device();
 
-   int d_ioctl(int fd, ioctl_req_t request, char *op);
+  int d_ioctl(int fd, ioctl_req_t request, char *op);
 };
 #endif /* BAREOS_STORED_BACKENDS_UNIX_TAPE_DEVICE_H_ */

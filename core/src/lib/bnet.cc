@@ -42,7 +42,7 @@
 #include "lib/tls_openssl.h"
 
 #ifndef INADDR_NONE
-#define INADDR_NONE    -1
+#define INADDR_NONE -1
 #endif
 
 #ifndef HAVE_GETADDRINFO
@@ -66,36 +66,29 @@ static pthread_mutex_t ip_mutex = PTHREAD_MUTEX_INITIALIZER;
  *    4. Error
  *  Using IsBnetStop() and IsBnetError() you can figure this all out.
  */
-int32_t BnetRecv(BareosSocket * bsock)
-{
-   return bsock->recv();
-}
-
+int32_t BnetRecv(BareosSocket *bsock) { return bsock->recv(); }
 
 /**
  * Return 1 if there are errors on this bsock or it is closed,
  *   i.e. stop communicating on this line.
  */
-bool IsBnetStop(BareosSocket * bsock)
-{
-   return bsock->IsStop();
-}
+bool IsBnetStop(BareosSocket *bsock) { return bsock->IsStop(); }
 
 /**
  * Return number of errors on socket
  */
-int IsBnetError(BareosSocket * bsock)
-{
-   return bsock->IsError();
-}
+int IsBnetError(BareosSocket *bsock) { return bsock->IsError(); }
 
 /**
  * Call here after error during closing to suppress error
  *  messages which are due to the other end shutting down too.
  */
-void BnetSuppressErrorMessages(BareosSocket * bsock, bool flag)
-{
-   bsock->suppress_error_msgs_ = flag;
+void BnetSuppressErrorMessages(BareosSocket *bsock, bool flag) {
+
+
+
+
+  bsock->suppress_error_msgs_ = flag;
 }
 
 /**
@@ -106,11 +99,7 @@ void BnetSuppressErrorMessages(BareosSocket * bsock, bool flag)
  * Returns: false on failure
  *          true  on success
  */
-bool BnetSend(BareosSocket *bsock)
-{
-   return bsock->send();
-}
-
+bool BnetSend(BareosSocket *bsock) { return bsock->send(); }
 
 /**
  * Establish a TLS connection -- server side
@@ -118,42 +107,46 @@ bool BnetSend(BareosSocket *bsock)
  *           false on failure
  */
 #ifdef HAVE_TLS
-bool BnetTlsServer(std::shared_ptr<TlsContext> tls_ctx, BareosSocket *bsock, alist *verify_list)
-{
-   TLS_CONNECTION *tls_conn = nullptr;
-   JobControlRecord *jcr = bsock->jcr();
+bool BnetTlsServer(std::shared_ptr<TlsContext> tls_ctx, BareosSocket *bsock, alist *verify_list) {
 
-   tls_conn = new_tls_connection(tls_ctx, bsock->fd_, true);
-   if (!tls_conn) {
-      Qmsg0(bsock->jcr(), M_FATAL, 0, _("TLS connection initialization failed.\n"));
-      return false;
-   }
 
-   bsock->SetTlsConnection(tls_conn);
 
-   /*
-    * Initiate TLS Negotiation
-    */
-   if (!TlsBsockAccept(bsock)) {
-      Qmsg0(bsock->jcr(), M_FATAL, 0, _("TLS Negotiation failed.\n"));
+
+  TLS_CONNECTION *tls_conn = nullptr;
+  JobControlRecord *jcr = bsock->jcr();
+
+  tls_conn = new_tls_connection(tls_ctx, bsock->fd_, true);
+  if (!tls_conn) {
+    Qmsg0(bsock->jcr(), M_FATAL, 0, _("TLS connection initialization failed.\n"));
+    return false;
+  }
+
+  bsock->SetTlsConnection(tls_conn);
+
+  /*
+   * Initiate TLS Negotiation
+   */
+  if (!TlsBsockAccept(bsock)) {
+    Qmsg0(bsock->jcr(), M_FATAL, 0, _("TLS Negotiation failed.\n"));
+    goto err;
+  }
+
+  if (verify_list) {
+    if (!TlsPostconnectVerifyCn(jcr, tls_conn, verify_list)) {
+      Qmsg1(bsock->jcr(), M_FATAL, 0,
+            _("TLS certificate verification failed."
+              " Peer certificate did not match a required commonName\n"),
+            bsock->host());
       goto err;
-   }
+    }
+  }
 
-   if (verify_list) {
-      if (!TlsPostconnectVerifyCn(jcr, tls_conn, verify_list)) {
-         Qmsg1(bsock->jcr(), M_FATAL, 0, _("TLS certificate verification failed."
-                                         " Peer certificate did not match a required commonName\n"),
-                                         bsock->host());
-         goto err;
-      }
-   }
-
-   Dmsg0(50, "TLS server negotiation established.\n");
-   return true;
+  Dmsg0(50, "TLS server negotiation established.\n");
+  return true;
 
 err:
-   bsock->FreeTls();
-   return false;
+  bsock->FreeTls();
+  return false;
 }
 
 /**
@@ -161,66 +154,72 @@ err:
  * Returns: true  on success
  *          false on failure
  */
-bool BnetTlsClient(std::shared_ptr<TLS_CONTEXT> tls_ctx, BareosSocket *bsock, bool VerifyPeer, alist *verify_list)
-{
-   TLS_CONNECTION *tls_conn;
-   JobControlRecord *jcr = bsock->jcr();
+bool BnetTlsClient(std::shared_ptr<TLS_CONTEXT> tls_ctx, BareosSocket *bsock, bool VerifyPeer,
+                   alist *verify_list) {
+  TLS_CONNECTION *tls_conn;
+  JobControlRecord *jcr = bsock->jcr();
 
-   tls_conn  = new_tls_connection(tls_ctx, bsock->fd_, false);
-   if (!tls_conn) {
-      Qmsg0(bsock->jcr(), M_FATAL, 0, _("TLS connection initialization failed.\n"));
-      return false;
-   }
+  tls_conn = new_tls_connection(tls_ctx, bsock->fd_, false);
+  if (!tls_conn) {
+    Qmsg0(bsock->jcr(), M_FATAL, 0, _("TLS connection initialization failed.\n"));
+    return false;
+  }
 
-   bsock->SetTlsConnection(tls_conn);
+  bsock->SetTlsConnection(tls_conn);
 
-   /*
-    * Initiate TLS Negotiation
-    */
+  /*
+   * Initiate TLS Negotiation
+   */
 
-    if (!TlsBsockConnect(bsock)) {
-      goto err;
-   }
+  if (!TlsBsockConnect(bsock)) {
+    goto err;
+  }
 
-   if (VerifyPeer) {
-      /*
-       * If there's an Allowed CN verify list, use that to validate the remote
-       * certificate's CN. Otherwise, we use standard host/CN matching.
-       */
-      if (verify_list) {
-         if (!TlsPostconnectVerifyCn(jcr, tls_conn, verify_list)) {
-            Qmsg1(bsock->jcr(), M_FATAL, 0, _("TLS certificate verification failed."
-                                            " Peer certificate did not match a required commonName\n"),
-                                            bsock->host());
-            goto err;
-         }
-      } else {
-         if (!TlsPostconnectVerifyHost(jcr, tls_conn, bsock->host())) {
-            Qmsg1(bsock->jcr(), M_FATAL, 0, _("TLS host certificate verification failed. Host name \"%s\" did not match presented certificate\n"),
-                  bsock->host());
-            goto err;
-         }
+  if (VerifyPeer) {
+    /*
+     * If there's an Allowed CN verify list, use that to validate the remote
+     * certificate's CN. Otherwise, we use standard host/CN matching.
+     */
+    if (verify_list) {
+      if (!TlsPostconnectVerifyCn(jcr, tls_conn, verify_list)) {
+        Qmsg1(bsock->jcr(), M_FATAL, 0,
+              _("TLS certificate verification failed."
+                " Peer certificate did not match a required commonName\n"),
+              bsock->host());
+        goto err;
       }
-   }
+    } else {
+      if (!TlsPostconnectVerifyHost(jcr, tls_conn, bsock->host())) {
+        Qmsg1(bsock->jcr(), M_FATAL, 0,
+              _("TLS host certificate verification failed. Host name \"%s\" did not match "
+                "presented certificate\n"),
+              bsock->host());
+        goto err;
+      }
+    }
+  }
 
-   Dmsg0(50, "TLS client negotiation established.\n");
-   return true;
+  Dmsg0(50, "TLS client negotiation established.\n");
+  return true;
 
 err:
-   bsock->FreeTls();
-   return false;
+  bsock->FreeTls();
+  return false;
 }
 #else
-bool BnetTlsServer(std::shared_ptr<TlsContext> tls_ctx, BareosSocket * bsock, alist *verify_list)
-{
-   Jmsg(bsock->jcr(), M_ABORT, 0, _("TLS enabled but not configured.\n"));
-   return false;
+bool BnetTlsServer(std::shared_ptr<TlsContext> tls_ctx, BareosSocket *bsock, alist *verify_list) {
+
+
+
+
+  Jmsg(bsock->jcr(), M_ABORT, 0, _("TLS enabled but not configured.\n"));
+  return false;
 }
 
-bool BnetTlsClient(std::shared_ptr<TLS_CONTEXT> tls_ctx, BareosSocket *bsock, bool VerifyPeer, alist *verify_list)
-{
-   Jmsg(bsock->jcr(), M_ABORT, 0, _("TLS enabled but not configured.\n"));
-   return false;
+bool BnetTlsClient(std::shared_ptr<TLS_CONTEXT> tls_ctx, BareosSocket *bsock, bool VerifyPeer,
+                   alist *verify_list) {
+  Jmsg(bsock->jcr(), M_ABORT, 0, _("TLS enabled but not configured.\n"));
+  return false;
 }
 #endif /* HAVE_TLS */
 
@@ -232,289 +231,279 @@ bool BnetTlsClient(std::shared_ptr<TLS_CONTEXT> tls_ctx, BareosSocket *bsock, bo
  *            0 if timeout
  *           -1 if error
  */
-int BnetWaitData(BareosSocket * bsock, int sec)
-{
-   return bsock->WaitData(sec);
-}
+int BnetWaitData(BareosSocket *bsock, int sec) { return bsock->WaitData(sec); }
 
 /**
  * As above, but returns on interrupt
  */
-int BnetWaitDataIntr(BareosSocket * bsock, int sec)
-{
-   return bsock->WaitDataIntr(sec);
-}
+int BnetWaitDataIntr(BareosSocket *bsock, int sec) { return bsock->WaitDataIntr(sec); }
 
 #ifndef NETDB_INTERNAL
-#define NETDB_INTERNAL  -1         /* See errno. */
+#define NETDB_INTERNAL -1 /* See errno. */
 #endif
 #ifndef NETDB_SUCCESS
-#define NETDB_SUCCESS   0          /* No problem. */
+#define NETDB_SUCCESS 0 /* No problem. */
 #endif
 #ifndef HOST_NOT_FOUND
-#define HOST_NOT_FOUND  1          /* Authoritative Answer Host not found. */
+#define HOST_NOT_FOUND 1 /* Authoritative Answer Host not found. */
 #endif
 #ifndef TRY_AGAIN
-#define TRY_AGAIN       2          /* Non-Authoritative Host not found, or SERVERFAIL. */
+#define TRY_AGAIN 2 /* Non-Authoritative Host not found, or SERVERFAIL. */
 #endif
 #ifndef NO_RECOVERY
-#define NO_RECOVERY     3          /* Non recoverable errors, FORMERR, REFUSED, NOTIMP. */
+#define NO_RECOVERY 3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP. */
 #endif
 #ifndef NO_DATA
-#define NO_DATA         4          /* Valid name, no data record of requested type. */
+#define NO_DATA 4 /* Valid name, no data record of requested type. */
 #endif
 
 #if HAVE_GETADDRINFO
-const char *resolv_host(int family, const char *host, dlist *addr_list)
-{
-   int res;
-   struct addrinfo hints;
-   struct addrinfo *ai, *rp;
-   IPADDR *addr;
+const char *resolv_host(int family, const char *host, dlist *addr_list) {
 
-   memset(&hints, 0, sizeof(struct addrinfo));
-   hints.ai_family = family;
-   hints.ai_socktype = SOCK_STREAM;
-   hints.ai_protocol = IPPROTO_TCP;
-   hints.ai_flags = 0;
+  int res;
+  struct addrinfo hints;
+  struct addrinfo *ai, *rp;
+  IPADDR *addr;
 
-   res = getaddrinfo(host, NULL, &hints, &ai);
-   if (res != 0) {
-      return gai_strerror(res);
-   }
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = family;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+  hints.ai_flags = 0;
 
-   for (rp = ai; rp != NULL; rp = rp->ai_next) {
-      switch (rp->ai_addr->sa_family) {
+  res = getaddrinfo(host, NULL, &hints, &ai);
+  if (res != 0) {
+    return gai_strerror(res);
+  }
+
+  for (rp = ai; rp != NULL; rp = rp->ai_next) {
+    switch (rp->ai_addr->sa_family) {
       case AF_INET:
-         addr = New(IPADDR(rp->ai_addr->sa_family));
-         addr->SetType(IPADDR::R_MULTIPLE);
-         /*
-          * Some serious casting to get the struct in_addr *
-          * rp->ai_addr == struct sockaddr
-          * as this is AF_INET family we can cast that
-          * to struct_sockaddr_in. Of that we need the
-          * address of the sin_addr member which contains a
-          * struct in_addr
-          */
-         addr->set_addr4(&(((struct sockaddr_in *)rp->ai_addr)->sin_addr));
-         break;
+        addr = New(IPADDR(rp->ai_addr->sa_family));
+        addr->SetType(IPADDR::R_MULTIPLE);
+        /*
+         * Some serious casting to get the struct in_addr *
+         * rp->ai_addr == struct sockaddr
+         * as this is AF_INET family we can cast that
+         * to struct_sockaddr_in. Of that we need the
+         * address of the sin_addr member which contains a
+         * struct in_addr
+         */
+        addr->set_addr4(&(((struct sockaddr_in *)rp->ai_addr)->sin_addr));
+        break;
 #ifdef HAVE_IPV6
       case AF_INET6:
-         addr = New(IPADDR(rp->ai_addr->sa_family));
-         addr->SetType(IPADDR::R_MULTIPLE);
-         /*
-          * Some serious casting to get the struct in6_addr *
-          * rp->ai_addr == struct sockaddr
-          * as this is AF_INET6 family we can cast that
-          * to struct_sockaddr_in6. Of that we need the
-          * address of the sin6_addr member which contains a
-          * struct in6_addr
-          */
-         addr->set_addr6(&(((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr));
-         break;
+        addr = New(IPADDR(rp->ai_addr->sa_family));
+        addr->SetType(IPADDR::R_MULTIPLE);
+        /*
+         * Some serious casting to get the struct in6_addr *
+         * rp->ai_addr == struct sockaddr
+         * as this is AF_INET6 family we can cast that
+         * to struct_sockaddr_in6. Of that we need the
+         * address of the sin6_addr member which contains a
+         * struct in6_addr
+         */
+        addr->set_addr6(&(((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr));
+        break;
 #endif
       default:
-         continue;
-      }
-      addr_list->append(addr);
-   }
-   freeaddrinfo(ai);
-   return NULL;
+        continue;
+    }
+    addr_list->append(addr);
+  }
+  freeaddrinfo(ai);
+  return NULL;
 }
 #else
 /**
  * Get human readable error for gethostbyname()
  */
-static const char *gethost_strerror()
-{
-   const char *msg;
-   berrno be;
-   switch (h_errno) {
-   case NETDB_INTERNAL:
+static const char *gethost_strerror() {
+
+  const char *msg;
+  berrno be;
+  switch (h_errno) {
+    case NETDB_INTERNAL:
       msg = be.bstrerror();
       break;
-   case NETDB_SUCCESS:
+    case NETDB_SUCCESS:
       msg = _("No problem.");
       break;
-   case HOST_NOT_FOUND:
+    case HOST_NOT_FOUND:
       msg = _("Authoritative answer for host not found.");
       break;
-   case TRY_AGAIN:
+    case TRY_AGAIN:
       msg = _("Non-authoritative for host not found, or ServerFail.");
       break;
-   case NO_RECOVERY:
+    case NO_RECOVERY:
       msg = _("Non-recoverable errors, FORMERR, REFUSED, or NOTIMP.");
       break;
-   case NO_DATA:
+    case NO_DATA:
       msg = _("Valid name, no data record of resquested type.");
       break;
-   default:
+    default:
       msg = _("Unknown error.");
-   }
-   return msg;
+  }
+  return msg;
 }
 
-static const char *resolv_host(int family, const char *host, dlist *addr_list)
-{
-   struct hostent *hp;
-   const char *errmsg;
-   char **p;
-   IPADDR *addr;
+static const char *resolv_host(int family, const char *host, dlist *addr_list) {
 
-   P(ip_mutex);                       /* gethostbyname() is not thread safe */
+  struct hostent *hp;
+  const char *errmsg;
+  char **p;
+  IPADDR *addr;
+
+  P(ip_mutex); /* gethostbyname() is not thread safe */
 #ifdef HAVE_GETHOSTBYNAME2
-   if ((hp = gethostbyname2(host, family)) == NULL) {
+  if ((hp = gethostbyname2(host, family)) == NULL) {
 #else
-   if ((hp = gethostbyname(host)) == NULL) {
+  if ((hp = gethostbyname(host)) == NULL) {
 #endif
-      /* may be the strerror give not the right result -:( */
-      errmsg = gethost_strerror();
-      V(ip_mutex);
-      return errmsg;
-   } else {
-      for (p = hp->h_addr_list; *p != 0; p++) {
-         switch (hp->h_addrtype) {
-         case AF_INET:
-            addr = New(IPADDR(hp->h_addrtype));
-            addr->SetType(IPADDR::R_MULTIPLE);
-            addr->set_addr4((struct in_addr *)*p);
-            break;
+    /* may be the strerror give not the right result -:( */
+    errmsg = gethost_strerror();
+    V(ip_mutex);
+    return errmsg;
+  } else {
+    for (p = hp->h_addr_list; *p != 0; p++) {
+      switch (hp->h_addrtype) {
+        case AF_INET:
+          addr = New(IPADDR(hp->h_addrtype));
+          addr->SetType(IPADDR::R_MULTIPLE);
+          addr->set_addr4((struct in_addr *)*p);
+          break;
 #ifdef HAVE_IPV6
-          case AF_INET6:
-            addr = New(IPADDR(hp->h_addrtype));
-            addr->SetType(IPADDR::R_MULTIPLE);
-            addr->set_addr6((struct in6_addr *)*p);
-            break;
+        case AF_INET6:
+          addr = New(IPADDR(hp->h_addrtype));
+          addr->SetType(IPADDR::R_MULTIPLE);
+          addr->set_addr6((struct in6_addr *)*p);
+          break;
 #endif
-         default:
-            continue;
-         }
-         addr_list->append(addr);
+        default:
+          continue;
       }
-      V(ip_mutex);
-   }
-   return NULL;
+      addr_list->append(addr);
+    }
+    V(ip_mutex);
+  }
+  return NULL;
 }
 #endif
 
-static IPADDR *add_any(int family)
-{
-   IPADDR *addr = New(IPADDR(family));
-   addr->SetType(IPADDR::R_MULTIPLE);
-   addr->SetAddrAny();
-   return addr;
+static IPADDR *add_any(int family) {
+
+  IPADDR *addr = New(IPADDR(family));
+  addr->SetType(IPADDR::R_MULTIPLE);
+  addr->SetAddrAny();
+  return addr;
 }
 
 /**
  * i host = 0 mean INADDR_ANY only ipv4
  */
-dlist *bnet_host2ipaddrs(const char *host, int family, const char **errstr)
-{
-   struct in_addr inaddr;
-   IPADDR *addr = 0;
-   const char *errmsg;
+dlist *bnet_host2ipaddrs(const char *host, int family, const char **errstr) {
+  struct in_addr inaddr;
+  IPADDR *addr = 0;
+  const char *errmsg;
 #ifdef HAVE_IPV6
-   struct in6_addr inaddr6;
+  struct in6_addr inaddr6;
 #endif
 
-   dlist *addr_list = New(dlist(addr, &addr->link));
-   if (!host || host[0] == '\0') {
-      if (family != 0) {
-         addr_list->append(add_any(family));
-      } else {
-         addr_list->append(add_any(AF_INET));
+  dlist *addr_list = New(dlist(addr, &addr->link));
+  if (!host || host[0] == '\0') {
+    if (family != 0) {
+      addr_list->append(add_any(family));
+    } else {
+      addr_list->append(add_any(AF_INET));
 #ifdef HAVE_IPV6
-         addr_list->append(add_any(AF_INET6));
+      addr_list->append(add_any(AF_INET6));
 #endif
-      }
-   } else if (inet_aton(host, &inaddr)) { /* MA Bug 4 */
-      addr = New(IPADDR(AF_INET));
-      addr->SetType(IPADDR::R_MULTIPLE);
-      addr->set_addr4(&inaddr);
-      addr_list->append(addr);
+    }
+  } else if (inet_aton(host, &inaddr)) { /* MA Bug 4 */
+    addr = New(IPADDR(AF_INET));
+    addr->SetType(IPADDR::R_MULTIPLE);
+    addr->set_addr4(&inaddr);
+    addr_list->append(addr);
 #ifdef HAVE_IPV6
 #ifndef HAVE_WIN32
-   } else if (inet_pton(AF_INET6, host, &inaddr6) == 1) {
+  } else if (inet_pton(AF_INET6, host, &inaddr6) == 1) {
 #else
-   } else if (p_InetPton && p_InetPton(AF_INET6, host, &inaddr6) == 1) {
+  } else if (p_InetPton && p_InetPton(AF_INET6, host, &inaddr6) == 1) {
 #endif
-      addr = New(IPADDR(AF_INET6));
-      addr->SetType(IPADDR::R_MULTIPLE);
-      addr->set_addr6(&inaddr6);
-      addr_list->append(addr);
+    addr = New(IPADDR(AF_INET6));
+    addr->SetType(IPADDR::R_MULTIPLE);
+    addr->set_addr6(&inaddr6);
+    addr_list->append(addr);
 #endif
-   } else {
-      if (family != 0) {
-         errmsg = resolv_host(family, host, addr_list);
-         if (errmsg) {
-            *errstr = errmsg;
-            FreeAddresses(addr_list);
-            return 0;
-         }
-      } else {
-#ifdef HAVE_IPV6
-         /* We try to resolv host for ipv6 and ipv4, the connection procedure
-          * will try to reach the host for each protocols. We report only "Host
-          * not found" ipv4 message (no need to have ipv6 and ipv4 messages).
-          */
-         resolv_host(AF_INET6, host, addr_list);
-#endif
-         errmsg = resolv_host(AF_INET, host, addr_list);
-
-         if (addr_list->size() == 0) {
-            *errstr = errmsg;
-            FreeAddresses(addr_list);
-            return 0;
-         }
+  } else {
+    if (family != 0) {
+      errmsg = resolv_host(family, host, addr_list);
+      if (errmsg) {
+        *errstr = errmsg;
+        FreeAddresses(addr_list);
+        return 0;
       }
-   }
-   return addr_list;
+    } else {
+#ifdef HAVE_IPV6
+      /* We try to resolv host for ipv6 and ipv4, the connection procedure
+       * will try to reach the host for each protocols. We report only "Host
+       * not found" ipv4 message (no need to have ipv6 and ipv4 messages).
+       */
+      resolv_host(AF_INET6, host, addr_list);
+#endif
+      errmsg = resolv_host(AF_INET, host, addr_list);
+
+      if (addr_list->size() == 0) {
+        *errstr = errmsg;
+        FreeAddresses(addr_list);
+        return 0;
+      }
+    }
+  }
+  return addr_list;
 }
 
 /**
  * Return the string for the error that occurred
  * on the socket. Only the first error is retained.
  */
-const char *bnet_strerror(BareosSocket * bsock)
-{
-   return bsock->bstrerror();
-}
+const char *bnet_strerror(BareosSocket *bsock) { return bsock->bstrerror(); }
 
 /**
  * Format and send a message
  *  Returns: false on error
  *           true  on success
  */
-bool BnetFsend(BareosSocket * bs, const char *fmt, ...)
-{
-   va_list arg_ptr;
-   int maxlen;
+bool BnetFsend(BareosSocket *bs, const char *fmt, ...) {
 
-   if (bs->errors || bs->IsTerminated()) {
-      return false;
-   }
-   /* This probably won't work, but we vsnprintf, then if we
-    * get a negative length or a length greater than our buffer
-    * (depending on which library is used), the printf was truncated, so
-    * get a bigger buffer and try again.
-    */
-   for (;;) {
-      maxlen = SizeofPoolMemory(bs->msg) - 1;
-      va_start(arg_ptr, fmt);
-      bs->msglen = Bvsnprintf(bs->msg, maxlen, fmt, arg_ptr);
-      va_end(arg_ptr);
-      if (bs->msglen > 0 && bs->msglen < (maxlen - 5)) {
-         break;
-      }
-      bs->msg = ReallocPoolMemory(bs->msg, maxlen + maxlen / 2);
-   }
-   return bs->send();
+
+
+
+  va_list arg_ptr;
+  int maxlen;
+
+  if (bs->errors || bs->IsTerminated()) {
+    return false;
+  }
+  /* This probably won't work, but we vsnprintf, then if we
+   * get a negative length or a length greater than our buffer
+   * (depending on which library is used), the printf was truncated, so
+   * get a bigger buffer and try again.
+   */
+  for (;;) {
+    maxlen = SizeofPoolMemory(bs->msg) - 1;
+    va_start(arg_ptr, fmt);
+    bs->msglen = Bvsnprintf(bs->msg, maxlen, fmt, arg_ptr);
+    va_end(arg_ptr);
+    if (bs->msglen > 0 && bs->msglen < (maxlen - 5)) {
+      break;
+    }
+    bs->msg = ReallocPoolMemory(bs->msg, maxlen + maxlen / 2);
+  }
+  return bs->send();
 }
 
-int BnetGetPeer(BareosSocket *bs, char *buf, socklen_t buflen)
-{
-   return bs->GetPeer(buf, buflen);
-}
+int BnetGetPeer(BareosSocket *bs, char *buf, socklen_t buflen) { return bs->GetPeer(buf, buflen); }
 
 /**
  * Set the network buffer size, suggested size is in size.
@@ -523,36 +512,30 @@ int BnetGetPeer(BareosSocket *bs, char *buf, socklen_t buflen)
  *  Returns: 0 on failure
  *           1 on success
  */
-bool BnetSetBufferSize(BareosSocket * bs, uint32_t size, int rw)
-{
-   return bs->SetBufferSize(size, rw);
+bool BnetSetBufferSize(BareosSocket *bs, uint32_t size, int rw) {
+
+
+
+
+  return bs->SetBufferSize(size, rw);
 }
 
 /**
  * Set socket non-blocking
  * Returns previous socket flag
  */
-int BnetSetNonblocking(BareosSocket *bsock)
-{
-   return bsock->SetNonblocking();
-}
+int BnetSetNonblocking(BareosSocket *bsock) { return bsock->SetNonblocking(); }
 
 /**
  * Set socket blocking
  * Returns previous socket flags
  */
-int BnetSetBlocking(BareosSocket *bsock)
-{
-   return bsock->SetBlocking();
-}
+int BnetSetBlocking(BareosSocket *bsock) { return bsock->SetBlocking(); }
 
 /**
  * Restores socket flags
  */
-void BnetRestoreBlocking (BareosSocket *bsock, int flags)
-{
-   bsock->RestoreBlocking(flags);
-}
+void BnetRestoreBlocking(BareosSocket *bsock, int flags) { bsock->RestoreBlocking(flags); }
 
 /**
  * Send a network "signal" to the other end
@@ -561,39 +544,36 @@ void BnetRestoreBlocking (BareosSocket *bsock, int flags)
  *  Returns: false on failure
  *           true  on success
  */
-bool BnetSig(BareosSocket * bs, int signal)
-{
-   return bs->signal(signal);
-}
+bool BnetSig(BareosSocket *bs, int signal) { return bs->signal(signal); }
 
 /**
  * Convert a network "signal" code into
  * human readable ASCII.
  */
-const char *bnet_sig_to_ascii(BareosSocket * bs)
-{
-   static char buf[30];
-   switch (bs->msglen) {
-   case BNET_EOD:
-      return "BNET_EOD";           /* end of data stream */
-   case BNET_EOD_POLL:
+const char *bnet_sig_to_ascii(BareosSocket *bs) {
+
+  static char buf[30];
+  switch (bs->msglen) {
+    case BNET_EOD:
+      return "BNET_EOD"; /* end of data stream */
+    case BNET_EOD_POLL:
       return "BNET_EOD_POLL";
-   case BNET_STATUS:
+    case BNET_STATUS:
       return "BNET_STATUS";
-   case BNET_TERMINATE:
-      return "BNET_TERMINATE";     /* Terminate connection */
-   case BNET_POLL:
+    case BNET_TERMINATE:
+      return "BNET_TERMINATE"; /* Terminate connection */
+    case BNET_POLL:
       return "BNET_POLL";
-   case BNET_HEARTBEAT:
+    case BNET_HEARTBEAT:
       return "BNET_HEARTBEAT";
-   case BNET_HB_RESPONSE:
+    case BNET_HB_RESPONSE:
       return "BNET_HB_RESPONSE";
-   case BNET_SUB_PROMPT:
+    case BNET_SUB_PROMPT:
       return "BNET_SUB_PROMPT";
-   case BNET_TEXT_INPUT:
+    case BNET_TEXT_INPUT:
       return "BNET_TEXT_INPUT";
-   default:
+    default:
       sprintf(buf, _("Unknown sig %d"), (int)bs->msglen);
       return buf;
-   }
+  }
 }

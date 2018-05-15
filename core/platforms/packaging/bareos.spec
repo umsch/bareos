@@ -715,8 +715,8 @@ export PATH=/opt/rh/devtoolset-7/root/usr/bin:/usr/local/sbin:/usr/local/bin:/sb
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ;
 
-# use our own cmake call instead of cmake macro as it is different on different platforms/versions
-cmake  .. \
+# use our own cmake call instead of cmake macro as it is different on different core/platforms/versions
+cmake  ../core \
       -DCMAKE_VERBOSE_MAKEFILE=ON \
       -DCMAKE_INSTALL_PREFIX:PATH=/usr \
       -DCMAKE_INSTALL_LIBDIR:PATH=/usr/lib \
@@ -901,9 +901,9 @@ rm %{buildroot}%{_mandir}/man1/bareos-tray-monitor.*
 # install systemd service files
 %if 0%{?systemd_support}
 install -d -m 755 %{buildroot}%{_unitdir}
-install -m 644 platforms/systemd/bareos-dir.service %{buildroot}%{_unitdir}
-install -m 644 platforms/systemd/bareos-fd.service %{buildroot}%{_unitdir}
-install -m 644 platforms/systemd/bareos-sd.service %{buildroot}%{_unitdir}
+install -m 644 core/platforms/systemd/bareos-dir.service %{buildroot}%{_unitdir}
+install -m 644 core/platforms/systemd/bareos-fd.service %{buildroot}%{_unitdir}
+install -m 644 core/platforms/systemd/bareos-sd.service %{buildroot}%{_unitdir}
 %if 0%{?suse_version}
 ln -sf service %{buildroot}%{_sbindir}/rcbareos-dir
 ln -sf service %{buildroot}%{_sbindir}/rcbareos-fd
@@ -1186,7 +1186,7 @@ echo "This is a meta package to install a full bareos system" > %{buildroot}%{_d
 %{_mandir}/man8/btraceback.8.gz
 %attr(0770, %{daemon_user}, %{daemon_group}) %dir %{working_dir}
 %attr(0775, %{daemon_user}, %{daemon_group}) %dir /var/log/%{name}
-%doc AGPL-3.0.txt LICENSE README.*
+%doc core/AGPL-3.0.txt core/LICENSE core/README.*
 #TODO: cmake does not create build directory
 #doc build/
 

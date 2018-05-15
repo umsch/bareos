@@ -1039,7 +1039,7 @@ echo %version | grep -o  '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' > %{buildroo
 %doc webui/README.md webui/LICENSE webui/CHANGELOG.md
 %doc webui/doc/README-TRANSLATION.md
 %doc webui/tests/selenium
-%{_datadir}/%{name}/
+%{_datadir}/bareos-webui/
 #attr(-, #daemon_user, #daemon_group) #{_datadir}/#{name}/data
 %dir /etc/bareos-webui
 %config(noreplace) /etc/bareos-webui/directors.ini

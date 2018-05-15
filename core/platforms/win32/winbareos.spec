@@ -131,6 +131,12 @@ Summary:        bareos
 %description postvista-debug-64
 Bareos Debug for Windows versions >= Windows Vista
 
+%package debugsrc
+Summary: bareos debug sources
+%description debugsrc
+Bareos debug sources for Windows
+
+
 %prep
 %setup -q -n bareos-%{version}
 
@@ -205,6 +211,7 @@ done
 
 
 %install
+cp  -av ../bareos-%{version} $RPM_BUILD_ROOT/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -225,5 +232,10 @@ rm -rf $RPM_BUILD_ROOT
 
 %files postvista-debug-64
 /postvista-debug-64
+
+
+%files debugsrc
+%defattr(-,root,root)
+/bareos-*
 
 %changelog

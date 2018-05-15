@@ -263,6 +263,64 @@ BuildRequires: lsb-release
 %endif
 
 
+# webui
+# ZendFramework 2.4 says it required php >= 5.3.23.
+# However, it works on SLES 11 with php 5.3.17
+# while it does not work with php 5.3.3 (RHEL6).
+Requires: php >= 5.3.17
+
+Requires: php-bz2
+Requires: php-ctype
+Requires: php-curl
+Requires: php-date
+Requires: php-dom
+Requires: php-fileinfo
+Requires: php-filter
+Requires: php-gettext
+Requires: php-gd
+Requires: php-hash
+Requires: php-iconv
+Requires: php-intl
+Requires: php-json
+%if 0%{?suse_version}
+%else
+Requires: php-libxml
+%endif
+Requires: php-mbstring
+Requires: php-openssl
+Requires: php-pcre
+Requires: php-reflection
+Requires: php-session
+Requires: php-simplexml
+Requires: php-spl
+Requires: php-xml
+Requires: php-xmlreader
+Requires: php-xmlwriter
+Requires: php-zip
+
+%if 0%{?suse_version} || 0%{?sle_version}
+BuildRequires: apache2
+# /usr/sbin/apxs2
+BuildRequires: apache2-devel
+BuildRequires: mod_php_any
+%define _apache_conf_dir /etc/apache2/conf.d/
+%define daemon_user  wwwrun
+%define daemon_group www
+Requires: apache
+Recommends: mod_php_any
+%else
+BuildRequires: httpd
+# apxs2
+BuildRequires: httpd-devel
+%define _apache_conf_dir /etc/httpd/conf.d/
+%define daemon_user  apache
+%define daemon_group apache
+Requires:   httpd
+Requires:   mod_php
+%endif
+
+
+
 Summary:    Backup Archiving REcovery Open Sourced - metapackage
 Requires:   %{name}-director = %{version}
 Requires:   %{name}-storage = %{version}
@@ -283,6 +341,43 @@ Bareos source code has been released under the AGPL version 3 license.
 
 %description
 %{dscr}
+
+
+%package    webui
+Summary:    Bareos webui (Bareos Web User Interface).
+Group:      Productivity/Archiving/Backup
+
+Requires:   %{name}-common = %{version}
+Requires: php >= 5.3.17
+Requires: php-bz2
+Requires: php-ctype
+Requires: php-curl
+Requires: php-date
+Requires: php-dom
+Requires: php-fileinfo
+Requires: php-filter
+Requires: php-gettext
+Requires: php-gd
+Requires: php-hash
+Requires: php-iconv
+Requires: php-intl
+Requires: php-json
+%if 0%{?suse_version}
+%else
+Requires: php-libxml
+%endif
+Requires: php-mbstring
+Requires: php-openssl
+Requires: php-pcre
+Requires: php-reflection
+Requires: php-session
+Requires: php-simplexml
+Requires: php-spl
+Requires: php-xml
+Requires: php-xmlreader
+Requires: php-xmlwriter
+Requires: php-zip
+
 
 # Notice : Don't try to change the order of package declaration
 # You will have side effect with PreReq
@@ -520,6 +615,18 @@ Summary:    Python plugin for Bareos Storage daemon
 Group:      Productivity/Archiving/Backup
 Requires:   bareos-storage = %{version}
 
+%description webui
+Bareos - Backup Archiving Recovery Open Sourced. \
+Bareos is a set of computer programs that permit you (or the system \
+administrator) to manage backup, recovery, and verification of computer \
+data across a network of computers of different kinds. In technical terms, \
+it is a network client/server based backup program. Bareos is relatively \
+easy to use and efficient, while offering many advanced storage management \
+features that make it easy to find and recover lost or damaged files. \
+Bareos source code has been released under the AGPL version 3 license.
+
+This package contains the webui (Bareos Web User Interface).
+
 %description director-python-plugin
 %{dscr}
 
@@ -693,6 +800,12 @@ This package contains required files for Bareos regression testing.
 %setup
 
 %build
+# webui
+pushd webui
+%configure
+make CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" %{?_smp_mflags};
+popd
+
 # Cleanup defined in Fedora Packaging:Guidelines
 # and required repetitive local build of at least CentOS 5.
 if [ "%{?buildroot}" -a "%{?buildroot}" != "/" ]; then
@@ -793,7 +906,7 @@ cmake  ../core \
 %endif
   -Dincludes=yes
 
-make  DESTDIR=%{buildroot}
+make DESTDIR=%{buildroot} CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" %{?_smp_mflags};
 
 %check
 # run unit tests
@@ -801,19 +914,10 @@ pushd %{CMAKE_BUILDDIR}
 make check
 
 %install
-##if 0#{?suse_version}
-#    #makeinstall DESTDIR=#{buildroot} install
-##else
-#    make DESTDIR=#{buildroot} install
-##endif
-#make DESTDIR=#{buildroot} install-autostart
 
 pushd %{CMAKE_BUILDDIR}
-make  DESTDIR=%{buildroot} install
-
+make  DESTDIR=%{buildroot}  CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" %{?_smp_mflags}  install
 popd
-
-#rm -Rvf build
 
 
 install -d -m 755 %{buildroot}/usr/share/applications
@@ -916,9 +1020,36 @@ ln -sf service %{buildroot}%{_sbindir}/rcbareos-sd
 echo "This meta package emulates the former bareos-client package" > %{buildroot}%{_docdir}/%{name}/README.bareos-client
 echo "This is a meta package to install a full bareos system" > %{buildroot}%{_docdir}/%{name}/README.bareos
 
+
+
+pushd webui
+make DESTDIR=%{buildroot} install
+
+# write version to version file
+echo %version | grep -o  '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' > %{buildroot}/%_datadir/bareos-webui/version.txt
+
 %files
 %defattr(-, root, root)
 %{_docdir}/%{name}/README.bareos
+
+
+
+%files webui
+%defattr(-,root,root,-)
+%doc webui/README.md webui/LICENSE webui/CHANGELOG.md
+%doc webui/doc/README-TRANSLATION.md
+%doc webui/tests/selenium
+%{_datadir}/%{name}/
+#attr(-, #daemon_user, #daemon_group) #{_datadir}/#{name}/data
+%dir /etc/bareos-webui
+%config(noreplace) /etc/bareos-webui/directors.ini
+%config(noreplace) /etc/bareos-webui/configuration.ini
+%config(noreplace) %attr(644,root,root) /etc/bareos/bareos-dir.d/console/admin.conf.example
+%config(noreplace) %attr(644,root,root) /etc/bareos/bareos-dir.d/profile/webui-admin.conf
+%config(noreplace) %{_apache_conf_dir}/bareos-webui.conf
+
+
+
 
 %files client
 %defattr(-, root, root)

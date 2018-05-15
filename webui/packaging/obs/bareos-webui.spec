@@ -95,12 +95,16 @@ This package contains the webui (Bareos Web User Interface).
 
 %build
 #autoreconf -fvi
+
+cd webui
+
 %configure
 make
 
 %install
 # makeinstall macro does not work on RedHat
 #makeinstall
+cd webui
 make DESTDIR=%{buildroot} install
 
 # write version to version file
@@ -166,9 +170,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc README.md LICENSE CHANGELOG.md
-%doc doc/README-TRANSLATION.md
-%doc tests/selenium
+%doc webui/README.md webui/LICENSE webui/CHANGELOG.md
+%doc webui/doc/README-TRANSLATION.md
+%doc webui/tests/selenium
 %{_datadir}/%{name}/
 #attr(-, #daemon_user, #daemon_group) #{_datadir}/#{name}/data
 %dir /etc/bareos-webui

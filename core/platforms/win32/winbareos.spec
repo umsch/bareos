@@ -10,7 +10,7 @@
 %define dirs_with_unittests lib findlib
 %define bareos_configs bareos-dir.d/ bareos-fd.d/ bareos-sd.d/ tray-monitor.d/ bconsole.conf
 
-Name:           mingw-winbareos
+Name:           winbareos
 Version:        0.0.0
 Release:        0
 Summary:        Bareos build for Windows

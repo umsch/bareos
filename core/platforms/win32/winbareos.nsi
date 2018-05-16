@@ -595,7 +595,7 @@ SectionIn 1 2 3 4
 
   # install unittests
 #  File "test_*.exe"
-  File "/oname=cmocka.dll" "libcmocka.dll"
+#  File "/oname=cmocka.dll" "libcmocka.dll"
 
   # install configuration as templates
   SetOutPath "$INSTDIR\defaultconfigs\bareos-fd.d"
@@ -957,7 +957,7 @@ Section "Bareos Webui" SEC_WEBUI
    SetOutPath "$INSTDIR"
    SetOverwrite ifnewer
    File /r "nssm.exe"
-   File /r "bareos-webui"
+   File /r "webui"
 
 IfSilent skip_vc_redist_check
    # check  for Visual C++ Redistributable für Visual Studio 2012 x86 (32 Bit)
@@ -1608,12 +1608,12 @@ done:
   File "/oname=$PLUGINSDIR\sqlite3.sql" ".\ddl\creates\sqlite3.sql"
 
   # webui
-  File "/oname=$PLUGINSDIR\php.ini" ".\bareos-webui\php\php.ini"
-  File "/oname=$PLUGINSDIR\global.php" ".\bareos-webui\config\autoload\global.php"
-  File "/oname=$PLUGINSDIR\directors.ini" ".\bareos-webui\install\directors.ini"
-  File "/oname=$PLUGINSDIR\configuration.ini" ".\bareos-webui\install\configuration.ini"
-  File "/oname=$PLUGINSDIR\webui-admin.conf" ".\bareos-webui/install/bareos/bareos-dir.d/profile/webui-admin.conf"
-  File "/oname=$PLUGINSDIR\admin.conf" ".\bareos-webui/install/bareos/bareos-dir.d/console/admin.conf.example"
+  File "/oname=$PLUGINSDIR\php.ini" ".\php\php.ini"
+  File "/oname=$PLUGINSDIR\global.php" "./webui/config/autoload/global.php"
+  File "/oname=$PLUGINSDIR\directors.ini" "./webui/install/directors.ini"
+  File "/oname=$PLUGINSDIR\configuration.ini" "./webui/install/configuration.ini"
+  File "/oname=$PLUGINSDIR\webui-admin.conf" "./webui/install/bareos/bareos-dir.d/profile/webui-admin.conf"
+  File "/oname=$PLUGINSDIR\admin.conf" "./webui/install/bareos/bareos-dir.d/console/admin.conf.example"
 
   # make first section mandatory
   SectionSetFlags ${SEC_FD} 17 # SF_SELECTED & SF_RO

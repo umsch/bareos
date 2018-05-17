@@ -121,6 +121,11 @@ BuildRequires:  sed
 BuildRequires:  vim
 BuildRequires:  cmake
 
+BuildRequires:  opsi-utils
+%define opsidest /var/lib/opsi/repository
+
+
+
 BuildRequires:  bareos-addons
 BuildRequires:  winbareos-nssm
 BuildRequires:  winbareos-php
@@ -422,6 +427,40 @@ for flavor in %{flavors}; do
 done
 
 
+
+#opsi
+
+cd core/platforms
+
+# OPSI ProductVersion is at most 32 characters long
+VERSION32C=$(sed -r -e 's/(.{1,32}).*/\1/' -e 's/\.*$//' <<< %{version})
+
+# set version and release for OPSI
+sed -i -e "s/^version: \$PackageVersion/version: %{release}/i" \
+       -e "s/^version: \$ProductVersion/version: $VERSION32C/i" opsi/OPSI/control
+WINBAREOS32=`ls -1 $RPM_BUILD_ROOT/winbareos*-postvista-32-bit-*.exe`
+WINBAREOS64=`ls -1 $RPM_BUILD_ROOT/winbareos*-postvista-64-bit-*.exe`
+if [ -r "$WINBAREOS32" ] && [ -r "$WINBAREOS64" ]; then
+    mkdir -p opsi/CLIENT_DATA/data
+    cp -a $WINBAREOS32 $WINBAREOS64 opsi/CLIENT_DATA/data
+
+    WINBAREOS32b='data\\'`basename $WINBAREOS32`
+    WINBAREOS64b='data\\'`basename $WINBAREOS64`
+    sed -i -e's/^Set $ProductExe32$ .*/Set $ProductExe32$ = "'$WINBAREOS32b'"/' \
+           -e's/^Set $ProductExe64$ .*/Set $ProductExe64$ = "'$WINBAREOS64b'"/' opsi/CLIENT_DATA/setup3264.ins
+
+    opsi-makeproductfile -m -z opsi
+fi
+test -r winbareos*.opsi
+
+mkdir -p $RPM_BUILD_ROOT%{opsidest}
+cp -a winbareos*.opsi* $RPM_BUILD_ROOT%{opsidest}
+
+
+
+
+# cleanup
+
 rm -R $RPM_BUILD_ROOT/bareos-%{version}
 rm -R $RPM_BUILD_ROOT/post*
 
@@ -432,5 +471,6 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 /winbareos-*.exe
+%{opsidest}/winbareos*.opsi*
 
 %changelog

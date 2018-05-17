@@ -280,7 +280,7 @@ for flavor in %{flavors}; do
       fi
 
       # run this in subshell in background
-     # (
+      (
       mkdir -p $RPM_BUILD_ROOT/$flavor/release${BITS}
       pushd    $RPM_BUILD_ROOT/$flavor/release${BITS}
 
@@ -348,7 +348,7 @@ for flavor in %{flavors}; do
 
       makensis -DVERSION=%version -DPRODUCT_VERSION=%version-%release -DBIT_WIDTH=${BITS} \
                -DWIN_DEBUG=${WIN_DEBUG} $RPM_BUILD_ROOT/$flavor/release${BITS}/winbareos.nsi | sed "s/^/${flavor}-${BITS}BIT-DEBUG-${WIN_DEBUG}: /g"
-      # ) &
+      ) &
       #subshell end
    done
 done

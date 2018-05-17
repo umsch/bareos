@@ -1,17 +1,21 @@
-# Determine Windows BITS (32/64) from name (mingw32-.../ming64-...)
-#%define WINDOWS_BITS %(echo %name | grep 64 >/dev/null 2>&1 && echo "64" || echo "32")
-
-
-
 # flavors:
 #   If name contains debug, enable debug during build.
 #   If name contains prevista, build for windows < vista.
+#define flavors postvista postvista-debug
+
 %define flavors postvista postvista-debug
+%define bits 32 64
+
+
 %define dirs_with_unittests lib findlib
 %define bareos_configs bareos-dir.d/ bareos-fd.d/ bareos-sd.d/ tray-monitor.d/ bconsole.conf
 
+%define SIGNCERT %{_builddir}/ia.p12
+%define SIGNPWFILE %{_builddir}/signpassword
+
+
 Name:           winbareos
-Version:        0.0.0
+Version:        18.2.2
 Release:        0
 Summary:        Bareos build for Windows
 License:        LGPLv2+
@@ -21,6 +25,16 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 #!BuildIgnore: post-build-checks
 Source0:        bareos-%{version}.tar.bz2
+
+
+Source1:         winbareos.nsi
+Source2:         clientdialog.ini
+Source3:         directordialog.ini
+Source4:         storagedialog.ini
+Source6:         bareos.ico
+Source9:         databasedialog.ini
+
+
 
 %define addonsdir /bareos-addons/
 BuildRequires:  bareos-addons
@@ -107,8 +121,29 @@ BuildRequires:  sed
 BuildRequires:  vim
 BuildRequires:  cmake
 
+BuildRequires:  bareos-addons
+BuildRequires:  winbareos-nssm
+BuildRequires:  winbareos-php
+
+BuildRequires:  mingw32-sed
+BuildRequires:  mingw64-sed
+
+BuildRequires:  mingw32-sqlite
+BuildRequires:  mingw64-sqlite
+
+BuildRequires:  osslsigncode
+BuildRequires:  obs-name-resolution-settings
+
+
+%define NSISDLLS KillProcWMI.dll AccessControl.dll LogEx.dll
+
 %description
 Base package for Bareos Windows build.
+
+%package nsi
+Summary:  bareos nsi installer
+%description nsi
+Bareos Windows NSI installer packages for the different variants.
 
 %package postvista-32
 Summary:        bareos
@@ -185,10 +220,13 @@ for flavor in %flavors; do
 #define __os_install_post #{_mingw64_debug_install_post} \
 #                          #{_mingw64_install_post}
 %define bindir %{_mingw64_bindir}
-   pushd $flavor-$WINDOWS_BITS
+   mkdir -p $flavor-$WINDOWS_BITS-build
+   pushd $flavor-$WINDOWS_BITS-build
    %{_mingw64_cmake_qt4} ${CMAKE_PARAMS} -DWINDOWS_BITS=$WINDOWS_BITS
    make %{?jobs:-j%jobs} DESTDIR=%{buildroot}/${flavor}-$WINDOWS_BITS install
    popd
+
+
 
    export WINDOWS_BITS=32
 
@@ -199,19 +237,224 @@ for flavor in %flavors; do
 %define __find_provides %{_mingw32_findprovides}
 #define __os_install_post #{_mingw32_debug_install_post} \
 #                          #{_mingw32_install_post}
-%define bindir %{_mingw32_bindir}
-   pushd $flavor-$WINDOWS_BITS
+ %define bindir %{_mingw32_bindir}
+   mkdir -p $flavor-$WINDOWS_BITS-build
+   pushd $flavor-$WINDOWS_BITS-build
    %{_mingw32_cmake_qt4} ${CMAKE_PARAMS} -DWINDOWS_BITS=$WINDOWS_BITS
    make %{?jobs:-j%jobs} DESTDIR=%{buildroot}/${flavor}-$WINDOWS_BITS install
    popd
 
 
-
 done
 
 
+for flavor in %{flavors}; do
+
+   cd %{_builddir}/bareos-%{version}/core
+
+   WIN_DEBUG=$(echo $flavor | grep debug >/dev/null && echo yes || echo no)
+
+   mkdir -p $RPM_BUILD_ROOT/$flavor/nsisplugins
+   for dll in %NSISDLLS; do
+      cp $dll $RPM_BUILD_ROOT/$flavor/nsisplugins
+   done
+
+   for BITS in 32 64; do
+      mkdir -p $RPM_BUILD_ROOT/$flavor/release${BITS}
+   done
+
+   DESCRIPTION="Bareos - Backup Archiving Recovery Open Sourced"
+
+   #cd %{buildroot}
+
+   for BITS in 32 64; do
+      for file in `find %{buildroot}/${flavor}-$BITS -name '*.exe'` `find %{buildroot}/${flavor}-$BITS -name '*.dll'` ; do
+         basename=`basename $file`
+         dest=$RPM_BUILD_ROOT/$flavor/release${BITS}/$basename
+         cp $file $dest
+      done
+   done
+
+   pushd    $RPM_BUILD_ROOT/$flavor/release${BITS}
+
+      #libcmocka.dll \
+   for file in \
+      libcrypto-*.dll \
+      libfastlz.dll \
+      libgcc_s_*-1.dll \
+      libhistory6.dll \
+      libjansson-4.dll \
+      liblzo2-2.dll \
+      libpng*.dll \
+      libreadline6.dll \
+      libssl-*.dll \
+      libstdc++-6.dll \
+      libsqlite3-0.dll \
+      libtermcap-0.dll \
+      openssl.exe \
+      libwinpthread-1.dll \
+      QtCore4.dll \
+      QtGui4.dll \
+      sed.exe \
+      sqlite3.exe \
+      zlib1.dll \
+   ; do
+      cp %{_mingw32_bindir}/$file $RPM_BUILD_ROOT/$flavor/release32
+      cp %{_mingw64_bindir}/$file $RPM_BUILD_ROOT/$flavor/release64
+   done
+   popd
+
+   for BITS in 32 64; do
+      if [  "${BITS}" = "64" ]; then
+         MINGWDIR=x86_64-w64-mingw32
+         else
+         MINGWDIR=i686-w64-mingw32
+      fi
+
+      # run this in subshell in background
+     # (
+      mkdir -p $RPM_BUILD_ROOT/$flavor/release${BITS}
+      pushd    $RPM_BUILD_ROOT/$flavor/release${BITS}
+
+      echo "The installer may contain the following software:" >> %_sourcedir/LICENSE
+      echo "" >> %_sourcedir/LICENSE
+
+      # nssm
+      cp -a /usr/lib/windows/nssm/win${BITS}/nssm.exe .
+      echo "" >> %_sourcedir/LICENSE
+      echo "NSSM - the Non-Sucking Service Manager: https://nssm.cc/" >> %_sourcedir/LICENSE
+      echo "##### LICENSE FILE OF NSSM START #####" >> %_sourcedir/LICENSE
+      cat /usr/lib/windows/nssm/README.txt >> %_sourcedir/LICENSE
+      echo "##### LICENSE FILE OF NSSM END #####" >> %_sourcedir/LICENSE
+      echo "" >> %_sourcedir/LICENSE
+
+
+      # bareos-webui
+      #mkdir bareos-webui
+      cp -a %{_builddir}/bareos-%{version}/webui webui  # copy bareos-webui
+
+      #cp -a %{_builddir}/bareos-%{version}/webui/install .
+
+      #mkdir -p tests
+      #cp -a %{_builddir}/bareos-%{version}/webui/tests/selenium tests
+
+      pwd
+      echo "" >> %_sourcedir/LICENSE
+      echo "##### LICENSE FILE OF BAREOS_WEBUI START #####" >> %_sourcedir/LICENSE
+      cat  %{_builddir}/bareos-%{version}/webui/LICENSE >> %_sourcedir/LICENSE # append bareos-webui license file to LICENSE
+      echo "##### LICENSE FILE OF BAREOS_WEBUI END #####" >> %_sourcedir/LICENSE
+      echo "" >> %_sourcedir/LICENSE
+
+
+      # php
+      cp -a /usr/lib/windows/php/ .
+      #cp php/php.ini .
+      echo "" >> %_sourcedir/LICENSE
+      echo "PHP: http://php.net/" >> %_sourcedir/LICENSE
+      echo "##### LICENSE FILE OF PHP START #####" >> %_sourcedir/LICENSE
+      cat php/license.txt >> %_sourcedir/LICENSE
+      echo "##### LICENSE FILE OF PHP END #####" >> %_sourcedir/LICENSE
+      echo "" >> %_sourcedir/LICENSE
+
+      pwd
+      popd
+
+      # copy the sql ddls over
+      cp -a  %{_builddir}/bareos-%{version}/core/src/cats/ddl $RPM_BUILD_ROOT/$flavor/release${BITS}
+
+      # copy the sources over if we create debug package
+      cp -a %{_builddir}/bareos-%{version}/core/src $RPM_BUILD_ROOT/$flavor/release${BITS}/bareos-%{version}
+
+      cp -r %{buildroot}/${flavor}-$BITS/usr/${MINGWDIR}/sys-root/mingw/etc/bareos $RPM_BUILD_ROOT/$flavor/release${BITS}/config
+
+      cp -r %{_builddir}/bareos-%{version}/core/platforms/win32/bareos-config-deploy.bat $RPM_BUILD_ROOT/$flavor/release${BITS}
+
+      cp -r %{_builddir}/bareos-%{version}/core/platforms/win32/fillup.sed $RPM_BUILD_ROOT/$flavor/release${BITS}/config
+
+      mkdir $RPM_BUILD_ROOT/$flavor/release${BITS}/Plugins
+      cp -rv %{_builddir}/bareos-%{version}/core/src/plugins/*/*.py $RPM_BUILD_ROOT/$flavor/release${BITS}/Plugins
+
+      cp %SOURCE1 %SOURCE2 %SOURCE3 %SOURCE4 %SOURCE6 %SOURCE9 \
+               %_sourcedir/LICENSE $RPM_BUILD_ROOT/$flavor/release${BITS}
+      cd $RPM_BUILD_ROOT/$flavor/release${BITS}
+
+      makensis -DVERSION=%version -DPRODUCT_VERSION=%version-%release -DBIT_WIDTH=${BITS} \
+               -DWIN_DEBUG=${WIN_DEBUG} $RPM_BUILD_ROOT/$flavor/release${BITS}/winbareos.nsi | sed "s/^/${flavor}-${BITS}BIT-DEBUG-${WIN_DEBUG}: /g"
+      # ) &
+      #subshell end
+   done
+done
+
+# wait for subshells to complete
+wait
+
+
+
+
+
+
 %install
-cp  -av ../bareos-%{version} $RPM_BUILD_ROOT/
+cp  -a ../bareos-%{version} $RPM_BUILD_ROOT/
+
+
+#for flavor in %{flavors}; do
+#   mkdir -p $RPM_BUILD_ROOT%{_mingw32_bindir}
+#   mkdir -p $RPM_BUILD_ROOT%{_mingw64_bindir}
+#
+#   FLAVOR=`echo "%name" | sed 's/winbareos-nsi-//g'`
+#   DESCRIPTION="Bareos installer version %version"
+#   URL="http://www.bareos.com"
+#
+#   for BITS in 32 64; do
+#      cp $RPM_BUILD_ROOT/$flavor/release${BITS}/Bareos*.exe \
+#           $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release-unsigned.exe
+#
+#      osslsigncode  sign \
+#                    -pkcs12 %SIGNCERT \
+#                    -readpass %SIGNPWFILE \
+#                    -n "${DESCRIPTION}" \
+#                    -i http://www.bareos.com/ \
+#                    -t http://timestamp.comodoca.com/authenticode \
+#                    -in  $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release-unsigned.exe \
+#                    -out $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release.exe
+#
+#      osslsigncode verify -in $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release.exe
+#
+#      rm $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release-unsigned.exe
+#
+#      rm -R $RPM_BUILD_ROOT/$flavor/release${BITS}
+#
+#   done
+#
+#   rm -R $RPM_BUILD_ROOT/$flavor/nsisplugins
+#done
+
+mkdir -p $RPM_BUILD_ROOT%{_mingw32_bindir}
+mkdir -p $RPM_BUILD_ROOT%{_mingw64_bindir}
+
+
+for flavor in %{flavors}; do
+
+   FLAVOR=`echo "%name" | sed 's/winbareos-nsi-//g'`
+   DESCRIPTION="Bareos installer version %version"
+   URL="http://www.bareos.com"
+
+   for BITS in 32 64; do
+      cp $RPM_BUILD_ROOT/$flavor/release${BITS}/Bareos*.exe \
+           $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release-unsigned.exe
+
+      mv  $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release-unsigned.exe \
+          $RPM_BUILD_ROOT/winbareos-%version-$flavor-${BITS}-bit-r%release.exe
+
+      rm -R $RPM_BUILD_ROOT/$flavor/release${BITS}
+
+   done
+
+   rm -R $RPM_BUILD_ROOT/$flavor/nsisplugins
+done
+
+
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -221,21 +464,25 @@ rm -rf $RPM_BUILD_ROOT
 
 %files postvista-32
 %defattr(-,root,root)
-/winbareos-%version-postvista-32-bit-r*.exe
+/postvista-32
 
 %files postvista-64
 %defattr(-,root,root)
-/winbareos-%version-postvista-64-bit-r*.exe
+/postvista-64
 
 %files postvista-debug-32
-/winbareos-%version-postvista-debug-32-bit-r*.exe
+/postvista-debug-32
 
 %files postvista-debug-64
-/winbareos-%version-postvista-debug-64-bit-r*.exe
+/postvista-debug-64
 
 
 %files debugsrc
 %defattr(-,root,root)
 /bareos-*
+
+%files nsi
+%defattr(-,root,root)
+/winbareos-*.exe
 
 %changelog

@@ -15,7 +15,7 @@
 
 
 Name:           winbareos
-Version:        18.2.2
+Version:        0.0.0
 Release:        0
 Summary:        Bareos build for Windows
 License:        LGPLv2+
@@ -139,38 +139,6 @@ BuildRequires:  obs-name-resolution-settings
 
 %description
 Base package for Bareos Windows build.
-
-%package nsi
-Summary:  bareos nsi installer
-%description nsi
-Bareos Windows NSI installer packages for the different variants.
-
-%package postvista-32
-Summary:        bareos
-%description postvista-32
-Bareos for Windows versions >= Windows Vista
-
-%package postvista-64
-Summary:        bareos
-%description postvista-64
-Bareos for Windows versions >= Windows Vista
-
-
-%package postvista-debug-32
-Summary:        bareos
-%description postvista-debug-32
-Bareos Debug for Windows versions >= Windows Vista
-
-%package postvista-debug-64
-Summary:        bareos
-%description postvista-debug-64
-Bareos Debug for Windows versions >= Windows Vista
-
-%package debugsrc
-Summary: bareos debug sources
-%description debugsrc
-Bareos debug sources for Windows
-
 
 %prep
 %setup -q -n bareos-%{version}
@@ -454,34 +422,14 @@ for flavor in %{flavors}; do
 done
 
 
-
+rm -R $RPM_BUILD_ROOT/bareos-%{version}
+rm -R $RPM_BUILD_ROOT/post*
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+
 %files
-
-
-%files postvista-32
-%defattr(-,root,root)
-/postvista-32
-
-%files postvista-64
-%defattr(-,root,root)
-/postvista-64
-
-%files postvista-debug-32
-/postvista-debug-32
-
-%files postvista-debug-64
-/postvista-debug-64
-
-
-%files debugsrc
-%defattr(-,root,root)
-/bareos-*
-
-%files nsi
 %defattr(-,root,root)
 /winbareos-*.exe
 

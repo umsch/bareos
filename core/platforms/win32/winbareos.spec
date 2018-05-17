@@ -221,17 +221,17 @@ rm -rf $RPM_BUILD_ROOT
 
 %files postvista-32
 %defattr(-,root,root)
-/postvista-32
+/winbareos-%version-postvista-32-bit-r*.exe
 
 %files postvista-64
 %defattr(-,root,root)
-/postvista-64
+/winbareos-%version-postvista-64-bit-r*.exe
 
 %files postvista-debug-32
-/postvista-debug-32
+/winbareos-%version-postvista-debug-32-bit-r*.exe
 
 %files postvista-debug-64
-/postvista-debug-64
+/winbareos-%version-postvista-debug-64-bit-r*.exe
 
 
 %files debugsrc

@@ -38,7 +38,7 @@ matrix:
 
 script:
     # run test script
-    - sudo -E $PWD/.travis/all; fi
+    - sudo -E $PWD/.travis/all;
 
 addons:
     hosts:

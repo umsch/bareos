@@ -1,6 +1,9 @@
 #!/bin/bash -x
 
 cd regress
+
+sudo apt install cmake
+
 echo '
 MAKEOPT=-j4
 BAREOS_SOURCE="`pwd`/../core"

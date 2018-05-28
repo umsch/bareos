@@ -1,21 +1,7 @@
-#!/bin/bash
+#!/bin/bash -x
 
-print_header()
-{
-   TEXT="$1"
-   printf "#\n"
-   printf "# %s\n" "$TEXT"
-   printf "#\n"
-}
-
-if [ "${COVERITY_SCAN}" ]; then
-   cd core
-   # run configure with default options
-   debian/rules override_dh_auto_configure
-   eval "$COVERITY_SCAN_BUILD"
-else
-   cd regress
-   echo '
+cd regress
+echo '
 MAKEOPT=-j4
 BAREOS_SOURCE="`pwd`/../core"
 EMAIL=my-name@domain.com
@@ -43,4 +29,4 @@ DEVELOPER=-Ddeveloper=yes
 COVERAGE=-Dcoverage=yes
 ' > config
 
-fi
+./nightly-disk

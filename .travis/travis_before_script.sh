@@ -15,7 +15,7 @@ if [ "${COVERITY_SCAN}" ]; then
    eval "$COVERITY_SCAN_BUILD"
 else
    cd regress
-   echo "
+   echo '
 MAKEOPT=-j4
 BAREOS_SOURCE="`pwd`/../core"
 EMAIL=my-name@domain.com
@@ -41,6 +41,6 @@ BASEPORT=8101
 SITE_NAME=travis-bareos-${HOST}
 DEVELOPER=-Ddeveloper=yes
 COVERAGE=-Dcoverage=yes
-" > config
+' > config
 
 fi

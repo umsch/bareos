@@ -26,7 +26,8 @@ include_directories(../include ..
    ${LZO2_INCLUDE_DIRS}
    ${CAP_INCLUDE_DIRS}
    ${WRAP_INCLUDE_DIRS}
-   )
+   ${PAM_INCLUDE_DIRS}
+)
 
 set(INCLUDE_FILES ../include/baconfig.h ../include/bareos.h
 		../include/bc_types.h ../include/config.h
@@ -55,7 +56,7 @@ set (BAREOS_SRCS  address_conf.cc alist.cc attr.cc attribs.cc base64.cc
    queue.cc rblist.cc runscript.cc rwlock.cc scan.cc scsi_crypto.cc  scsi_lli.cc
    sellist.cc serial.cc sha1.cc signal.cc  smartall.cc
    tls_gnutls.cc tls_none.cc tls_nss.cc tls_conf.cc tls_openssl.cc tree.cc util.cc var.cc
-   watchdog.cc workq.cc)
+   watchdog.cc workq.cc pam_handler.cc pam_handler.h)
 
 IF(HAVE_WIN32)
    LIST(APPEND BAREOS_SRCS
@@ -74,7 +75,7 @@ add_library(bareos SHARED ${BAREOS_SRCS})
 target_link_libraries(bareos
    ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES} ${FASTLZ_LIBRARIES} ${ZLIB_LIBRARIES}
    ${ACL_LIBRARIES} ${LZO2_LIBRARIES} ${CAP_LIBRARIES} ${WRAP_LIBRARIES} ${CAM_LIBRARIES}
-   ${WINDOWS_LIBRARIES} ${JANSSON_LIBRARIES})
+   ${WINDOWS_LIBRARIES} ${JANSSON_LIBRARIES} ${PAM_LIBRARIES})
 
 set (BAREOSCFG_SRCS ini.cc lex.cc parse_bsr.cc )
 

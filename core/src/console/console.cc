@@ -1115,6 +1115,66 @@ static int dir_psk_client_callback(char *identity,
    return result;
 }
 
+#include <termios.h>
+static bool SetEcho(FILE *stdin, bool on)
+{
+    struct termios termios_old, termios_new;
+
+    /* Turn echoing off and fail if we can’t. */
+    if (tcgetattr (fileno (stdin), &termios_old) != 0)
+        return false;
+    termios_new = termios_old;
+    if (on) {
+      termios_new.c_lflag |=  ECHO;
+    } else {
+      termios_new.c_lflag &= ~ECHO;
+    }
+    if (tcsetattr (fileno (stdin), TCSAFLUSH, &termios_new) != 0)
+        return false;
+   return true;
+}
+
+static bool ConsolePamAuthenticate(FILE *stdin, BareosSocket *UA_sock)
+{
+   bool quit = false;
+   bool failed = false;
+   btimer_t *tid = nullptr;
+   static bool pw = false;
+   do {
+      if(tid) {
+         StopBsockTimer(tid);
+      }
+      tid = StartBsockTimer(UA_sock, 10);
+      if (!tid) {
+         failed = true;
+         continue;
+      }
+      if (UA_sock->recv() >= 0) {
+         sendit(UA_sock->msg);
+      } else {
+         failed = true;
+         continue;
+      }
+      if (!pw) {
+         pw = true;
+      } else {
+         SetEcho (stdin, false);
+         quit = true;
+      }
+      char *line = readline("");
+      if (line) {
+         UA_sock->fsend(line);
+         Actuallyfree(line);
+      } else {
+         failed = true;
+         continue;
+      }
+   } while (!quit && !failed);
+
+   SetEcho (stdin, true);
+   return failed ? false : true;
+}
+
 /*
  * Main Bareos Console -- User Interface Program
  */
@@ -1326,9 +1386,14 @@ int main(int argc, char *argv[])
 
    sendit(errmsg);
 
+   if (!ConsolePamAuthenticate(stdin, UA_sock)) {
+      TerminateConsole(0);
+      return 1;
+   }
+
    Dmsg0(40, "Opened connection with Director daemon\n");
 
-   sendit(_("Enter a period to cancel a command.\n"));
+   sendit(_("\nEnter a period to cancel a command.\n"));
 
 #if defined(HAVE_WIN32)
    /*

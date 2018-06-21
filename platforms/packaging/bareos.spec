@@ -119,8 +119,7 @@ BuildRequires: libtirpc-devel
 %define droplet 1
 %define systemd_support 1
 %endif
-
-%if 0%{?rhel_version} >= 700
+%if 0%{?rhel_version} >= 700 || 0%{?fedora} >= 28
 %define ceph 1
 %endif
 
@@ -142,7 +141,7 @@ BuildRequires: glusterfs-devel glusterfs-api-devel
 %endif
 
 %if 0%{?ceph}
-%if 0%{?sle_version} >= 120300
+%if 0%{?sle_version} >= 120300 || 0%{?fedora} >= 28 || 0%{?rhel} > 7
 BuildRequires: libcephfs-devel
 %else
 BuildRequires: ceph-devel

@@ -19,7 +19,7 @@
 
 
 
-set(DIRDSRCS admin.cc archive.cc authenticate.cc autoprune.cc backup.cc bsr.cc catreq.cc
+set(DIRDSRCS admin.cc archive.cc authenticate.cc auth_pam.cc autoprune.cc backup.cc bsr.cc catreq.cc
    consolidate.cc dir_plugins.cc dird_conf.cc dird.cc expand.cc fd_cmds.cc
    getmsg.cc inc_conf.cc job.cc jobq.cc migrate.cc mountreq.cc msgchan.cc
    ndmp_dma_storage.cc
@@ -39,13 +39,16 @@ IF(HAVE_WIN32)
 ENDIF()
 
 IF(HAVE_WIN32)
-   include_directories(${CMAKE_SOURCE_DIR}/src/win32/generic ${CMAKE_SOURCE_DIR}/src/win32/dird ../include ..)
+   include_directories(${CMAKE_SOURCE_DIR}/src/win32/generic
+                       ${CMAKE_SOURCE_DIR}/src/win32/dird
+                       ${PAM_INCLUDE_DIRS}
+                       ../include ..)
    LIST(APPEND DIRDSRCS
       ../win32/generic/main.cc
       ../win32/generic/service.cc
       )
 ELSE()
-   include_directories(. .. ../include ../lmdb ../ndmp)
+   include_directories(. .. ../include ../lmdb ../ndmp ${PAM_INCLUDE_DIRS})
 ENDIF()
 
 
@@ -77,7 +80,7 @@ IF(HAVE_WIN32)
       )
 ENDIF()
 
-target_link_libraries(bareos-dir ${BAREOS_DIR_LIBRARIES})
+target_link_libraries(bareos-dir ${BAREOS_DIR_LIBRARIES} ${PAM_LIBRARIES})
 
 
 add_executable(bareos-dbcheck ${DBCHKSRCS})

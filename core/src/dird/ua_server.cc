@@ -31,6 +31,7 @@
 #include "include/bareos.h"
 #include "dird.h"
 #include "dird/authenticate.h"
+#include "dird/auth_pam.h"
 #include "dird/job.h"
 #include "dird/ua_cmds.h"
 #include "dird/ua_db.h"
@@ -38,7 +39,6 @@
 #include "dird/ua_output.h"
 #include "dird/ua_server.h"
 #include "lib/bnet.h"
-#include "lib/pam_handler.h"
 
 /* Imported variables */
 

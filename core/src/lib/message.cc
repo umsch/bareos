@@ -3,7 +3,7 @@
 
    Copyright (C) 2000-2012 Free Software Foundation Europe e.V.
    Copyright (C) 2011-2012 Planets Communications B.V.
-   Copyright (C) 2013-2013 Bareos GmbH & Co. KG
+   Copyright (C) 2013-2018 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -34,10 +34,9 @@
 #include "include/bareos.h"
 #include "include/jcr.h"
 #include "lib/util.h"
+#include <regex>
 
 db_log_insert_func p_db_log_insert = NULL;
-
-#define FULL_LOCATION 1               /* set for file:line in Debug messages */
 
 /*
  * This is where we define "Globals" because all the daemons include this file.
@@ -46,6 +45,7 @@ DLL_IMP_EXP const char *working_directory = NULL; /* working directory path stor
 DLL_IMP_EXP const char *assert_msg = (char *)NULL; /* ASSERT2 error message */
 DLL_IMP_EXP int verbose = 0;                      /* increase User messages */
 DLL_IMP_EXP int debug_level = 0;                  /* debug level */
+DLL_IMP_EXP std::string d_msg_srcfile_filter_expression; /* regex to filter the debug output */
 DLL_IMP_EXP bool dbg_timestamp = false;           /* print timestamp in debug output */
 DLL_IMP_EXP bool prt_kaboom = false;              /* Print kaboom output */
 DLL_IMP_EXP utime_t daemon_start_time = 0;        /* Daemon start time */
@@ -1211,9 +1211,26 @@ static void pt_out(char *buf)
 }
 
 /*
+ * If the Debug Filter Message Regex is not set, we log everything.
+ * If it is set, we only log messages that are generated in a file whose filename matches the regex.
+ */
+bool DebugMessageFilterMatches(std::string &filename)
+{
+   if (d_msg_srcfile_filter_expression.empty())
+   {
+      return true;
+   }
+   std::regex message_filter_regex (d_msg_srcfile_filter_expression);
+   if (std::regex_match(filename, message_filter_regex))
+   {
+      return true;
+   }
+   return false;
+}
+
+/*
  *  This subroutine prints a debug message if the level number is less than or
- *  equal the debug_level. File and line numbers are included for more detail if
- *  desired, but not currently printed.
+ *  equal the debug_level. File and line numbers are included for more detail
  *
  *  If the level is negative, the details of file and line number are not printed.
  */
@@ -1234,40 +1251,40 @@ void d_msg(const char *file, int line, int level, const char *fmt,...)
    }
 
    if (level <= debug_level) {
-      if (dbg_timestamp) {
-         mtime = GetCurrentBtime();
-         usecs = mtime % 1000000;
-         Mmsg(buf, "%s.%06d ", bstrftimes(ed1, sizeof(ed1), BtimeToUtime(mtime)), usecs);
-         pt_out(buf.c_str());
-      }
-
-#ifdef FULL_LOCATION
-      if (details) {
-         Mmsg(buf, "%s (%d): %s:%d-%u ", my_name, level, get_basename(file), line, GetJobidFromTsd());
-      }
-#endif
-
-      while (1) {
-         maxlen = more.MaxSize() - 1;
-         va_start(ap, fmt);
-         len = Bvsnprintf(more.c_str(), maxlen, fmt, ap);
-         va_end(ap);
-
-         if (len < 0 || len >= (maxlen - 5)) {
-            more.ReallocPm(maxlen + maxlen / 2);
-            continue;
+      std::string basename = get_basename(file);
+      if (DebugMessageFilterMatches( basename )) {
+         if (dbg_timestamp) {
+            mtime = GetCurrentBtime();
+            usecs = mtime % 1000000;
+            Mmsg(buf, "%s.%06d ", bstrftimes(ed1, sizeof(ed1), BtimeToUtime(mtime)), usecs);
+            pt_out(buf.c_str());
          }
 
-         break;
-      }
+         if (details) {
+            Mmsg(buf, "%s (%d): %s:%d-%u ", my_name, level, basename.c_str(), line,
+                 GetJobidFromTsd());
+         }
 
-#ifdef FULL_LOCATION
-      if (details) {
-         pt_out(buf.c_str());
-      }
-#endif
+         while (1) {
+            maxlen = more.MaxSize() - 1;
+            va_start(ap, fmt);
+            len = Bvsnprintf(more.c_str(), maxlen, fmt, ap);
+            va_end(ap);
 
-      pt_out(more.c_str());
+            if (len < 0 || len >= (maxlen - 5)) {
+               more.ReallocPm(maxlen + maxlen / 2);
+               continue;
+            }
+
+            break;
+         }
+
+         if (details) {
+            pt_out(buf.c_str());
+         }
+
+         pt_out(more.c_str());
+      }
    }
 }
 
@@ -1339,11 +1356,9 @@ void p_msg(const char *file, int line, int level, const char *fmt,...)
    PoolMem buf(PM_EMSG),
             more(PM_EMSG);
 
-#ifdef FULL_LOCATION
    if (level >= 0) {
       Mmsg(buf,  "%s: %s:%d-%u ", my_name, get_basename(file), line, GetJobidFromTsd());
    }
-#endif
 
    while (1) {
       maxlen = more.MaxSize() - 1;
@@ -1359,11 +1374,9 @@ void p_msg(const char *file, int line, int level, const char *fmt,...)
       break;
    }
 
-#ifdef FULL_LOCATION
    if (level >= 0) {
       pt_out(buf.c_str());
    }
-#endif
 
    pt_out(more.c_str());
 }
@@ -1380,13 +1393,11 @@ void p_msg_fb(const char *file, int line, int level, const char *fmt,...)
    int len = 0;
    va_list arg_ptr;
 
-#ifdef FULL_LOCATION
    if (level >= 0) {
       len = Bsnprintf(buf, sizeof(buf), "%s: %s:%d-%u ",
                       my_name, get_basename(file), line,
                       GetJobidFromTsd());
    }
-#endif
 
    va_start(arg_ptr, fmt);
    Bvsnprintf(buf + len, sizeof(buf) - len, (char *)fmt, arg_ptr);
@@ -1423,11 +1434,9 @@ void t_msg(const char *file, int line, int level, const char *fmt,...)
          trace_fd = fopen(fn.c_str(), "a+b");
       }
 
-#ifdef FULL_LOCATION
       if (details) {
          Mmsg(buf,  "%s: %s:%d-%u ", my_name, get_basename(file), line, GetJobidFromTsd());
       }
-#endif
 
       while (1) {
          maxlen = more.MaxSize() - 1;
@@ -1444,11 +1453,9 @@ void t_msg(const char *file, int line, int level, const char *fmt,...)
       }
 
       if (trace_fd != NULL) {
-#ifdef FULL_LOCATION
          if (details) {
             fputs(buf.c_str(), trace_fd);
          }
-#endif
          fputs(more.c_str(), trace_fd);
          fflush(trace_fd);
       }

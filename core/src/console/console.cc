@@ -28,6 +28,8 @@
  * Bareos Console interface to the Director
  */
 
+#include <security/pam_appl.h>
+
 #include "include/bareos.h"
 #include "console_conf.h"
 #include "jcr.h"
@@ -1134,45 +1136,101 @@ static bool SetEcho(FILE *stdin, bool on)
    return true;
 }
 
+enum class PamAuthState {
+   INIT,
+   RECEIVE_MSG_TYPE,
+   RECEIVE_MSG,
+   READ_INPUT,
+   SEND_INPUT,
+   AUTH_OK
+};
+
+static PamAuthState state = PamAuthState::INIT;
+
 static bool ConsolePamAuthenticate(FILE *stdin, BareosSocket *UA_sock)
 {
    bool quit = false;
-   bool failed = false;
+   bool error = false;
+
+   int type;
    btimer_t *tid = nullptr;
-   static bool pw = false;
-   do {
-      if(tid) {
-         StopBsockTimer(tid);
+   char *userinput = nullptr;
+
+   while (!error && !quit) {
+      switch(state) {
+         case PamAuthState::INIT:
+            if(tid) {
+               StopBsockTimer(tid);
+            }
+            tid = StartBsockTimer(UA_sock, 10);
+            if (!tid) {
+               error = true;
+            }
+            state = PamAuthState::RECEIVE_MSG_TYPE;
+            break;
+         case PamAuthState::RECEIVE_MSG_TYPE:
+            if (UA_sock->recv() == 1) {
+               type = UA_sock->msg[0];
+               switch (type) {
+                  case PAM_PROMPT_ECHO_OFF:
+                  case PAM_PROMPT_ECHO_ON:
+                     SetEcho (stdin, type == PAM_PROMPT_ECHO_ON);
+                     state = PamAuthState::RECEIVE_MSG;
+                     break;
+                  case PAM_SUCCESS:
+                     state = PamAuthState::AUTH_OK;
+                     quit = true;
+                     break;
+                  default:
+                     Dmsg1(100, "Error, unknown pam type %d\n", type);
+                     error = true;
+                     break;
+               } /* switch (type) */
+            } else {
+               error = true;
+            }
+            break;
+         case PamAuthState::RECEIVE_MSG:
+            if (UA_sock->recv() > 0) {
+               sendit(UA_sock->msg);
+               state = PamAuthState::READ_INPUT;
+            } else {
+               error = true;
+            }
+            break;
+         case PamAuthState::READ_INPUT: {
+               userinput = readline("");
+               if (userinput) {
+                  state = PamAuthState::SEND_INPUT;
+               } else {
+                  error = true;
+               }
+            }
+            break;
+         case PamAuthState::SEND_INPUT:
+            UA_sock->fsend(userinput);
+            Actuallyfree(userinput);
+            state = PamAuthState::INIT;
+            break;
+         default:
+            break;
       }
-      tid = StartBsockTimer(UA_sock, 10);
-      if (!tid) {
-         failed = true;
-         continue;
+      if (UA_sock->IsStop() || UA_sock->IsError()) {
+         if(userinput) {
+            Actuallyfree(userinput);
+         }
+         if(tid) {
+            StopBsockTimer(tid);
+         }
+         error = true;
+         break;
       }
-      if (UA_sock->recv() >= 0) {
-         sendit(UA_sock->msg);
-      } else {
-         failed = true;
-         continue;
-      }
-      if (!pw) {
-         pw = true;
-      } else {
-         SetEcho (stdin, false);
-         quit = true;
-      }
-      char *line = readline("");
-      if (line) {
-         UA_sock->fsend(line);
-         Actuallyfree(line);
-      } else {
-         failed = true;
-         continue;
-      }
-   } while (!quit && !failed);
+   }; /* while (!quit) */
 
    SetEcho (stdin, true);
-   return failed ? false : true;
+   sendit("\n");
+
+   return !error;
 }
 
 /*

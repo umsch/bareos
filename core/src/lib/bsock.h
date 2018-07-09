@@ -146,6 +146,7 @@ public:
    virtual int WaitData(int sec, int usec = 0) = 0;
    virtual int WaitDataIntr(int sec, int usec = 0) = 0;
    bool fsend(const char*, ...);
+   bool send(const char *msg, uint32_t nbytes);
    void SetKillable(bool killable);
    bool signal(int signal);
    const char *bstrerror();           /* last error on socket */

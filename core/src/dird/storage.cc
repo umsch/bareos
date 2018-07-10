@@ -494,7 +494,7 @@ bool SelectNextRstore(JobControlRecord *jcr, bootstrap_info &info)
          return true;
       }
       Bmicrosleep(10, 0);          /* Sleep 10 secs */
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          FreeRstorage(jcr);
          return false;
       }

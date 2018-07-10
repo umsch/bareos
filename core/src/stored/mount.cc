@@ -107,7 +107,7 @@ mount_next_vol:
       Dmsg1(150, "Continue after dir_ask_sysop_to_mount. must_load=%d\n", dev->must_load());
    }
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       Jmsg(jcr, M_FATAL, 0, _("Job %d canceled.\n"), jcr->JobId);
       goto bail_out;
    }
@@ -125,7 +125,7 @@ mount_next_vol:
       goto bail_out;
    }
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       goto bail_out;
    }
 
@@ -223,7 +223,7 @@ mount_next_vol:
       P(mount_mutex);
    }
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       goto bail_out;
    }
 
@@ -411,7 +411,7 @@ bool DeviceControlRecord::find_a_volume()
          Dmsg0(200, "Before DirFindNextAppendableVolume.\n");
          while (!dcr->DirFindNextAppendableVolume()) {
             Dmsg0(200, "not dir_find_next\n");
-            if (JobCanceled(jcr)) {
+            if (JobControlRecord::JobCanceled(jcr)) {
                return false;
             }
             V(mount_mutex);
@@ -420,7 +420,7 @@ bool DeviceControlRecord::find_a_volume()
                return false;
              }
              P(mount_mutex);
-             if (JobCanceled(jcr)) {
+             if (JobControlRecord::JobCanceled(jcr)) {
                 return false;
              }
              Dmsg0(150, "Again dir_find_next_append...\n");
@@ -451,7 +451,7 @@ int DeviceControlRecord::CheckVolumeLabel(bool &ask, bool &autochanger)
    } else {
       vol_label_status = ReadDevVolumeLabel(dcr);
    }
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       goto check_bail_out;
    }
 

@@ -398,7 +398,7 @@ bRC GeneratePluginEvent(JobControlRecord *jcr, bEventType eventType, void *value
    /*
     * If call_if_canceled is set, we call the plugin anyway
     */
-   if (!call_if_canceled && jcr->IsJobCanceled()) {
+   if (!call_if_canceled && jcr->JobCanceled()) {
       goto bail_out;
    }
 
@@ -436,7 +436,7 @@ bRC GeneratePluginEvent(JobControlRecord *jcr, bEventType eventType, void *value
       }
    }
 
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       Dmsg0(debuglevel, "Cancel return from GeneratePluginEvent\n");
       rc = bRC_Cancel;
    }
@@ -454,7 +454,7 @@ bool PluginCheckFile(JobControlRecord *jcr, char *fname)
    alist *plugin_ctx_list;
    int retval = bRC_OK;
 
-   if (!fd_plugin_list || !jcr || !jcr->plugin_ctx_list || jcr->IsJobCanceled()) {
+   if (!fd_plugin_list || !jcr || !jcr->plugin_ctx_list || jcr->JobCanceled()) {
       return false;                      /* Return if no plugins loaded */
    }
 
@@ -592,7 +592,7 @@ bRC PluginOptionHandleFile(JobControlRecord *jcr, FindFilesPacket *ff_pkt, struc
    sp->accurate_found = ff_pkt->accurate_found;
 
    plugin_ctx_list = jcr->plugin_ctx_list;
-   if (!fd_plugin_list || !plugin_ctx_list || jcr->IsJobCanceled()) {
+   if (!fd_plugin_list || !plugin_ctx_list || jcr->JobCanceled()) {
       Jmsg1(jcr, M_FATAL, 0, "Command plugin \"%s\" requested, but is not loaded.\n", cmd);
       goto bail_out;         /* Return if no plugins loaded */
    }
@@ -660,7 +660,7 @@ int PluginSave(JobControlRecord *jcr, FindFilesPacket *ff_pkt, bool top_level)
 
    cmd = ff_pkt->top_fname;
    plugin_ctx_list = jcr->plugin_ctx_list;
-   if (!fd_plugin_list || !plugin_ctx_list || jcr->IsJobCanceled()) {
+   if (!fd_plugin_list || !plugin_ctx_list || jcr->JobCanceled()) {
       Jmsg1(jcr, M_FATAL, 0, "Command plugin \"%s\" requested, but is not loaded.\n", cmd);
       return 1;                            /* Return if no plugins loaded */
    }
@@ -708,7 +708,7 @@ int PluginSave(JobControlRecord *jcr, FindFilesPacket *ff_pkt, bool top_level)
       /*
        * Loop getting filenames to backup then saving them
        */
-      while (!jcr->IsJobCanceled()) {
+      while (!jcr->JobCanceled()) {
          memset(&sp, 0, sizeof(sp));
          sp.pkt_size = sizeof(sp);
          sp.pkt_end = sizeof(sp);
@@ -934,7 +934,7 @@ int PluginEstimate(JobControlRecord *jcr, FindFilesPacket *ff_pkt, bool top_leve
       /*
        * Loop getting filenames to backup then saving them
        */
-      while (!jcr->IsJobCanceled()) {
+      while (!jcr->JobCanceled()) {
          memset(&sp, 0, sizeof(sp));
          sp.pkt_size = sizeof(sp);
          sp.pkt_end = sizeof(sp);
@@ -1037,7 +1037,7 @@ bool SendPluginName(JobControlRecord *jcr, BareosSocket *sd, bool start)
       Jmsg0(jcr, M_FATAL, 0, _("Plugin save packet not found.\n"));
       return false;
    }
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       return false;
    }
 
@@ -1211,7 +1211,7 @@ int PluginCreateFile(JobControlRecord *jcr, Attributes *attr, BareosWinFilePacke
    bpContext *ctx = jcr->plugin_ctx;
    b_plugin_ctx *b_ctx = (b_plugin_ctx *)jcr->plugin_ctx->bContext;
 
-   if (!ctx || !SetCmdPlugin(bfd, jcr) || jcr->IsJobCanceled()) {
+   if (!ctx || !SetCmdPlugin(bfd, jcr) || jcr->JobCanceled()) {
       return CF_ERROR;
    }
    plugin = ctx->plugin;
@@ -1805,7 +1805,7 @@ void NewPlugins(JobControlRecord *jcr)
       return;
    }
 
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       return;
    }
 

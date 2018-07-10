@@ -448,9 +448,9 @@ static inline int NdmpWaitForJobTermination(JobControlRecord *jcr)
     * so that we let the SD despool.
     */
    Dmsg4(100, "cancel=%d FDJS=%d JS=%d SDJS=%d\n",
-         jcr->IsCanceled(), jcr->FDJobStatus,
+         jcr->JobCanceled(), jcr->FDJobStatus,
          jcr->JobStatus, jcr->SDJobStatus);
-   if (jcr->IsCanceled() || (!jcr->res.job->RescheduleIncompleteJobs)) {
+   if (jcr->JobCanceled() || (!jcr->res.job->RescheduleIncompleteJobs)) {
       Dmsg3(100, "FDJS=%d JS=%d SDJS=%d\n",
             jcr->FDJobStatus, jcr->JobStatus, jcr->SDJobStatus);
       CancelStorageDaemonJob(jcr);

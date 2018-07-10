@@ -214,7 +214,7 @@ bool BareosSocket::despool(void UpdateAttrSpoolSize(ssize_t size), ssize_t tsize
       }
 
       send();
-      if (jcr && JobCanceled(jcr)) {
+      if (jcr && JobControlRecord::JobCanceled(jcr)) {
          return false;
       }
    }
@@ -368,7 +368,7 @@ bool BareosSocket::two_way_authenticate(JobControlRecord *jcr,
    alist *verify_list = NULL;
    TlsBase * selected_local_tls = nullptr;
 
-   if (jcr && JobCanceled(jcr)) {
+   if (jcr && JobControlRecord::JobCanceled(jcr)) {
       Dmsg0(debuglevel, "Failed, because job is canceled.\n");
       auth_success = false; /* force quick exit */
       goto auth_fatal;
@@ -438,7 +438,7 @@ bool BareosSocket::two_way_authenticate(JobControlRecord *jcr,
       goto auth_fatal;
    }
 
-   if (jcr && JobCanceled(jcr)) {
+   if (jcr && JobControlRecord::JobCanceled(jcr)) {
       Dmsg0(debuglevel, "Failed, because job is canceled.\n");
       auth_success = false; /* force quick exit */
       goto auth_fatal;

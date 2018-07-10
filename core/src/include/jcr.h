@@ -144,33 +144,6 @@ enum {
    MT_SQLQUERY
 };
 
-#define JobTerminatedSuccessfully(jcr) \
-  (jcr->JobStatus == JS_Terminated || \
-   jcr->JobStatus == JS_Warnings \
-  )
-
-#define JobCanceled(jcr) \
-  (jcr->JobStatus == JS_Canceled || \
-   jcr->JobStatus == JS_ErrorTerminated || \
-   jcr->JobStatus == JS_FatalError \
-  )
-
-#define JobWaiting(jcr) \
- (jcr->job_started && \
-  (jcr->JobStatus == JS_WaitFD || \
-   jcr->JobStatus == JS_WaitSD || \
-   jcr->JobStatus == JS_WaitMedia || \
-   jcr->JobStatus == JS_WaitMount || \
-   jcr->JobStatus == JS_WaitStoreRes || \
-   jcr->JobStatus == JS_WaitJobRes || \
-   jcr->JobStatus == JS_WaitClientRes || \
-   jcr->JobStatus == JS_WaitMaxJobs || \
-   jcr->JobStatus == JS_WaitPriority || \
-   jcr->SDJobStatus == JS_WaitMedia || \
-   jcr->SDJobStatus == JS_WaitMount || \
-   jcr->SDJobStatus == JS_WaitDevice || \
-   jcr->SDJobStatus == JS_WaitMaxJobs))
-
 #define foreach_jcr(jcr) \
    for (jcr=jcr_walk_start(); jcr; (jcr=jcr_walk_next(jcr)) )
 
@@ -302,9 +275,15 @@ public:
    int32_t UseCount() const { return _use_count; }
    void InitMutex(void) {pthread_mutex_init(&mutex, NULL); }
    void DestroyMutex(void) {pthread_mutex_destroy(&mutex); }
-   bool IsJobCanceled() { return JobCanceled(this); }
-   bool IsCanceled() { return JobCanceled(this); }
-   bool IsTerminatedOk() { return JobTerminatedSuccessfully(this); }
+   static bool JobCanceled(JobControlRecord *jcr) {
+         return (jcr->JobStatus == JS_Canceled
+                  || jcr->JobStatus == JS_ErrorTerminated
+                  || jcr->JobStatus == JS_FatalError); }
+   bool JobCanceled() { return JobCanceled(this); }
+   static bool JobTerminatedSuccessfully(JobControlRecord *jcr) {
+         return (jcr->JobStatus == JS_Terminated
+                  || jcr->JobStatus == JS_Warnings); }
+   bool JobTerminatedSuccessfully() { return JobTerminatedSuccessfully(this); }
    bool IsIncomplete() { return JobStatus == JS_Incomplete; }
    bool is_JobLevel(int32_t JobLevel) { return JobLevel == JobLevel_; }
    bool is_JobType(int32_t JobType) { return JobType == JobType_; }
@@ -336,6 +315,26 @@ public:
    void MyThreadSendSignal(int sig);   /**< in lib/jcr.c */
    void SetKillable(bool killable);      /**< in lib/jcr.c */
    bool IsKillable() const { return my_thread_killable; }
+
+   #ifdef DIRECTOR_DAEMON
+   static bool JobWaiting(JobControlRecord *jcr) {
+      return
+      (jcr->job_started &&
+      (jcr->JobStatus == JS_WaitFD ||
+      jcr->JobStatus == JS_WaitSD ||
+      jcr->JobStatus == JS_WaitMedia ||
+      jcr->JobStatus == JS_WaitMount ||
+      jcr->JobStatus == JS_WaitStoreRes ||
+      jcr->JobStatus == JS_WaitJobRes ||
+      jcr->JobStatus == JS_WaitClientRes ||
+      jcr->JobStatus == JS_WaitMaxJobs ||
+      jcr->JobStatus == JS_WaitPriority ||
+      jcr->SDJobStatus == JS_WaitMedia ||
+      jcr->SDJobStatus == JS_WaitMount ||
+      jcr->SDJobStatus == JS_WaitDevice ||
+      jcr->SDJobStatus == JS_WaitMaxJobs));
+   }
+   #endif /* DIRECTOR_DAEMON */
 
    /*
     * Global part of JobControlRecord common to all daemons

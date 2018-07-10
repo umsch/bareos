@@ -365,7 +365,7 @@ bRC GeneratePluginEvent(JobControlRecord *jcr, bsdEventType eventType, void *val
       }
    }
 
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       Dmsg0(debuglevel, "Cancel return from GeneratePluginEvent\n");
       rc = bRC_Cancel;
    }
@@ -634,7 +634,7 @@ void NewPlugins(JobControlRecord *jcr)
       Dmsg0(debuglevel, "No sd plugin list!\n");
       return;
    }
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       return;
    }
    /*

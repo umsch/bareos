@@ -298,7 +298,7 @@ static bool DespoolData(DeviceControlRecord *dcr, bool commit)
    SetNewFileParameters(dcr);
 
    while (ok) {
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          ok = false;
          break;
       }
@@ -479,7 +479,7 @@ bool WriteBlockToSpoolFile(DeviceControlRecord *dcr)
    bool despool = false;
    DeviceBlock *block = dcr->block;
 
-   if (JobCanceled(dcr->jcr)) {
+   if (JobControlRecord::JobCanceled(dcr->jcr)) {
       return false;
    }
    ASSERT(block->binbuf == ((uint32_t) (block->bufp - block->buf)));

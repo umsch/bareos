@@ -186,7 +186,7 @@ static void DoSdCommands(JobControlRecord *jcr)
                /*
                 * Note sd->msg command may be destroyed by comm activity
                 */
-               if (!JobCanceled(jcr)) {
+               if (!JobControlRecord::JobCanceled(jcr)) {
                   if (jcr->errmsg[0]) {
                      Jmsg1(jcr, M_FATAL, 0, _("Command error with SD, hanging up. %s\n"),
                            jcr->errmsg);
@@ -202,7 +202,7 @@ static void DoSdCommands(JobControlRecord *jcr)
       }
 
       if (!found) {                   /* command not found */
-         if (!JobCanceled(jcr)) {
+         if (!JobControlRecord::JobCanceled(jcr)) {
             Jmsg1(jcr, M_FATAL, 0, _("SD command not found: %s\n"), sd->msg);
             Dmsg1(110, "<stored: Command not found: %s\n", sd->msg);
          }
@@ -239,14 +239,14 @@ bool DoListenRun(JobControlRecord *jcr)
     * Wait for the Storage daemon to contact us to start the Job, when he does, we will be released.
     */
    P(mutex);
-   while (!jcr->authenticated && !JobCanceled(jcr)) {
+   while (!jcr->authenticated && !JobControlRecord::JobCanceled(jcr)) {
       errstat = pthread_cond_wait(&jcr->job_start_wait, &mutex);
       if (errstat == EINVAL || errstat == EPERM) {
          break;
       }
       Dmsg1(800, "=== Auth cond errstat=%d\n", errstat);
    }
-   Dmsg3(50, "Auth=%d canceled=%d errstat=%d\n", jcr->authenticated, JobCanceled(jcr), errstat);
+   Dmsg3(50, "Auth=%d canceled=%d errstat=%d\n", jcr->authenticated, JobControlRecord::JobCanceled(jcr), errstat);
    V(mutex);
 
    if (!jcr->authenticated || !jcr->store_bsock) {

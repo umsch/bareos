@@ -1618,7 +1618,7 @@ alist *select_jobs(UaContext *ua, const char *reason)
                }
                break;
             case waiting_jobs:
-               if (!JobWaiting(jcr)) {
+               if (!JobControlRecord::JobWaiting(jcr)) {
                   continue;
                }
                break;

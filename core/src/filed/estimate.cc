@@ -62,7 +62,7 @@ static int TallyFile(JobControlRecord *jcr, FindFilesPacket *ff_pkt, bool top_le
 {
    Attributes attr;
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return 0;
    }
    switch (ff_pkt->type) {

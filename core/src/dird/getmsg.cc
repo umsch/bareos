@@ -89,7 +89,7 @@ static void SetJcrSdJobStatus(JobControlRecord *jcr, int SDJobStatus)
          break;
    }
 
-   if (JobWaiting(jcr)) {
+   if (JobControlRecord::JobWaiting(jcr)) {
       set_waittime = false;
    }
 

@@ -218,7 +218,7 @@ static int AccurateListHandler(void *ctx, int num_fields, char **row)
 {
    JobControlRecord *jcr = (JobControlRecord *)ctx;
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return 1;
    }
 
@@ -317,7 +317,7 @@ bool SendAccurateCurrentFiles(JobControlRecord *jcr)
    /*
     * In base level, no previous job is used and no restart incomplete jobs
     */
-   if (jcr->IsCanceled() || jcr->is_JobLevel(L_BASE)) {
+   if (jcr->JobCanceled() || jcr->is_JobLevel(L_BASE)) {
       return true;
    }
 
@@ -726,7 +726,7 @@ int WaitForJobTermination(JobControlRecord *jcr, int timeout)
             Jmsg(jcr, M_WARNING, 0, _("Unexpected Client Job message: %s\n"),
                  fd->msg);
          }
-         if (JobCanceled(jcr)) {
+         if (JobControlRecord::JobCanceled(jcr)) {
             break;
          }
       }
@@ -738,7 +738,7 @@ int WaitForJobTermination(JobControlRecord *jcr, int timeout)
          int i = 0;
          Jmsg(jcr, M_FATAL, 0, _("Network error with FD during %s: ERR=%s\n"),
               job_type_to_str(jcr->getJobType()), fd->bstrerror());
-         while (i++ < 10 && jcr->res.job->RescheduleIncompleteJobs && jcr->IsCanceled()) {
+         while (i++ < 10 && jcr->res.job->RescheduleIncompleteJobs && jcr->JobCanceled()) {
             Bmicrosleep(3, 0);
          }
 
@@ -749,9 +749,9 @@ int WaitForJobTermination(JobControlRecord *jcr, int timeout)
    /*
     * Force cancel in SD if failing, but not for Incomplete jobs so that we let the SD despool.
     */
-   Dmsg5(100, "cancel=%d fd_ok=%d FDJS=%d JS=%d SDJS=%d\n", jcr->IsCanceled(), fd_ok, jcr->FDJobStatus,
+   Dmsg5(100, "cancel=%d fd_ok=%d FDJS=%d JS=%d SDJS=%d\n", jcr->JobCanceled(), fd_ok, jcr->FDJobStatus,
         jcr->JobStatus, jcr->SDJobStatus);
-   if (jcr->IsCanceled() || (!jcr->res.job->RescheduleIncompleteJobs && !fd_ok)) {
+   if (jcr->JobCanceled() || (!jcr->res.job->RescheduleIncompleteJobs && !fd_ok)) {
       Dmsg4(100, "fd_ok=%d FDJS=%d JS=%d SDJS=%d\n", fd_ok, jcr->FDJobStatus,
            jcr->JobStatus, jcr->SDJobStatus);
       CancelStorageDaemonJob(jcr);
@@ -873,7 +873,7 @@ void UpdateBootstrapFile(JobControlRecord *jcr)
    /*
     * Now update the bootstrap file if any
     */
-   if (jcr->IsTerminatedOk() &&
+   if (jcr->JobTerminatedSuccessfully() &&
        jcr->jr.JobBytes &&
        jcr->res.job->WriteBootstrap) {
       FILE *fd;
@@ -987,7 +987,7 @@ void GenerateBackupSummary(JobControlRecord *jcr, ClientDbRecord *cr, int msg_ty
        * it is normal.  Or look at it the other way, only for a
        * normal exit should we complain about this error.
        */
-      if (jcr->IsTerminatedOk() && jcr->jr.JobBytes) {
+      if (jcr->JobTerminatedSuccessfully() && jcr->jr.JobBytes) {
          Jmsg(jcr, M_ERROR, 0, "%s", jcr->db->strerror());
       }
       jcr->VolumeName[0] = 0;         /* none */

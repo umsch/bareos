@@ -153,7 +153,7 @@ bool DoAppendData(JobControlRecord *jcr, BareosSocket *bs, const char *what)
     */
    dcr->VolFirstIndex = dcr->VolLastIndex = 0;
    jcr->run_time = time(NULL);              /* start counting time for rates */
-   for (last_file_index = 0; ok && !jcr->IsJobCanceled(); ) {
+   for (last_file_index = 0; ok && !jcr->JobCanceled(); ) {
       /*
        * Read Stream header from the daemon.
        *
@@ -214,7 +214,7 @@ fi_checked:
        * that after the loop ends.
        */
       rec_data = dcr->rec->data;
-      while ((n = BgetMsg(bs)) > 0 && !jcr->IsJobCanceled()) {
+      while ((n = BgetMsg(bs)) > 0 && !jcr->JobCanceled()) {
          dcr->rec->VolSessionId = jcr->VolSessionId;
          dcr->rec->VolSessionTime = jcr->VolSessionTime;
          dcr->rec->FileIndex = file_index;
@@ -246,7 +246,7 @@ fi_checked:
       dcr->rec->data = rec_data;
 
       if (bs->IsError()) {
-         if (!jcr->IsJobCanceled()) {
+         if (!jcr->JobCanceled()) {
             Dmsg2(350, "Network read error from %s. ERR=%s\n",
                   what, bs->bstrerror());
             Jmsg2(jcr, M_FATAL, 0, _("Network error reading from %s. ERR=%s\n"),
@@ -286,7 +286,7 @@ fi_checked:
          /*
           * Print only if ok and not cancelled to avoid spurious messages
           */
-         if (ok && !jcr->IsJobCanceled()) {
+         if (ok && !jcr->JobCanceled()) {
             Jmsg1(jcr, M_FATAL, 0, _("Error writing end session label. ERR=%s\n"),
                   dev->bstrerror());
             PossibleIncompleteJob(jcr, last_file_index);
@@ -303,7 +303,7 @@ fi_checked:
          /*
           * Print only if ok and not cancelled to avoid spurious messages
           */
-         if (ok && !jcr->IsJobCanceled()) {
+         if (ok && !jcr->JobCanceled()) {
             Jmsg2(jcr, M_FATAL, 0, _("Fatal append error on device %s: ERR=%s\n"),
                   dev->print_name(), dev->bstrerror());
             Dmsg0(100, _("Set ok=FALSE after WriteBlockToDevice.\n"));
@@ -341,7 +341,7 @@ fi_checked:
     */
    ReleaseDevice(dcr);
 
-   if ((!ok || jcr->IsJobCanceled()) && !jcr->is_JobStatus(JS_Incomplete)) {
+   if ((!ok || jcr->JobCanceled()) && !jcr->is_JobStatus(JS_Incomplete)) {
       DiscardAttributeSpool(jcr);
    } else {
       CommitAttributeSpool(jcr);

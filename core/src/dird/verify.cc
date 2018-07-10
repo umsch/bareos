@@ -498,7 +498,7 @@ void VerifyCleanup(JobControlRecord *jcr, int TermCode)
 
    UpdateJobEnd(jcr, TermCode);
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       CancelStorageDaemonJob(jcr);
    }
 
@@ -647,12 +647,12 @@ void GetAttributesAndCompareToCatalog(JobControlRecord *jcr, JobId_t JobId)
     *   Attributes
     *   Link name  ???
     */
-   while ((n=BgetDirmsg(fd)) >= 0 && !JobCanceled(jcr)) {
+   while ((n=BgetDirmsg(fd)) >= 0 && !JobControlRecord::JobCanceled(jcr)) {
       int stream;
       char *attr, *p, *fn;
       PoolMem Opts_Digest(PM_MESSAGE);   /* Verify Opts or MD5/SHA1 digest */
 
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          goto bail_out;
       }
       fname = CheckPoolMemorySize(fname, fd->message_length);
@@ -897,7 +897,7 @@ static int MissingHandler(void *ctx, int num_fields, char **row)
 {
    JobControlRecord *jcr = (JobControlRecord *)ctx;
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return 1;
    }
    if (!jcr->fn_printed) {

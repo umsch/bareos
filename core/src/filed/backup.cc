@@ -525,7 +525,7 @@ int SaveFile(JobControlRecord *jcr, FindFilesPacket *ff_pkt, bool top_level)
    struct save_pkt sp;          /* use by option plugin */
    BareosSocket *sd = jcr->store_bsock;
 
-   if (jcr->IsCanceled() || jcr->IsIncomplete()) {
+   if (jcr->JobCanceled() || jcr->IsIncomplete()) {
       return 0;
    }
 
@@ -883,10 +883,10 @@ int SaveFile(JobControlRecord *jcr, FindFilesPacket *ff_pkt, bool top_level)
    }
 
 good_rtn:
-   rtnstat = jcr->IsCanceled() ? 0 : 1; /* good return if not canceled */
+   rtnstat = jcr->JobCanceled() ? 0 : 1; /* good return if not canceled */
 
 bail_out:
-   if (jcr->IsIncomplete() || jcr->IsCanceled()) {
+   if (jcr->IsIncomplete() || jcr->JobCanceled()) {
       rtnstat = 0;
    }
    if (plugin_started) {
@@ -1026,7 +1026,7 @@ static inline bool SendDataToSd(b_ctx *bctx)
    sd->msg = bctx->wbuf; /* set correct write buffer */
 
    if (!sd->send()) {
-      if (!bctx->jcr->IsJobCanceled()) {
+      if (!bctx->jcr->JobCanceled()) {
          Jmsg1(bctx->jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), sd->bstrerror());
       }
       return false;
@@ -1180,7 +1180,7 @@ static int send_data(JobControlRecord *jcr, int stream, FindFilesPacket *ff_pkt,
     *    <file-index> <stream> <info>
     */
    if (!sd->fsend("%ld %d 0", jcr->JobFiles, stream)) {
-      if (!jcr->IsJobCanceled()) {
+      if (!jcr->JobCanceled()) {
          Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), sd->bstrerror());
       }
       goto bail_out;
@@ -1252,7 +1252,7 @@ static int send_data(JobControlRecord *jcr, int stream, FindFilesPacket *ff_pkt,
          sd->message_length = bctx.encrypted_len; /* set encrypted length */
          sd->msg = jcr->crypto.crypto_buf; /* set correct write buffer */
          if (!sd->send()) {
-            if (!jcr->IsJobCanceled()) {
+            if (!jcr->JobCanceled()) {
                Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), sd->bstrerror());
             }
             goto bail_out;
@@ -1264,7 +1264,7 @@ static int send_data(JobControlRecord *jcr, int stream, FindFilesPacket *ff_pkt,
    }
 
    if (!sd->signal(BNET_EOD)) { /* indicate end of file data */
-      if (!jcr->IsJobCanceled()) {
+      if (!jcr->JobCanceled()) {
          Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), sd->bstrerror());
       }
       goto bail_out;
@@ -1347,7 +1347,7 @@ bool EncodeAndSendAttributes(JobControlRecord *jcr, FindFilesPacket *ff_pkt, int
     *    <file-index> <stream> <info>
     */
    if (!sd->fsend("%ld %d 0", jcr->JobFiles, attr_stream)) {
-      if (!jcr->IsCanceled() && !jcr->IsIncomplete()) {
+      if (!jcr->JobCanceled() && !jcr->IsIncomplete()) {
          Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), sd->bstrerror());
       }
       return false;
@@ -1457,7 +1457,7 @@ bool EncodeAndSendAttributes(JobControlRecord *jcr, FindFilesPacket *ff_pkt, int
    }
 
    Dmsg2(300, ">stored: attr len=%d: %s\n", sd->message_length, sd->msg);
-   if (!status && !jcr->IsJobCanceled()) {
+   if (!status && !jcr->JobCanceled()) {
       Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"), sd->bstrerror());
    }
 

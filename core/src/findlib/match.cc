@@ -68,7 +68,7 @@ bool MatchFiles(JobControlRecord *jcr, FindFilesPacket *ff, int FileSave(JobCont
    struct s_included_file *inc = NULL;
 
    /* This is the old deprecated way */
-   while (!JobCanceled(jcr) && (inc = get_next_included_file(ff, inc))) {
+   while (!JobControlRecord::JobCanceled(jcr) && (inc = get_next_included_file(ff, inc))) {
       /* Copy options for this file */
       bstrncat(ff->VerifyOpts, inc->VerifyOpts, sizeof(ff->VerifyOpts));
       Dmsg1(100, "FindFiles: file=%s\n", inc->fname);

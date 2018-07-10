@@ -116,7 +116,7 @@ bool AccurateFinish(JobControlRecord *jcr)
 {
    bool retval = true;
 
-   if (jcr->IsCanceled() || jcr->IsIncomplete()) {
+   if (jcr->JobCanceled() || jcr->IsIncomplete()) {
       AccurateFree(jcr);
       return retval;
    }
@@ -347,7 +347,7 @@ bool AccurateCmd(JobControlRecord *jcr)
    uint16_t delta_seq;
    BareosSocket *dir = jcr->dir_bsock;
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return true;
    }
 

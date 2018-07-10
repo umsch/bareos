@@ -172,7 +172,7 @@ int FindFiles(JobControlRecord *jcr, FindFilesPacket *ff,
             if (FindOneFile(jcr, ff, OurCallback, ff->top_fname, (dev_t)-1, true) == 0) {
                return 0;                  /* error return */
             }
-            if (JobCanceled(jcr)) {
+            if (JobControlRecord::JobCanceled(jcr)) {
                return 0;
             }
          }
@@ -189,7 +189,7 @@ int FindFiles(JobControlRecord *jcr, FindFilesPacket *ff,
             ff->cmd_plugin = true;
             PluginSave(jcr, ff, true);
             ff->cmd_plugin = false;
-            if (JobCanceled(jcr)) {
+            if (JobControlRecord::JobCanceled(jcr)) {
                return 0;
             }
          }

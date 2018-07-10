@@ -823,7 +823,7 @@ bool BareosDb::WriteBatchFileRecords(JobControlRecord *jcr)
       return true;
    }
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       goto bail_out;
    }
 
@@ -837,7 +837,7 @@ bool BareosDb::WriteBatchFileRecords(JobControlRecord *jcr)
       Jmsg1(jcr, M_FATAL, 0, "Batch end %s\n", errmsg);
       goto bail_out;
    }
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       goto bail_out;
    }
 

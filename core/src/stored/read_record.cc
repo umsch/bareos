@@ -395,7 +395,7 @@ bool ReadRecords(DeviceControlRecord *dcr,
    jcr->mount_next_volume = false;
 
    while (ok && !done) {
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          ok = false;
          break;
       }

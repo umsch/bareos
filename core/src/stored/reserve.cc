@@ -306,7 +306,7 @@ static bool UseDeviceCmd(JobControlRecord *jcr)
       }
 
       LockReservations();
-      for ( ; !fail && !JobCanceled(jcr); ) {
+      for ( ; !fail && !JobControlRecord::JobCanceled(jcr); ) {
          PopReserveMessages(jcr);
          rctx.suitable_device = false;
          rctx.have_volume = false;
@@ -881,7 +881,7 @@ static bool ReserveDeviceForRead(DeviceControlRecord *dcr)
    bool ok = false;
 
    ASSERT(dcr);
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return false;
    }
 
@@ -944,7 +944,7 @@ static bool ReserveDeviceForAppend(DeviceControlRecord *dcr, ReserveContext &rct
    bool ok = false;
 
    ASSERT(dcr);
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return false;
    }
 

@@ -168,7 +168,7 @@ int RunScripts(JobControlRecord *jcr, alist *runscripts, const char *label, alis
 
       if ((script->when & SCRIPT_Before) && (when & SCRIPT_Before)) {
          if ((script->on_success && (jcr->JobStatus == JS_Running || jcr->JobStatus == JS_Created)) ||
-             (script->on_failure && (JobCanceled(jcr) || jcr->JobStatus == JS_Differences))) {
+             (script->on_failure && (JobControlRecord::JobCanceled(jcr) || jcr->JobStatus == JS_Differences))) {
             Dmsg4(200, "runscript: Run it because SCRIPT_Before (%s,%i,%i,%c)\n",
                   script->command, script->on_success, script->on_failure, jcr->JobStatus );
             runit = true;
@@ -177,7 +177,7 @@ int RunScripts(JobControlRecord *jcr, alist *runscripts, const char *label, alis
 
       if ((script->when & SCRIPT_AfterVSS) && (when & SCRIPT_AfterVSS)) {
          if ((script->on_success && (jcr->JobStatus == JS_Blocked)) ||
-             (script->on_failure && JobCanceled(jcr))) {
+             (script->on_failure && JobControlRecord::JobCanceled(jcr))) {
             Dmsg4(200, "runscript: Run it because SCRIPT_AfterVSS (%s,%i,%i,%c)\n",
                   script->command, script->on_success, script->on_failure, jcr->JobStatus );
             runit = true;
@@ -185,8 +185,8 @@ int RunScripts(JobControlRecord *jcr, alist *runscripts, const char *label, alis
       }
 
       if ((script->when & SCRIPT_After) && (when & SCRIPT_After)) {
-         if ((script->on_success && jcr->IsTerminatedOk()) ||
-             (script->on_failure && (JobCanceled(jcr) || jcr->JobStatus == JS_Differences))) {
+         if ((script->on_success && jcr->JobTerminatedSuccessfully()) ||
+             (script->on_failure && (JobControlRecord::JobCanceled(jcr) || jcr->JobStatus == JS_Differences))) {
             Dmsg4(200, "runscript: Run it because SCRIPT_After (%s,%i,%i,%c)\n",
                   script->command, script->on_success, script->on_failure, jcr->JobStatus );
             runit = true;

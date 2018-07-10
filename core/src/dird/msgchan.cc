@@ -387,7 +387,7 @@ bool StartStorageDaemonMessageThread(JobControlRecord *jcr)
    /* Wait for thread to start */
    while (!jcr->SD_msg_chan_started) {
       Bmicrosleep(0, 50);
-      if (JobCanceled(jcr) || jcr->sd_msg_thread_done) {
+      if (JobControlRecord::JobCanceled(jcr) || jcr->sd_msg_thread_done) {
          return false;
       }
    }
@@ -438,7 +438,7 @@ extern "C" void *msg_thread(void *arg)
     */
    Dmsg0(100, "Start msg_thread loop\n");
    n = 0;
-   while (!JobCanceled(jcr) && (n=BgetDirmsg(sd)) >= 0) {
+   while (!JobControlRecord::JobCanceled(jcr) && (n=BgetDirmsg(sd)) >= 0) {
       Dmsg1(400, "<stored: %s", sd->msg);
       /*
        * Check for "3000 OK Job Authorization="
@@ -503,7 +503,7 @@ void WaitForStorageDaemonTermination(JobControlRecord *jcr)
       P(mutex);
       pthread_cond_timedwait(&jcr->term_wait, &mutex, &timeout);
       V(mutex);
-      if (jcr->IsCanceled()) {
+      if (jcr->JobCanceled()) {
          if (jcr->SD_msg_chan_started) {
             jcr->store_bsock->SetTimedOut();
             jcr->store_bsock->SetTerminated();

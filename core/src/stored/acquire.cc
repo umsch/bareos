@@ -228,7 +228,7 @@ bool AcquireDeviceForRead(DeviceControlRecord *dcr)
          dev->ClearLabeled();
       }
 
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          char ed1[50];
          Mmsg1(dev->errmsg, _("Job %s canceled.\n"), edit_int64(jcr->JobId, ed1));
          Jmsg(jcr, M_INFO, 0, dev->errmsg);
@@ -449,7 +449,7 @@ DeviceControlRecord *acquire_device_for_append(DeviceControlRecord *dcr)
       dev->Unlock();
       Dmsg1(190, "jid=%u Do mount_next_write_vol\n", (uint32_t)jcr->JobId);
       if (!dcr->MountNextWriteVolume()) {
-         if (!JobCanceled(jcr)) {
+         if (!JobControlRecord::JobCanceled(jcr)) {
             /* Reduce "noise" -- don't print if job canceled */
             Jmsg(jcr, M_FATAL, 0, _("Could not ready device %s for append.\n"),
                dev->print_name());
@@ -596,7 +596,7 @@ bool ReleaseDevice(DeviceControlRecord *dcr)
    /*
     * Fire off Alert command and include any output
     */
-   if (!JobCanceled(jcr)) {
+   if (!JobControlRecord::JobCanceled(jcr)) {
       if (!dcr->device->drive_tapealert_enabled && dcr->device->alert_command) {
          int status = 1;
          POOLMEM *alert, *line;

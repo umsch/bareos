@@ -100,7 +100,7 @@ static bool response(JobControlRecord *jcr, BareosSocket *sd, char *resp, const 
          return true;
       }
    }
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return false;                   /* if canceled avoid useless error messages */
    }
    if (IsBnetError(sd)) {
@@ -384,7 +384,7 @@ static bool CloneRecordToRemoteSd(DeviceControlRecord *dcr, DeviceRecord *rec)
     */
    if (send_eod) {
       if (!sd->signal(BNET_EOD)) { /* indicate end of file data */
-         if (!jcr->IsJobCanceled()) {
+         if (!jcr->JobCanceled()) {
             Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
                   sd->bstrerror());
          }
@@ -397,7 +397,7 @@ static bool CloneRecordToRemoteSd(DeviceControlRecord *dcr, DeviceRecord *rec)
     */
    if (send_header) {
       if (!sd->fsend("%ld %d 0", rec->FileIndex, rec->Stream)) {
-         if (!jcr->IsJobCanceled()) {
+         if (!jcr->JobCanceled()) {
             Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
                   sd->bstrerror());
          }
@@ -418,7 +418,7 @@ static bool CloneRecordToRemoteSd(DeviceControlRecord *dcr, DeviceRecord *rec)
    if (!sd->send()) {
       sd->msg = msgsave;
       sd->message_length = 0;
-      if (!jcr->IsJobCanceled()) {
+      if (!jcr->JobCanceled()) {
          Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
                sd->bstrerror());
       }
@@ -629,7 +629,7 @@ bool DoMacRun(JobControlRecord *jcr)
        * signal the remote we are done.
        */
       if (!sd->signal(BNET_EOD) || !sd->signal(BNET_EOD)) {
-         if (!jcr->IsJobCanceled()) {
+         if (!jcr->JobCanceled()) {
             Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
                   sd->bstrerror());
          }
@@ -743,7 +743,7 @@ bail_out:
              * Print only if ok and not cancelled to avoid spurious messages
              */
 
-            if (ok && !jcr->IsJobCanceled()) {
+            if (ok && !jcr->JobCanceled()) {
                Jmsg1(jcr, M_FATAL, 0, _("Error writing end session label. ERR=%s\n"),
                      dev->bstrerror());
             }
@@ -790,7 +790,7 @@ bail_out:
        */
       ReleaseDevice(jcr->dcr);
 
-      if (!ok || JobCanceled(jcr)) {
+      if (!ok || JobControlRecord::JobCanceled(jcr)) {
          DiscardAttributeSpool(jcr);
       } else {
          CommitAttributeSpool(jcr);

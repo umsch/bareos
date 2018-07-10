@@ -400,7 +400,7 @@ bool StorageDaemonDeviceControlRecord::DirUpdateVolumeInfo(bool label, bool upda
    /*
     * Do not lock device here because it may be locked from label
     */
-   if (!jcr->IsCanceled()) {
+   if (!jcr->JobCanceled()) {
       if (!DoGetVolumeInfo(this)) {
          Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
          Dmsg2(debuglevel, _("Didn't get vol info vol=%s: ERR=%s"),
@@ -551,14 +551,14 @@ bool StorageDaemonDeviceControlRecord::DirAskSysopToCreateAppendableVolume()
    int status = W_TIMEOUT;
    bool got_vol = false;
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return false;
    }
 
    Dmsg0(debuglevel, "enter DirAskSysopToCreateAppendableVolume\n");
    ASSERT(dev->blocked());
    for ( ;; ) {
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          Mmsg(dev->errmsg,
               _("Job %s canceled while waiting for mount on Storage Device \"%s\".\n"),
               jcr->Job, dev->print_name());
@@ -643,7 +643,7 @@ bool StorageDaemonDeviceControlRecord::DirAskSysopToMountVolume(int mode)
    }
    ASSERT(dev->blocked());
    while (1) {
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          Mmsg(dev->errmsg, _("Job %s canceled while waiting for mount on Storage Device %s.\n"),
               jcr->Job, dev->print_name());
          return false;

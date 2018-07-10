@@ -86,7 +86,7 @@ void DoVerifyVolume(JobControlRecord *jcr)
    /*
     * Get a record from the Storage daemon
     */
-   while (BgetMsg(sd) >= 0 && !JobCanceled(jcr)) {
+   while (BgetMsg(sd) >= 0 && !JobControlRecord::JobCanceled(jcr)) {
       /*
        * First we expect a Stream Record Header
        */

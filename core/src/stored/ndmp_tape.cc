@@ -1087,7 +1087,7 @@ void EndOfNdmpBackup(JobControlRecord *jcr)
             /*
              * Print only if JobStatus JS_Terminated and not cancelled to avoid spurious messages
              */
-            if (jcr->is_JobStatus(JS_Terminated) && !jcr->IsJobCanceled()) {
+            if (jcr->is_JobStatus(JS_Terminated) && !jcr->JobCanceled()) {
                Jmsg1(jcr, M_FATAL, 0,
                      _("Error writing end session label. ERR=%s\n"),
                      dcr->dev->bstrerror());
@@ -1104,7 +1104,7 @@ void EndOfNdmpBackup(JobControlRecord *jcr)
             /*
              * Print only if JobStatus JS_Terminated and not cancelled to avoid spurious messages
              */
-            if (jcr->is_JobStatus(JS_Terminated) && !jcr->IsJobCanceled()) {
+            if (jcr->is_JobStatus(JS_Terminated) && !jcr->JobCanceled()) {
                Jmsg2(jcr, M_FATAL, 0,
                      _("Fatal append error on device %s: ERR=%s\n"),
                      dcr->dev->print_name(), dcr->dev->bstrerror());

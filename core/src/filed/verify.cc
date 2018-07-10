@@ -84,7 +84,7 @@ static int VerifyFile(JobControlRecord *jcr, FindFilesPacket *ff_pkt, bool top_l
    int status;
    BareosSocket *dir;
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return 0;
    }
 

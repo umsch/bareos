@@ -394,7 +394,7 @@ VolumeReservationItem *reserve_volume(DeviceControlRecord *dcr, const char *Volu
    VolumeReservationItem *vol, *nvol;
    Device * volatile dev = dcr->dev;
 
-   if (JobCanceled(dcr->jcr)) {
+   if (JobControlRecord::JobCanceled(dcr->jcr)) {
       return NULL;
    }
    ASSERT(dev != NULL);
@@ -923,7 +923,7 @@ bool DeviceControlRecord::Can_i_use_volume()
    bool rtn = true;
    VolumeReservationItem *vol;
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return false;
    }
    LockVolumes();

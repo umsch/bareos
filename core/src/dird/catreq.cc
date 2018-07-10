@@ -658,7 +658,7 @@ void CatalogUpdate(JobControlRecord *jcr, BareosSocket *bs)
       return;                         /* user disabled cataloging */
    }
 
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       goto bail_out;
    }
 
@@ -674,7 +674,7 @@ void CatalogUpdate(JobControlRecord *jcr, BareosSocket *bs)
    UpdateAttribute(jcr, bs->msg, bs->message_length);
 
 bail_out:
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       CancelStorageDaemonJob(jcr);
    }
 }
@@ -696,7 +696,7 @@ bool DespoolAttributesFromFile(JobControlRecord *jcr, const char *file)
 
    Dmsg0(100, "Begin DespoolAttributesFromFile\n");
 
-   if (jcr->IsJobCanceled() || !jcr->res.pool->catalog_files || !jcr->db) {
+   if (jcr->JobCanceled() || !jcr->res.pool->catalog_files || !jcr->db) {
       goto bail_out;                  /* user disabled cataloging */
    }
 
@@ -733,9 +733,9 @@ bool DespoolAttributesFromFile(JobControlRecord *jcr, const char *file)
          size += nbytes;
       }
 
-      if (!jcr->IsJobCanceled()) {
+      if (!jcr->JobCanceled()) {
          UpdateAttribute(jcr, msg, message_length);
-         if (jcr->IsJobCanceled()) {
+         if (jcr->JobCanceled()) {
             goto bail_out;
          }
       }
@@ -748,7 +748,7 @@ bail_out:
       close(spool_fd);
    }
 
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       CancelStorageDaemonJob(jcr);
    }
 

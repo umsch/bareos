@@ -779,7 +779,7 @@ static int RestoreObjectHandler(void *ctx, int num_fields, char **row)
    JobControlRecord *jcr = octx->jcr;
 
    fd = jcr->file_bsock;
-   if (jcr->IsJobCanceled()) {
+   if (jcr->JobCanceled()) {
       return 1;
    }
 

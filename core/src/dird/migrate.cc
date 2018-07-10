@@ -1834,7 +1834,7 @@ void MigrationCleanup(JobControlRecord *jcr, int TermCode)
            new_jobid);
       jcr->db->SqlQuery(query.c_str());
 
-      if (jcr->IsTerminatedOk()) {
+      if (jcr->JobTerminatedSuccessfully()) {
          UaContext *ua;
 
          switch (jcr->getJobType()) {
@@ -1943,7 +1943,7 @@ void MigrationCleanup(JobControlRecord *jcr, int TermCode)
           * it is normal. Or look at it the other way, only for a
           * normal exit should we complain about this error.
           */
-         if (jcr->IsTerminatedOk() && jcr->jr.JobBytes) {
+         if (jcr->JobTerminatedSuccessfully() && jcr->jr.JobBytes) {
             Jmsg(jcr, M_ERROR, 0, "%s", mig_jcr->db->strerror());
          }
          mig_jcr->VolumeName[0] = 0;         /* none */

@@ -794,7 +794,7 @@ static inline int process_directory(JobControlRecord *jcr, FindFilesPacket *ff_p
 
 #else
 
-   while (!JobCanceled(jcr)) {
+   while (!JobControlRecord::JobCanceled(jcr)) {
       int name_length;
       result = readdir(directory);
       if (result == NULL) {

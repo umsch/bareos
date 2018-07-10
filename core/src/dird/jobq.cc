@@ -191,7 +191,7 @@ extern "C" void *sched_wait(void *arg)
          wtime = 30;
       }
       Bmicrosleep(wtime, 0);
-      if (JobCanceled(jcr)) {
+      if (JobControlRecord::JobCanceled(jcr)) {
          break;
       }
       wtime = jcr->sched_time - time(NULL);
@@ -237,7 +237,7 @@ int JobqAdd(jobq_t *jq, JobControlRecord *jcr)
 
    jcr->IncUseCount();                 /* mark jcr in use by us */
    Dmsg3(2300, "JobqAdd jobid=%d jcr=0x%x UseCount=%d\n", jcr->JobId, jcr, jcr->UseCount());
-   if (!JobCanceled(jcr) && wtime > 0) {
+   if (!JobControlRecord::JobCanceled(jcr) && wtime > 0) {
       SetThreadConcurrency(jq->max_workers + 2);
       sched_pkt = (wait_pkt *)malloc(sizeof(wait_pkt));
       sched_pkt->jcr = jcr;
@@ -262,7 +262,7 @@ int JobqAdd(jobq_t *jq, JobControlRecord *jcr)
     * While waiting in a queue this job is not attached to a thread
     */
    SetJcrInTsd(INVALID_JCR);
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       /*
        * Add job to ready queue so that it is canceled quickly
        */
@@ -565,7 +565,7 @@ extern "C" void *jobq_server(void *arg)
                /*
                 * If resource conflict, job is canceled
                 */
-               if (!JobCanceled(jcr)) {
+               if (!JobControlRecord::JobCanceled(jcr)) {
                   je = jn;            /* point to next waiting job */
                   continue;
                }
@@ -670,7 +670,7 @@ static bool RescheduleJob(JobControlRecord *jcr, jobq_t *jq, jobq_item_t *je)
           * Check for failed jobs
           */
          (jcr->res.job->RescheduleOnError &&
-          !jcr->IsTerminatedOk() &&
+          !jcr->JobTerminatedSuccessfully() &&
           !jcr->is_JobStatus(JS_Canceled) &&
           jcr->is_JobType(JT_BACKUP));
    }

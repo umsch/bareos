@@ -199,7 +199,7 @@ bool DoJobRun(JobControlRecord *jcr)
     * expires.
     */
    P(mutex);
-   while (!jcr->authenticated && !JobCanceled(jcr)) {
+   while (!jcr->authenticated && !JobControlRecord::JobCanceled(jcr)) {
       errstat = pthread_cond_timedwait(&jcr->job_start_wait, &mutex, &timeout);
       if (errstat == ETIMEDOUT || errstat == EINVAL || errstat == EPERM) {
          break;
@@ -207,14 +207,14 @@ bool DoJobRun(JobControlRecord *jcr)
       Dmsg1(800, "=== Auth cond errstat=%d\n", errstat);
    }
    Dmsg3(50, "Auth=%d canceled=%d errstat=%d\n", jcr->authenticated,
-         JobCanceled(jcr), errstat);
+         JobControlRecord::JobCanceled(jcr), errstat);
    V(mutex);
    Dmsg2(800, "Auth fail or cancel for jid=%d %p\n", jcr->JobId, jcr);
 
    memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
    switch (jcr->getJobProtocol()) {
    case PT_NDMP_BAREOS:
-      if (jcr->authenticated && !JobCanceled(jcr)) {
+      if (jcr->authenticated && !JobControlRecord::JobCanceled(jcr)) {
          Dmsg2(800, "Running jid=%d %p\n", jcr->JobId, jcr);
 
          /*
@@ -240,7 +240,7 @@ bool DoJobRun(JobControlRecord *jcr)
       /*
        * Handle the file daemon session.
        */
-      if (jcr->authenticated && !JobCanceled(jcr)) {
+      if (jcr->authenticated && !JobControlRecord::JobCanceled(jcr)) {
          Dmsg2(800, "Running jid=%d %p\n", jcr->JobId, jcr);
          RunJob(jcr);                   /* Run the job */
       }
@@ -296,7 +296,7 @@ bool nextRunCmd(JobControlRecord *jcr)
       Dmsg2(800, "Wait FD for jid=%d %p\n", jcr->JobId, jcr);
 
       P(mutex);
-      while (!jcr->authenticated && !JobCanceled(jcr)) {
+      while (!jcr->authenticated && !JobControlRecord::JobCanceled(jcr)) {
          errstat = pthread_cond_timedwait(&jcr->job_start_wait, &mutex, &timeout);
          if (errstat == ETIMEDOUT || errstat == EINVAL || errstat == EPERM) {
             break;
@@ -304,11 +304,11 @@ bool nextRunCmd(JobControlRecord *jcr)
          Dmsg1(800, "=== Auth cond errstat=%d\n", errstat);
       }
       Dmsg3(50, "Auth=%d canceled=%d errstat=%d\n", jcr->authenticated,
-            JobCanceled(jcr), errstat);
+            JobControlRecord::JobCanceled(jcr), errstat);
       V(mutex);
       Dmsg2(800, "Auth fail or cancel for jid=%d %p\n", jcr->JobId, jcr);
 
-      if (jcr->authenticated && !JobCanceled(jcr)) {
+      if (jcr->authenticated && !JobControlRecord::JobCanceled(jcr)) {
          Dmsg2(800, "Running jid=%d %p\n", jcr->JobId, jcr);
 
          /*

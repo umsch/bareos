@@ -522,7 +522,7 @@ void *process_director_commands(JobControlRecord *jcr, BareosSocket *dir)
             Dmsg1(100, "Executing %s command.\n", cmds[i].cmd);
             if (!cmds[i].func(jcr)) {         /* do command */
                quit = true;         /* error or fully terminated, get out */
-               Dmsg1(100, "Quit command loop. Canceled=%d\n", JobCanceled(jcr));
+               Dmsg1(100, "Quit command loop. Canceled=%d\n", JobControlRecord::JobCanceled(jcr));
             }
             break;
          }
@@ -1093,7 +1093,7 @@ static bool RunbeforenowCmd(JobControlRecord *jcr)
                jcr->director->allowed_script_dirs :
                me->allowed_script_dirs);
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       dir->fsend(FailedRunScript);
       Dmsg0(100, "Back from RunScripts ClientBeforeJob now: FAILED\n");
       return false;
@@ -2123,7 +2123,7 @@ static bool BackupCmd(JobControlRecord *jcr)
    } else {
       jcr->setJobStatus(JS_Terminated);
       /* Note, the above set status will not override an error */
-      if (!jcr->IsTerminatedOk()) {
+      if (!jcr->JobTerminatedSuccessfully()) {
          BnetSuppressErrorMessages(sd, 1);
          goto cleanup;                /* bail out now */
       }
@@ -2513,7 +2513,7 @@ bail_out:
       retval = false;                 /* we stop here */
    }
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       retval = false;                 /* we stop here */
    }
 
@@ -2646,7 +2646,7 @@ bool response(JobControlRecord *jcr, BareosSocket *sd, char *resp, const char *c
          return true;
       }
    }
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       return false;                   /* if canceled avoid useless error messages */
    }
    if (IsBnetError(sd)) {

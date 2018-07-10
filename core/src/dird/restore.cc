@@ -474,7 +474,7 @@ void NativeRestoreCleanup(JobControlRecord *jcr, int TermCode)
       jcr->unlink_bsr = false;
    }
 
-   if (JobCanceled(jcr)) {
+   if (JobControlRecord::JobCanceled(jcr)) {
       CancelStorageDaemonJob(jcr);
    }
 

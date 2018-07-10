@@ -31,6 +31,7 @@
 #include "include/bareos.h"
 #include "dird.h"
 #include "dird/backup.h"
+#include "dird/ua_cmdstruct.h"
 #include "dird/expand.h"
 #include "dird/fd_cmds.h"
 #include "dird/job.h"

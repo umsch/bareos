@@ -220,6 +220,40 @@ struct Resources {
    bool run_inc_pool_override;            /**< Incremental pool override was given on run cmdline */
    bool run_diff_pool_override;           /**< Differential pool override was given on run cmdline */
    bool run_next_pool_override;           /**< Next pool override was given on run cmdline */
+   Resources() {
+      job = nullptr;
+      verify_job = nullptr;
+      previous_job = nullptr;
+      rstore = nullptr;
+      wstore = nullptr;
+      pstore = nullptr;
+      client = nullptr;
+      pool = nullptr;
+      rpool = nullptr;
+      full_pool = nullptr;
+      vfull_pool = nullptr;
+      inc_pool = nullptr;
+      diff_pool = nullptr;
+      next_pool = nullptr;
+      fileset = nullptr;
+      catalog = nullptr;
+      messages = nullptr;
+      pool_source = nullptr;
+      npool_source = nullptr;
+      rpool_source = nullptr;
+      rstore_source = nullptr;
+      wstore_source = nullptr;
+      catalog_source = nullptr;
+      rstorage = nullptr;
+      wstorage = nullptr;
+      pstorage = nullptr;
+      run_pool_override = false;
+      run_full_pool_override = false;
+      run_vfull_pool_override = false;
+      run_inc_pool_override = false;
+      run_diff_pool_override = false;
+      run_next_pool_override = false;
+   }
 };
 #endif
 

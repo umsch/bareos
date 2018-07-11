@@ -401,7 +401,7 @@ JobControlRecord *new_jcr(int size, JCR_free_HANDLER *daemon_free_jcr)
 
    jcr = (JobControlRecord *)malloc(size);
    memset(jcr, 0, size);
-   jcr = new(jcr) JobControlRecord();
+   jcr = new(jcr) JobControlRecord(); /* placement new instead of memset */
 
    jcr->msg_queue = New (dlist(item, &item->link));
    if ((status = pthread_mutex_init(&jcr->msg_queue_mutex, NULL)) != 0) {
@@ -1339,3 +1339,172 @@ void DbgPrintJcr(FILE *fp)
       }
    }
 }
+
+JobControlRecord::JobControlRecord()
+   : mutex(PTHREAD_MUTEX_INITIALIZER)
+   , _use_count(0)
+   , JobType_(0)
+   , JobLevel_(0)
+   , Protocol_(0)
+   , my_thread_killable(false)
+   , my_thread_id(0)
+   , dir_bsock(nullptr)
+   , store_bsock(nullptr)
+   , file_bsock(nullptr)
+   , daemon_free_jcr(nullptr)
+   , msg_queue(nullptr)
+   , msg_queue_mutex(PTHREAD_MUTEX_INITIALIZER)
+   , dequeuing_msgs(false)
+   , VolumeName(nullptr)
+   , errmsg(nullptr)
+
+   , JobId(0)
+   , VolSessionId(0)
+   , VolSessionTime(0)
+   , JobFiles(0)
+   , JobErrors(0)
+   , JobWarnings(0)
+   , LastRate(0)
+   , JobBytes(0)
+   , LastJobBytes(0)
+   , ReadBytes(0)
+   , FileId(0)
+   , JobStatus(0)
+   , JobPriority(0)
+   , sched_time(0)
+   , initial_sched_time(0)
+   , start_time(0)
+   , run_time(0)
+   , last_time(0)
+   , end_time(0)
+   , wait_time_sum(0)
+   , wait_time(0)
+   , job_started_time(0)
+   , client_name(nullptr)
+   , JobIds(nullptr)
+   , RestoreBootstrap(nullptr)
+   , stime(nullptr)
+   , sd_auth_key(nullptr)
+   , jcr_msgs(nullptr)
+   , ClientId(0)
+   , where(nullptr)
+   , RegexWhere(nullptr)
+   , where_bregexp(nullptr)
+   , cached_pnl(0)
+   , cached_path(nullptr)
+   , passive_client(false)
+   , prefix_links(false)
+   , gui(false)
+   , authenticated(false)
+   , cached_attribute(false)
+   , batch_started(false)
+   , cmd_plugin(false)
+   , opt_plugin(false)
+   , keep_path_list(false)
+   , accurate(false)
+   , HasBase(false)
+   , rerunning(false)
+   , job_started(false)
+   , suppress_output(false)
+   , cjcr(0)
+
+   , buf_size(0)
+#ifdef HAVE_WIN32
+   , cp_thread(nullptr)
+#endif
+   , attr(nullptr)
+   , db(nullptr)
+   , db_batch(nullptr)
+   , nb_base_files(0)
+   , nb_base_files_used(0)
+
+   , ar(nullptr)
+   , id_list(nullptr)
+
+   , plugin_ctx_list(nullptr)
+   , plugin_ctx(nullptr)
+   , plugin_sp(nullptr)
+   , comment(nullptr)
+   , max_bandwidth(0)
+   , path_list(nullptr)
+
+#ifdef DIRECTOR_DAEMON
+   , SD_msg_chan(0)
+   , SD_msg_chan_started(false)
+   , start_wait(PTHREAD_COND_INITIALIZER)
+   , term_wait(PTHREAD_COND_INITIALIZER)
+   , nextrun_ready(PTHREAD_COND_INITIALIZER)
+   , work_item(nullptr)
+   , ua(nullptr)
+   , restore_tree_root(nullptr)
+   , bsr(nullptr)
+   , backup_format(nullptr)
+   , plugin_options(nullptr)
+   , SDJobFiles(0)
+   , SDJobBytes(0)
+   , SDErrors(0)
+   , SDJobStatus(0)
+   , FDJobStatus(0)
+   , DumpLevel(0)
+   , ExpectedFiles(0)
+   , MediaId(0)
+   , FileIndex(0)
+   , MaxRunSchedTime(0)
+   , mig_jcr(nullptr)
+
+
+   , fname(nullptr)
+   , client_uname(nullptr)
+   , FDSecureEraseCmd(nullptr)
+   , SDSecureEraseCmd(nullptr)
+   , vf_jobids(nullptr)
+   , replace(0)
+   , NumVols(0)
+   , reschedule_count(0)
+   , FDVersion(0)
+   , spool_size(0)
+   , sd_msg_thread_done(false)
+   , IgnoreDuplicateJobChecking(false)
+   , IgnoreLevelPoolOverides(false)
+   , IgnoreClientConcurrency(false)
+   , IgnoreStorageConcurrency(false)
+   , spool_data(false)
+   , acquired_resource_locks(false)
+   , start_wait_inited(false)
+   , term_wait_inited(false)
+   , nextrun_ready_inited(false)
+   , fn_printed(false)
+   , needs_sd(false)
+   , cloned(false)
+   , unlink_bsr(false)
+   , VSS(false)
+   , Encrypt(false)
+   , stats_enabled(false)
+   , no_maxtime(false)
+   , keep_sd_auth_key(false)
+   , use_accurate_chksum(false)
+   , sd_canceled(false)
+   , remote_replicate(false)
+   , RescheduleIncompleteJobs(false)
+   , HasQuota(false)
+   , HasSelectedJobs(false)
+#endif /* DIRECTOR_DAEMON */
+{
+      Dmsg0(100, "Contruct JobControlRecord\n");
+      job_end_callbacks.init();
+      Job[0] = 0;
+#ifdef DIRECTOR_DAEMON
+      FSCreateTime[0] = 0;
+      since[0] = 0;
+      PrevJob[0] = 0;
+      RestoreJobId = 0;
+      MigrateJobId = 0;
+      VerifyJobId = 0;
+#endif
+};
+
+JobControlRecord::~JobControlRecord()
+{
+      Dmsg0(100, "Destruct JobControlRecord\n");
+}
+

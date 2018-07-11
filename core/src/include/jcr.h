@@ -311,13 +311,8 @@ private:
    int32_t Protocol_;                     /**< Backup Protocol */
    bool my_thread_killable;               /**< Can we kill the thread? */
 public:
-      JobControlRecord() {
-            Dmsg0(100, "Contruct JobControlRecord\n");
-      }
-
-      ~JobControlRecord() {
-            Dmsg0(100, "Destruct JobControlRecord\n");
-      }
+   JobControlRecord();
+   ~JobControlRecord();
 
    void lock() {P(mutex); }
    void unlock() {V(mutex); }

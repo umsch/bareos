@@ -52,6 +52,10 @@
 struct dlink {
    void *next;
    void *prev;
+   dlink() {
+      next = 0;
+      prev = 0;
+   }
 };
 
 class DLL_IMP_EXP dlist : public SmartAlloc {

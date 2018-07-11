@@ -262,7 +262,7 @@ struct CompressionContext {
    POOLMEM *inflate_buffer;               /**< Buffer used for inflation (decompression) */
    uint32_t deflate_buffer_size;          /**< Length of deflation buffer */
    uint32_t inflate_buffer_size;          /**< Length of inflation buffer */
-   struct {
+   struct workset_s {
 #ifdef HAVE_LIBZ
       void *pZLIB;                        /**< ZLIB compression session data */
 #endif
@@ -272,7 +272,24 @@ struct CompressionContext {
 #ifdef HAVE_FASTLZ
       void *pZFAST;                       /**< FASTLZ compression session data */
 #endif
+      workset_s() {
+#ifdef HAVE_LIBZ
+      pZLIB = nullptr;                        /**< ZLIB compression session data */
+#endif
+#ifdef HAVE_LZO
+      pLZO = nullptr;                         /**< LZO compression session data */
+#endif
+#ifdef HAVE_FASTLZ
+      pZFAST = nullptr;                       /**< FASTLZ compression session data */
+#endif
+      }
    } workset;
+   CompressionContext() {
+      deflate_buffer = nullptr;
+      inflate_buffer = nullptr;
+      deflate_buffer_size = 0;
+      inflate_buffer_size = 0;
+   }
 };
 
 struct job_callback_item {

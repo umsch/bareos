@@ -136,6 +136,51 @@ struct JobDbRecord {
    int offset;                        /**< offset records to display */
    faddr_t rec_addr;
    uint32_t FileIndex;                /**< added during Verify */
+
+   JobDbRecord() {
+      JobId = -1;
+      Job[0] = 0;
+      Name[0] = 0;
+      JobType = 0;
+      JobLevel = 0;
+      JobStatus= 0;
+      ClientId = 0;
+      PoolId = 0;
+      FileSetId = 0;
+      PriorJobId = 0;
+      SchedTime = 0;
+      StartTime = 0;
+      EndTime = 0;
+      RealEndTime = 0;
+      JobTDate = 0;
+      VolSessionId = 0;
+      VolSessionTime = 0;
+      JobFiles = 0;
+      JobErrors = 0;
+      JobMissingFiles = 0;
+      JobBytes = 0;
+      ReadBytes = 0;
+      JobSumTotalBytes = 0;
+      PurgedFiles = 0;
+      HasBase = 0;
+
+      FirstIndex = 0;
+      LastIndex = 0;
+      StartFile = 0;
+      EndFile = 0;
+      StartBlock = 0;
+      EndBlock = 0;
+
+      cSchedTime[0] = 0;
+      cStartTime[0] = 0;
+      cEndTime[0] = 0;
+      cRealEndTime[0] = 0;
+
+      limit = 0;
+      offset = 0;
+      rec_addr = 0;
+      FileIndex = 0;
+   }
 };
 
 /* Job Media information used to create the media records

@@ -1489,6 +1489,7 @@ JobControlRecord::JobControlRecord()
    , HasQuota(false)
    , HasSelectedJobs(false)
 #endif /* DIRECTOR_DAEMON */
+
 #ifdef FILE_DAEMON
    , num_files_examined(0)
    , last_fname(nullptr)
@@ -1521,8 +1522,67 @@ JobControlRecord::JobControlRecord()
    , VSSClient *pVSSClient(nullptr)
 #endif /* HAVE_WIN32 */
 #endif /* FILE_DAEMON */
+
+#ifdef STORAGE_DAEMON
+   , next_dev(nullptr)
+   , prev_dev(nullptr)
+   , dir_auth_key(nullptr)
+   , job_start_wait(PTHREAD_COND_INITIALIZER)
+   , job_end_wait(PTHREAD_COND_INITIALIZER)
+   , type(0)
+   , read_dcr(nullptr)
+   , dcr(nullptr)
+   , dcrs(nullptr)
+   , job_name(nullptr)
+   , fileset_name(nullptr)
+   , fileset_md5(nullptr)
+   , backup_format(nullptr)
+   , VolList(nullptr)
+   , NumWriteVolumes(0)
+   , NumReadVolumes(0)
+   , CurReadVolume(0)
+   , label_errors(0)
+   , session_opened(false)
+   , remote_replicate(false)
+   , Ticket(0)
+   , ignore_label_errors(false)
+   , spool_attributes(false)
+   , no_attributes(false)
+   , spool_size(0)
+   , spool_data(false)
+   , CurVol(0)
+   , director(nullptr)
+   , plugin_options(nullptr)
+   , write_store(nullptr)
+   , read_store(nullptr)
+   , reserve_msgs(nullptr)
+   , acquired_storage(false)
+   , PreferMountedVols(false)
+   , Resched(false)
+   , insert_jobmedia_records(false)
+   , RemainingQuota(0)
+
+   , rctx(nullptr)
+   , bsr(nullptr)
+   , mount_next_volume(false)
+   , read_VolSessionId(0)
+   , read_VolSessionTime(0)
+   , read_StartFile(0)
+   , read_EndFile(0)
+   , read_StartBlock(0)
+   , read_EndBlock(0)
+
+   , min_wait(0)
+   , max_wait(0)
+   , max_num_wait(0)
+   , wait_sec(0)
+   , rem_wait_sec(0)
+   , num_wait(0)
+#endif /* STORAGE_DAEMON */
+
 {
       Dmsg0(100, "Contruct JobControlRecord\n");
+
       job_end_callbacks.init();
       Job[0] = 0;
 #ifdef DIRECTOR_DAEMON

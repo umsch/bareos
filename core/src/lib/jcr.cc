@@ -1489,6 +1489,38 @@ JobControlRecord::JobControlRecord()
    , HasQuota(false)
    , HasSelectedJobs(false)
 #endif /* DIRECTOR_DAEMON */
+#ifdef FILE_DAEMON
+   , num_files_examined(0)
+   , last_fname(nullptr)
+   , job_metadata(nullptr)
+   , acl_data(nullptr)
+   , xattr_data(nullptr)
+   , last_type(0);
+   , incremental(false)
+   , mtime(0)
+   , listing(0)
+   , Ticket(0)
+   , big_buf(nullptr)
+   , replace(0)
+   , ff(nullptr)
+   , ExpectedFiles(0)
+   , StartFile(0)
+   , EndFile(0)
+   , StartBlock(0)
+   , EndBlock(0)
+   , heartbeat_id(0)
+   , hb_started(false)
+   , RunScripts(nullptr)
+   , director(nullptr)
+   , enable_vss(false)
+   , got_metadata(false)
+   , multi_restore(false)
+   , file_list(nullptr)
+   , base_size(0)
+#ifdef HAVE_WIN32
+   , VSSClient *pVSSClient(nullptr)
+#endif /* HAVE_WIN32 */
+#endif /* FILE_DAEMON */
 {
       Dmsg0(100, "Contruct JobControlRecord\n");
       job_end_callbacks.init();
@@ -1500,6 +1532,9 @@ JobControlRecord::JobControlRecord()
       RestoreJobId = 0;
       MigrateJobId = 0;
       VerifyJobId = 0;
+#endif
+#ifdef FILE_DAEMON
+      PrevJob[0] = 0;
 #endif
 };
 

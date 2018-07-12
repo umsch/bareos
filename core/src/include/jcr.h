@@ -183,6 +183,18 @@ struct CryptoContext {
    POOLMEM *crypto_buf;                   /**< Encryption/Decryption buffer */
    POOLMEM *pki_session_encoded;          /**< Cached DER-encoded copy of pki_session */
    int32_t pki_session_encoded_size;      /**< Size of DER-encoded pki_session */
+   CryptoContext() {
+      pki_sign = false;
+      pki_encrypt = false;
+      digest = nullptr;
+      pki_keypair;
+      pki_signers = nullptr;
+      pki_recipients = nullptr;
+      pki_session = nullptr;
+      crypto_buf = nullptr;
+      pki_session_encoded = nullptr;
+      pki_session_encoded_size = 0;
+   }
 };
 #endif
 

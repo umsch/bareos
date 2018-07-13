@@ -46,13 +46,9 @@
 #define isatty(fd) (fd==0)
 #endif
 
-/* Exported variables */
-ConsoleResource *me = NULL;                    /* Our Global resource */
-ConfigurationParser *my_config = nullptr;             /* Our Global config */
+static ConsoleResource *console_resource = NULL;
+ConfigurationParser *my_config = nullptr;
 
-//extern int rl_catch_signals;
-
-/* Forward referenced functions */
 static void TerminateConsole(int sig);
 static int CheckResources();
 int GetCmd(FILE *input, const char *prompt, BareosSocket *sock, int sec);
@@ -63,13 +59,11 @@ extern "C" void GotSigcontinue(int sig);
 extern "C" void GotSigtout(int sig);
 extern "C" void GotSigtin(int sig);
 
-/* Static variables */
 static char *configfile = NULL;
 static BareosSocket *UA_sock = NULL;
 static DirectorResource *dir = NULL;
 static ConsoleResource *cons = NULL;
 static bool stop = false;
-static bool no_conio = false;
 static int timeout = 0;
 static int argc;
 static int numdir;
@@ -108,7 +102,6 @@ PROG_COPYRIGHT
 "        -c <path>   specify configuration file or directory\n"
 "        -d <nn>     set debug level to <nn>\n"
 "        -dt         print timestamp in debug output\n"
-"        -n          no conio\n"
 "        -s          no signals\n"
 "        -u <nn>     set command execution timeout to <nn> seconds\n"
 "        -t          test - read configuration and exit\n"
@@ -149,7 +142,7 @@ static int ZedKeyscmd(FILE *input, BareosSocket *UA_sock)
 }
 
 /**
- * These are the @command
+ * These are the @commands that run only in bconsole
  */
 struct cmdstruct {
    const char *key;
@@ -306,7 +299,8 @@ static void ReadAndProcessInput(FILE *input, BareosSocket *UA_sock)
          }
 
          /*
-          * Suppress output if running in background or user hit ctl-c
+          * Suppress output if running
+          * in background or user hit ctl-c
           */
          if (!stop && !usrbrk()) {
             if (UA_sock->msg) {
@@ -336,35 +330,6 @@ static void ReadAndProcessInput(FILE *input, BareosSocket *UA_sock)
    }
 }
 
-/**
- * Call-back for reading a passphrase for an encrypted PEM file
- * This function uses getpass(),
- *  which uses a static buffer and is NOT thread-safe.
- */
-static int TlsPemCallback(char *buf, int size, const void *userdata)
-{
-#ifdef HAVE_TLS
-   const char *prompt = (const char *)userdata;
-#if defined(HAVE_WIN32)
-   ConsoleOutput(prompt);
-   if (win32_cgets(buf, size) == NULL) {
-      buf[0] = 0;
-      return 0;
-   } else {
-      return strlen(buf);
-   }
-#else
-   char *passwd;
-
-   passwd = getpass(prompt);
-   bstrncpy(buf, passwd, size);
-   return strlen(buf);
-#endif
-#else
-   buf[0] = 0;
-   return 0;
-#endif
-}
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -408,26 +373,17 @@ static char *get_previous_keyword(int current_point, int nb)
          }
       }
 
-      /*
-       * Find the end of the command
-       */
       for (; i >= 0; i--) {
          if (rl_line_buffer[i] != ' ') {
-            end = i;
+            end = i; /* end of command */
             break;
          }
       }
 
-      /*
-       * No end of string
-       */
       if (end == -1) {
-         return NULL;
+         return NULL; /* no end found */
       }
 
-      /*
-       * Look for the start of the command
-       */
       for (start = end; start > 0; start--) {
          if (rl_line_buffer[start] == '"') {
             inquotes = !inquotes;
@@ -435,7 +391,7 @@ static char *get_previous_keyword(int current_point, int nb)
          if ((rl_line_buffer[start - 1] == ' ') && inquotes == 0) {
             break;
          }
-         current_point = start;
+         current_point = start; /* start of command */
       }
    }
 
@@ -448,11 +404,8 @@ static char *get_previous_keyword(int current_point, int nb)
    return s;
 }
 
-/**
- * Simple structure that will contain the completion list
- */
 struct ItemList {
-   alist list;
+   alist list; /* holds the completion list */
 };
 
 static ItemList *items = NULL;
@@ -489,9 +442,7 @@ static void match_kw(regex_t *preg, const char *what, int len, POOLMEM *&buf)
 
       items->list.append(bstrdup(buf));
 
-      /*
-       * We search for the next keyword in the line
-       */
+      /* search for next keyword */
       match_kw(preg, what + pmatch[1].rm_eo, len - pmatch[1].rm_eo, buf);
    }
 }
@@ -520,7 +471,7 @@ void GetArguments(const char *what)
 }
 
 /* retreive a simple list (.pool, .client) and store it into items */
-void GetItems(const char *what)
+static void GetItems(const char *what)
 {
    init_items();
 
@@ -537,20 +488,12 @@ typedef enum
    ITEM_HELP       /* use help item=xxx and detect all arguments */
 } cpl_item_t;
 
-/* Generator function for command completion.  STATE lets us know whether
- * to start from scratch; without any state (i.e. STATE == 0), then we
- * start at the top of the list.
- */
 static char *item_generator(const char *text, int state,
                             const char *item, cpl_item_t type)
 {
   static int list_index, len;
   char *name;
 
-  /* If this is a new word to complete, initialize now.  This includes
-   * saving the length of TEXT for efficiency, and initializing the index
-   *  variable to 0.
-   */
   if (!state)
   {
      list_index = 0;
@@ -565,7 +508,6 @@ static char *item_generator(const char *text, int state,
      }
   }
 
-  /* Return the next name which partially matches from the command list. */
   while (items && list_index < items->list.size())
   {
      name = (char *)items->list[list_index];
@@ -578,13 +520,10 @@ static char *item_generator(const char *text, int state,
      }
   }
 
-  /* If no names matched, then return NULL. */
+  /* no match */
   return ((char *)NULL);
 }
 
-/* global variables for the type and the item to search
- * the readline API doesn't permit to pass user data.
- */
 static const char *cpl_item;
 static cpl_item_t cpl_type;
 
@@ -593,7 +532,7 @@ static char *cpl_generator(const char *text, int state)
    return item_generator(text, state, cpl_item, cpl_type);
 }
 
-/* this function is used to not use the default filename completion */
+/* do not use the default filename completion */
 static char *dummy_completion_function(const char *text, int state)
 {
    return NULL;
@@ -670,15 +609,15 @@ static char **readline_completion(const char *text, int start, int end)
          }
       }
 
-      if (!found) {             /* we try to get help with the first command */
+      if (!found) { /* try to get help with the first command */
          cpl_item = cmd;
          cpl_type = ITEM_HELP;
-         /* we don't want to append " " at the end */
+         /* do not append space at the end */
          rl_completion_suppress_append = true;
          matches = rl_completion_matches(text, cpl_generator);
       }
       free(s);
-   } else {                     /* nothing on the line, display all commands */
+   } else { /* nothing on the line, display all commands */
       cpl_item = ".help all";
       cpl_type = ITEM_ARG;
       matches = rl_completion_matches(text, cpl_generator);
@@ -716,12 +655,10 @@ int GetCmd(FILE *input, const char *prompt, BareosSocket *sock, int sec)
 
    do_history = 0;
    rl_catch_signals = 0;              /* do it ourselves */
-   /* Here, readline does ***real*** malloc
-    * so, be we have to use the real free
-    */
+
    line = readline((char *)prompt);   /* cast needed for old readlines */
    if (!line) {
-      return -1;                      /* error return and exit */
+      return -1;
    }
    StripTrailingJunk(line);
    command = line;
@@ -761,30 +698,22 @@ static int ConsoleUpdateHistory(const char *histfile)
 {
    int ret = 0;
 
-#ifdef HAVE_READLINE
    int max_history_length,
        truncate_entries;
 
-   /*
-    * Calculate how much we should keep in the current history file.
-    */
-   max_history_length = (me) ? me->history_length : 100;
+   max_history_length = (console_resource)
+                       ? console_resource->history_length
+                       : 100;
    truncate_entries = max_history_length - history_length;
    if (truncate_entries < 0) {
       truncate_entries = 0;
    }
 
-   /*
-    * First, try to truncate the history file, and if it
-    * fails, the file is probably not present, and we
-    * can use write_history to create it.
-    */
    if (history_truncate_file(histfile, truncate_entries) == 0) {
       ret = append_history(history_length, histfile);
    } else {
       ret = write_history(histfile);
    }
-#endif
 
    return ret;
 }
@@ -793,30 +722,21 @@ static int ConsoleInitHistory(const char *histfile)
 {
    int ret = 0;
 
-#ifdef HAVE_READLINE
    int max_history_length;
 
    using_history();
 
-   /*
-    * First truncate the history size to an reasonable size.
-    */
-   max_history_length = (me) ? me->history_length : 100;
+   max_history_length = (console_resource)
+                       ? console_resource->history_length
+                       : 100;
    history_truncate_file(histfile, max_history_length);
 
-   /*
-    * Read the content of the history file into memory.
-    */
    ret = read_history(histfile);
 
-   /*
-    * Tell the completer that we want a complete.
-    */
    rl_completion_entry_function = dummy_completion_function;
    rl_attempted_completion_function = readline_completion;
    rl_filename_completion_desired = 0;
    stifle_history(max_history_length);
-#endif
 
    return ret;
 }
@@ -843,11 +763,11 @@ static bool SelectDirector(const char *director, DirectorResource **ret_dir, Con
    }
    UnlockRes();
 
-   if (numdir == 1) {           /* No choose */
+   if (numdir == 1) { /* No choose */
       dir = (DirectorResource *)GetNextRes(R_DIRECTOR, NULL);
    }
 
-   if (director) {    /* Command line choice overwrite the no choose option */
+   if (director) { /* Command line choice overwrite the no choose option */
       LockRes();
       foreach_res(dir, R_DIRECTOR) {
          if (bstrcmp(dir->name(), director)) {
@@ -855,13 +775,13 @@ static bool SelectDirector(const char *director, DirectorResource **ret_dir, Con
          }
       }
       UnlockRes();
-      if (!dir) {               /* Can't find Director used as argument */
+      if (!dir) { /* Can't find Director used as argument */
          ConsoleOutputFormat(_("Can't find %s in Director list\n"), director);
          return 0;
       }
    }
 
-   if (!dir) {                  /* prompt for director */
+   if (!dir) { /* prompt for director */
       UA_sock = New(BareosSocketTCP);
 try_again:
       ConsoleOutput(_("Available Directors:\n"));
@@ -874,7 +794,7 @@ try_again:
       if (GetCmd(stdin, _("Select Director by entering a number: "),
                   UA_sock, 600) < 0)
       {
-         WSACleanup();               /* Cleanup Windows sockets */
+         WSACleanup(); /* Cleanup Windows sockets */
          return 0;
       }
       if (!Is_a_number(UA_sock->msg)) {
@@ -934,52 +854,6 @@ try_again:
    return 1;
 }
 
-/**
- * Callback calling director console connection
-*/
-static int dir_psk_client_callback(char *identity,
-                                   unsigned int max_identity_len,
-                                   unsigned char *psk,
-                                   unsigned int max_psk_len) {
-
-   Dmsg0(100, "dir_psk_client_callback");
-
-   int result = 0;
-
-   if (NULL != dir && NULL != dir->password.value) {
-      if (p_encoding_clear == dir->password.encoding) {
-         /* plain password */
-      } else if (p_encoding_md5 == dir->password.encoding) {
-         /* md5 string */
-         /* convert the PSK key to binary */
-         result = hex2bin(dir->password.value, psk, max_psk_len);
-      } else {
-         /* hex password encoding? */
-      }
-   } else {
-      Dmsg0(100, "Passowrd not set in Director Config\n");
-      result = 0;
-   }
-
-   if (result == 0 || result > (int)max_psk_len) {
-      Dmsg1(100, "Error, Could not convert PSK key '%s' to binary key\n", dir->password.value);
-      result = 0;
-   } else {
-      static char *psk_identity = (char *)"Nasenbaer";
-
-      int ret = Bsnprintf(identity, max_identity_len, "%s", psk_identity);
-      if (ret < 0 || (unsigned int)ret > max_identity_len) {
-         Dmsg0(100, "Error, psk_identify too long\n");
-         result = 0;
-      }
-   }
-
-   return result;
-}
-
-/*
- * Main Bareos Console -- User Interface Program
- */
 int main(int argc, char *argv[])
 {
    int ch;
@@ -1039,10 +913,6 @@ int main(int argc, char *argv[])
                debug_level = 1;
             }
          }
-         break;
-
-      case 'n':                    /* no conio */
-         no_conio = true;
          break;
 
       case 's':                    /* turn off signals */
@@ -1122,9 +992,7 @@ int main(int argc, char *argv[])
       Emsg1(M_ERROR_TERM, 0, _("Please correct configuration file: %s\n"), my_config->get_base_config_path().c_str());
    }
 
-   if (!no_conio) {
-      ConInit(stdin);
-   }
+   ConInit(stdin);
 
    if (list_directors) {
       LockRes();
@@ -1141,9 +1009,9 @@ int main(int argc, char *argv[])
 
    memset(&jcr, 0, sizeof(jcr));
 
-   (void)WSA_Init();                        /* Initialize Windows sockets */
+   (void)WSA_Init(); /* Initialize Windows sockets */
 
-   StartWatchdog();                        /* Start socket watchdog */
+   StartWatchdog(); /* Start socket watchdog */
 
    if (!SelectDirector(director, &dir, &cons)) {
       return 1;
@@ -1160,21 +1028,19 @@ int main(int argc, char *argv[])
    }
 
    UA_sock = New(BareosSocketTCP);
-   if (!UA_sock->connect(NULL, 5, 15, heart_beat, "Director daemon", dir->address, NULL, dir->DIRport, false)) {
+   if (!UA_sock->connect(NULL, 5, 15, heart_beat,
+         "Director daemon", dir->address, NULL, dir->DIRport, false)) {
       delete UA_sock;
       TerminateConsole(0);
       return 1;
    }
    jcr.dir_bsock = UA_sock;
 
-   /*
-    * If cons == NULL, default console will be used
-    */
    if (cons) {
       name = cons->name();
       ASSERT(cons->password.encoding == p_encoding_md5);
       password = &cons->password;
-   } else {
+   } else { /* default console */
       name = "*UserAgent*";
       ASSERT(dir->password.encoding == p_encoding_md5);
       password = &dir->password;
@@ -1200,14 +1066,8 @@ int main(int argc, char *argv[])
    ConsoleOutput(_("\nEnter a period to cancel a command.\n"));
 
 #if defined(HAVE_WIN32)
-   /*
-    * Read/Update history file if USERPROFILE exists
-    */
    char *env = getenv("USERPROFILE");
 #else
-   /*
-    * Read/Update history file if HOME exists
-    */
    char *env = getenv("HOME");
 #endif
 
@@ -1226,11 +1086,8 @@ int main(int argc, char *argv[])
       }
    }
 
-   /*
-    * See if there is an explicit setting of a history file to use.
-    */
-   if (me && me->history_file) {
-      PmStrcpy(history_file, me->history_file);
+   if (console_resource && console_resource->history_file) {
+      PmStrcpy(history_file, console_resource->history_file);
       ConsoleInitHistory(history_file.c_str());
    } else {
       if (env) {
@@ -1257,13 +1114,11 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-/* Cleanup and then exit */
 static void TerminateConsole(int sig)
 {
-
    static bool already_here = false;
 
-   if (already_here) {                /* avoid recursive temination problems */
+   if (already_here) { /* avoid recursive temination problems */
       exit(1);
    }
    already_here = true;
@@ -1272,10 +1127,8 @@ static void TerminateConsole(int sig)
    my_config = NULL;
    CleanupCrypto();
    FreePoolMemory(args);
-   if (!no_conio) {
-      ConTerm();
-   }
-   WSACleanup();               /* Cleanup Windows sockets */
+   ConTerm();
+   WSACleanup(); /* Cleanup Windows sockets */
    LmgrCleanupMain();
 
    if (sig != 0) {
@@ -1284,9 +1137,6 @@ static void TerminateConsole(int sig)
    return;
 }
 
-/**
- * Make a quick check to see that we have all the resources needed.
- */
 static int CheckResources()
 {
    bool OK = true;
@@ -1306,7 +1156,7 @@ static int CheckResources()
       OK = false;
    }
 
-   me = (ConsoleResource *)GetNextRes(R_CONSOLE, NULL);
+   console_resource = (ConsoleResource *)GetNextRes(R_CONSOLE, NULL);
 
    UnlockRes();
 

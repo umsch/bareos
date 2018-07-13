@@ -19,7 +19,7 @@
 
 include_directories(. .. ../include )
 
-SET (BCONSSRCS console.cc console_conf.cc)
+SET (BCONSSRCS auth_pam.cc console.cc console_conf.cc console_output.cc)
 IF(HAVE_WIN32)
    LIST(APPEND BCONSSRCS ../win32/console/consoleres.rc)
 ENDIF()

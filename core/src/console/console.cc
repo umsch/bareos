@@ -28,23 +28,19 @@
  * Bareos Console interface to the Director
  */
 
-#include <security/pam_appl.h>
-
 #include "include/bareos.h"
 #include "console_conf.h"
+#include "console_output.h"
+#include "auth_pam.h"
 #include "jcr.h"
 #include "lib/bnet.h"
 
-#ifdef HAVE_CONIO
-#include "conio.h"
-#else
 #define ConInit(x)
 #define ConTerm()
 #define ConSetZedKeys();
 #define trapctlc()
 #define clrbrk()
 #define usrbrk() 0
-#endif
 
 #if defined(HAVE_WIN32)
 #define isatty(fd) (fd==0)
@@ -61,8 +57,6 @@ static void TerminateConsole(int sig);
 static int CheckResources();
 int GetCmd(FILE *input, const char *prompt, BareosSocket *sock, int sec);
 static int DoOutputcmd(FILE *input, BareosSocket *UA_sock);
-void senditf(const char *fmt, ...);
-void sendit(const char *buf);
 
 extern "C" void GotSigstop(int sig);
 extern "C" void GotSigcontinue(int sig);
@@ -74,8 +68,6 @@ static char *configfile = NULL;
 static BareosSocket *UA_sock = NULL;
 static DirectorResource *dir = NULL;
 static ConsoleResource *cons = NULL;
-static FILE *output = stdout;
-static bool teeout = false;               /* output to output and stdout */
 static bool stop = false;
 static bool no_conio = false;
 static int timeout = 0;
@@ -97,15 +89,12 @@ static int EchoCmd(FILE *input, BareosSocket *UA_sock);
 static int TimeCmd(FILE *input, BareosSocket *UA_sock);
 static int SleepCmd(FILE *input, BareosSocket *UA_sock);
 static int ExecCmd(FILE *input, BareosSocket *UA_sock);
-#ifdef HAVE_READLINE
 static int EolCmd(FILE *input, BareosSocket *UA_sock);
 
 #ifndef HAVE_REGEX_H
 #include "lib/bregex.h"
 #else
 #include <regex.h>
-#endif
-
 #endif
 
 static void usage()
@@ -180,9 +169,7 @@ static struct cmdstruct commands[] = {
    { N_("exit"), QuitCmd, _("exit = quit")},
    { N_("zed_keys"), ZedKeyscmd, _("zed_keys = use zed keys instead of bash keys")},
    { N_("help"), HelpCmd, _("help listing")},
-#ifdef HAVE_READLINE
    { N_("separator"), EolCmd, _("set command separator")},
-#endif
 };
 #define comsize ((int)(sizeof(commands)/sizeof(struct cmdstruct)))
 
@@ -217,7 +204,7 @@ static int Do_a_command(FILE *input, BareosSocket *UA_sock)
    if (!found) {
       PmStrcat(UA_sock->msg, _(": is an invalid command\n"));
       UA_sock->message_length = strlen(UA_sock->msg);
-      sendit(UA_sock->msg);
+      ConsoleOutput(UA_sock->msg);
    }
    return status;
 }
@@ -256,7 +243,7 @@ static void ReadAndProcessInput(FILE *input, BareosSocket *UA_sock)
          if (fgets(UA_sock->msg, len, input) == NULL) {
             status = -1;
          } else {
-            sendit(UA_sock->msg);     /* echo to terminal */
+            ConsoleOutput(UA_sock->msg);     /* echo to terminal */
             StripTrailingJunk(UA_sock->msg);
             UA_sock->message_length = strlen(UA_sock->msg);
             status = 1;
@@ -313,7 +300,7 @@ static void ReadAndProcessInput(FILE *input, BareosSocket *UA_sock)
 
          if (at_prompt) {
             if (!stop) {
-               sendit("\n");
+               ConsoleOutput("\n");
             }
             at_prompt = false;
          }
@@ -323,7 +310,7 @@ static void ReadAndProcessInput(FILE *input, BareosSocket *UA_sock)
           */
          if (!stop && !usrbrk()) {
             if (UA_sock->msg) {
-               sendit(UA_sock->msg);
+               ConsoleOutput(UA_sock->msg);
             }
          }
       }
@@ -359,7 +346,7 @@ static int TlsPemCallback(char *buf, int size, const void *userdata)
 #ifdef HAVE_TLS
    const char *prompt = (const char *)userdata;
 #if defined(HAVE_WIN32)
-   sendit(prompt);
+   ConsoleOutput(prompt);
    if (win32_cgets(buf, size) == NULL) {
       buf[0] = 0;
       return 0;
@@ -379,10 +366,8 @@ static int TlsPemCallback(char *buf, int size, const void *userdata)
 #endif
 }
 
-#ifdef HAVE_READLINE
-#define READLINE_LIBRARY 1
-#include "readline/readline.h"
-#include "readline/history.h"
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "lib/edit.h"
 #include "lib/tls_openssl.h"
 #include "lib/bsignal.h"
@@ -497,13 +482,6 @@ static void match_kw(regex_t *preg, const char *what, int len, POOLMEM *&buf)
    }
    rc = regexec(preg, what, nmatch, pmatch, 0);
    if (rc == 0) {
-#if 0
-      Pmsg1(0, "\n\n%s\n0123456789012345678901234567890123456789\n        10         20         30\n", what);
-      Pmsg2(0, "%i-%i\n", pmatch[0].rm_so, pmatch[0].rm_eo);
-      Pmsg2(0, "%i-%i\n", pmatch[1].rm_so, pmatch[1].rm_eo);
-      Pmsg2(0, "%i-%i\n", pmatch[2].rm_so, pmatch[2].rm_eo);
-      Pmsg2(0, "%i-%i\n", pmatch[3].rm_so, pmatch[3].rm_eo);
-#endif
       size = pmatch[1].rm_eo - pmatch[1].rm_so;
       buf = CheckPoolMemorySize(buf, size + 1);
       memcpy(buf, what + pmatch[1].rm_so, size);
@@ -719,7 +697,7 @@ static int EolCmd(FILE *input, BareosSocket *UA_sock)
    } else if (argc == 1) {
       eol = '\0';
    } else {
-      sendit(_("Illegal separator character.\n"));
+      ConsoleOutput(_("Illegal separator character.\n"));
    }
    return 1;
 }
@@ -761,7 +739,7 @@ int GetCmd(FILE *input, const char *prompt, BareosSocket *sock, int sec)
       }
    }
    if (command != line && isatty(fileno(input))) {
-      senditf("%s%s\n", prompt, command);
+      ConsoleOutputFormat("%s%s\n", prompt, command);
    }
 
    sock->message_length = PmStrcpy(sock->msg, command);
@@ -778,122 +756,6 @@ int GetCmd(FILE *input, const char *prompt, BareosSocket *sock, int sec)
    }
    return 1;                    /* OK */
 }
-
-#else /* no readline, do it ourselves */
-
-#ifdef HAVE_CONIO
-static bool bisatty(int fd)
-{
-   if (no_conio) {
-      return false;
-   }
-   return isatty(fd);
-}
-#endif
-
-#ifdef HAVE_WIN32 /* use special console for input on win32 */
-/**
- * Get next input command from terminal.
- *
- *   Returns: 1 if got input
- *           -1 if EOF or error
- */
-int GetCmd(FILE *input, const char *prompt, BareosSocket *sock, int sec)
-{
-   int len;
-
-   if (!stop) {
-      if (output == stdout || teeout) {
-         sendit(prompt);
-      }
-   }
-
-again:
-   len = SizeofPoolMemory(sock->msg) - 1;
-   if (stop) {
-      sleep(1);
-      goto again;
-   }
-
-#ifdef HAVE_CONIO
-   if (bisatty(fileno(input))) {
-      InputLine(sock->msg, len);
-      goto ok_out;
-   }
-#endif
-
-   if (input == stdin) {
-      if (win32_cgets(sock->msg, len) == NULL) {
-         return -1;
-      }
-   } else {
-      if (fgets(sock->msg, len, input) == NULL) {
-         return -1;
-      }
-   }
-
-   if (usrbrk()) {
-      clrbrk();
-   }
-
-   StripTrailingJunk(sock->msg);
-   sock->message_length = strlen(sock->msg);
-
-   return 1;
-}
-#else
-/**
- * Get next input command from terminal.
- *
- *   Returns: 1 if got input
- *            0 if timeout
- *           -1 if EOF or error
- */
-int GetCmd(FILE *input, const char *prompt, BareosSocket *sock, int sec)
-{
-   int len;
-
-   if (!stop) {
-      if (output == stdout || teeout) {
-         sendit(prompt);
-      }
-   }
-
-again:
-   switch (WaitForReadableFd(fileno(input), sec, true)) {
-   case 0:
-      return 0;                    /* timeout */
-   case -1:
-      return -1;                   /* error */
-   default:
-      len = SizeofPoolMemory(sock->msg) - 1;
-      if (stop) {
-         sleep(1);
-         goto again;
-      }
-#ifdef HAVE_CONIO
-      if (bisatty(fileno(input))) {
-         InputLine(sock->msg, len);
-         break;
-      }
-#endif
-      if (fgets(sock->msg, len, input) == NULL) {
-         return -1;
-      }
-      break;
-   }
-
-   if (usrbrk()) {
-      clrbrk();
-   }
-
-   StripTrailingJunk(sock->msg);
-   sock->message_length = strlen(sock->msg);
-
-   return 1;
-}
-#endif /* HAVE_WIN32 */
-#endif /* ! HAVE_READLINE */
 
 static int ConsoleUpdateHistory(const char *histfile)
 {
@@ -994,7 +856,7 @@ static bool SelectDirector(const char *director, DirectorResource **ret_dir, Con
       }
       UnlockRes();
       if (!dir) {               /* Can't find Director used as argument */
-         senditf(_("Can't find %s in Director list\n"), director);
+         ConsoleOutputFormat(_("Can't find %s in Director list\n"), director);
          return 0;
       }
    }
@@ -1002,11 +864,11 @@ static bool SelectDirector(const char *director, DirectorResource **ret_dir, Con
    if (!dir) {                  /* prompt for director */
       UA_sock = New(BareosSocketTCP);
 try_again:
-      sendit(_("Available Directors:\n"));
+      ConsoleOutput(_("Available Directors:\n"));
       LockRes();
       numdir = 0;
       foreach_res(dir, R_DIRECTOR) {
-         senditf( _("%2d:  %s at %s:%d\n"), 1+numdir++, dir->name(), dir->address, dir->DIRport);
+         ConsoleOutputFormat( _("%2d:  %s at %s:%d\n"), 1+numdir++, dir->name(), dir->address, dir->DIRport);
       }
       UnlockRes();
       if (GetCmd(stdin, _("Select Director by entering a number: "),
@@ -1016,14 +878,14 @@ try_again:
          return 0;
       }
       if (!Is_a_number(UA_sock->msg)) {
-         senditf(_("%s is not a number. You must enter a number between "
+         ConsoleOutputFormat(_("%s is not a number. You must enter a number between "
                    "1 and %d\n"),
                  UA_sock->msg, numdir);
          goto try_again;
       }
       item = atoi(UA_sock->msg);
       if (item < 0 || item > numdir) {
-         senditf(_("You must enter a number between 1 and %d\n"), numdir);
+         ConsoleOutputFormat(_("You must enter a number between 1 and %d\n"), numdir);
          goto try_again;
       }
       delete UA_sock;
@@ -1113,122 +975,6 @@ static int dir_psk_client_callback(char *identity,
    }
 
    return result;
-}
-
-#include <termios.h>
-static bool SetEcho(FILE *stdin, bool on)
-{
-    struct termios termios_old, termios_new;
-
-    /* Turn echoing off and fail if we can’t. */
-    if (tcgetattr (fileno (stdin), &termios_old) != 0)
-        return false;
-    termios_new = termios_old;
-    if (on) {
-      termios_new.c_lflag |=  ECHO;
-    } else {
-      termios_new.c_lflag &= ~ECHO;
-    }
-    if (tcsetattr (fileno (stdin), TCSAFLUSH, &termios_new) != 0)
-        return false;
-   return true;
-}
-
-enum class PamAuthState {
-   INIT,
-   RECEIVE_MSG_TYPE,
-   RECEIVE_MSG,
-   READ_INPUT,
-   SEND_INPUT,
-   AUTH_OK
-};
-
-static PamAuthState state = PamAuthState::INIT;
-
-static bool ConsolePamAuthenticate(FILE *stdin, BareosSocket *UA_sock)
-{
-   bool quit = false;
-   bool error = false;
-
-   int type;
-   btimer_t *tid = nullptr;
-   char *userinput = nullptr;
-
-   while (!error && !quit) {
-      switch(state) {
-         case PamAuthState::INIT:
-            if(tid) {
-               StopBsockTimer(tid);
-            }
-            tid = StartBsockTimer(UA_sock, 10);
-            if (!tid) {
-               error = true;
-            }
-            state = PamAuthState::RECEIVE_MSG_TYPE;
-            break;
-         case PamAuthState::RECEIVE_MSG_TYPE:
-            if (UA_sock->recv() == 1) {
-               type = UA_sock->msg[0];
-               switch (type) {
-                  case PAM_PROMPT_ECHO_OFF:
-                  case PAM_PROMPT_ECHO_ON:
-                     SetEcho (stdin, type == PAM_PROMPT_ECHO_ON);
-                     state = PamAuthState::RECEIVE_MSG;
-                     break;
-                  case PAM_SUCCESS:
-                     state = PamAuthState::AUTH_OK;
-                     quit = true;
-                     break;
-                  default:
-                     Dmsg1(100, "Error, unknown pam type %d\n", type);
-                     error = true;
-                     break;
-               } /* switch (type) */
-            } else {
-               error = true;
-            }
-            break;
-         case PamAuthState::RECEIVE_MSG:
-            if (UA_sock->recv() > 0) {
-               sendit(UA_sock->msg);
-               state = PamAuthState::READ_INPUT;
-            } else {
-               error = true;
-            }
-            break;
-         case PamAuthState::READ_INPUT: {
-               userinput = readline("");
-               if (userinput) {
-                  state = PamAuthState::SEND_INPUT;
-               } else {
-                  error = true;
-               }
-            }
-            break;
-         case PamAuthState::SEND_INPUT:
-            UA_sock->fsend(userinput);
-            Actuallyfree(userinput);
-            state = PamAuthState::INIT;
-            break;
-         default:
-            break;
-      }
-      if (UA_sock->IsStop() || UA_sock->IsError()) {
-         if(userinput) {
-            Actuallyfree(userinput);
-         }
-         if(tid) {
-            StopBsockTimer(tid);
-         }
-         error = true;
-         break;
-      }
-   }; /* while (!quit) */
-
-   SetEcho (stdin, true);
-   sendit("\n");
-
-   return !error;
 }
 
 /*
@@ -1383,7 +1129,7 @@ int main(int argc, char *argv[])
    if (list_directors) {
       LockRes();
       foreach_res(dir, R_DIRECTOR) {
-         senditf("%s\n", dir->name());
+         ConsoleOutputFormat("%s\n", dir->name());
       }
       UnlockRes();
    }
@@ -1403,7 +1149,7 @@ int main(int argc, char *argv[])
       return 1;
    }
 
-   senditf(_("Connecting to Director %s:%d\n"), dir->address,dir->DIRport);
+   ConsoleOutputFormat(_("Connecting to Director %s:%d\n"), dir->address,dir->DIRport);
 
    if (dir->heartbeat_interval) {
       heart_beat = dir->heartbeat_interval;
@@ -1435,12 +1181,12 @@ int main(int argc, char *argv[])
    }
 
    if (!UA_sock->AuthenticateWithDirector(&jcr, name, *password, errmsg, errmsg_len, dir)) {
-      sendit(errmsg);
+      ConsoleOutput(errmsg);
       TerminateConsole(0);
       return 1;
    }
 
-   sendit(errmsg);
+   ConsoleOutput(errmsg);
 
    if (dir && dir->use_pam_authentication) {
       if (!ConsolePamAuthenticate(stdin, UA_sock)) {
@@ -1451,7 +1197,7 @@ int main(int argc, char *argv[])
 
    Dmsg0(40, "Opened connection with Director daemon\n");
 
-   sendit(_("\nEnter a period to cancel a command.\n"));
+   ConsoleOutput(_("\nEnter a period to cancel a command.\n"));
 
 #if defined(HAVE_WIN32)
    /*
@@ -1570,7 +1316,7 @@ static int CheckResources()
 /* @version */
 static int Versioncmd(FILE *input, BareosSocket *UA_sock)
 {
-   senditf("Version: " VERSION " (" BDATE ") %s %s %s\n",
+   ConsoleOutputFormat("Version: " VERSION " (" BDATE ") %s %s %s\n",
       HOST_OS, DISTNAME, DISTVER);
    return 1;
 }
@@ -1581,17 +1327,17 @@ static int InputCmd(FILE *input, BareosSocket *UA_sock)
    FILE *fd;
 
    if (argc > 2) {
-      sendit(_("Too many arguments on input command.\n"));
+      ConsoleOutput(_("Too many arguments on input command.\n"));
       return 1;
    }
    if (argc == 1) {
-      sendit(_("First argument to input command must be a filename.\n"));
+      ConsoleOutput(_("First argument to input command must be a filename.\n"));
       return 1;
    }
    fd = fopen(argk[1], "rb");
    if (!fd) {
       BErrNo be;
-      senditf(_("Cannot open file %s for input. ERR=%s\n"),
+      ConsoleOutputFormat(_("Cannot open file %s for input. ERR=%s\n"),
          argk[1], be.bstrerror());
       return 1;
    }
@@ -1604,7 +1350,7 @@ static int InputCmd(FILE *input, BareosSocket *UA_sock)
 /* Send output to both terminal and specified file */
 static int TeeCmd(FILE *input, BareosSocket *UA_sock)
 {
-   teeout = true;
+   EnableTeeOut();
    return DoOutputcmd(input, UA_sock);
 }
 
@@ -1612,38 +1358,34 @@ static int TeeCmd(FILE *input, BareosSocket *UA_sock)
 /* Send output to specified "file" */
 static int OutputCmd(FILE *input, BareosSocket *UA_sock)
 {
-   teeout = false;
+   DisableTeeOut();
    return DoOutputcmd(input, UA_sock);
 }
 
 static int DoOutputcmd(FILE *input, BareosSocket *UA_sock)
 {
-   FILE *fd;
+   FILE *file;
    const char *mode = "a+b";
 
    if (argc > 3) {
-      sendit(_("Too many arguments on output/tee command.\n"));
+      ConsoleOutput(_("Too many arguments on output/tee command.\n"));
       return 1;
    }
    if (argc == 1) {
-      if (output != stdout) {
-         fclose(output);
-         output = stdout;
-         teeout = false;
-      }
+      CloseTeeFile();
       return 1;
    }
    if (argc == 3) {
       mode = argk[2];
    }
-   fd = fopen(argk[1], mode);
-   if (!fd) {
+   file = fopen(argk[1], mode);
+   if (!file) {
       BErrNo be;
-      senditf(_("Cannot open file %s for output. ERR=%s\n"),
+      ConsoleOutputFormat(_("Cannot open file %s for output. ERR=%s\n"),
          argk[1], be.bstrerror(errno));
       return 1;
    }
-   output = fd;
+   SetTeeFile(file);
    return 1;
 }
 
@@ -1658,7 +1400,7 @@ static int ExecCmd(FILE *input, BareosSocket *UA_sock)
    int wait = 0;
 
    if (argc > 3) {
-      sendit(_("Too many arguments. Enclose command in double quotes.\n"));
+      ConsoleOutput(_("Too many arguments. Enclose command in double quotes.\n"));
       return 1;
    }
    if (argc == 3) {
@@ -1667,19 +1409,19 @@ static int ExecCmd(FILE *input, BareosSocket *UA_sock)
    bpipe = OpenBpipe(argk[1], wait, "r");
    if (!bpipe) {
       BErrNo be;
-      senditf(_("Cannot popen(\"%s\", \"r\"): ERR=%s\n"),
+      ConsoleOutputFormat(_("Cannot popen(\"%s\", \"r\"): ERR=%s\n"),
          argk[1], be.bstrerror(errno));
       return 1;
    }
 
    while (fgets(line, sizeof(line), bpipe->rfd)) {
-      senditf("%s", line);
+      ConsoleOutputFormat("%s", line);
    }
    status = CloseBpipe(bpipe);
    if (status != 0) {
       BErrNo be;
       be.SetErrno(status);
-     senditf(_("Autochanger error: ERR=%s\n"), be.bstrerror());
+     ConsoleOutputFormat(_("Autochanger error: ERR=%s\n"), be.bstrerror());
    }
    return 1;
 }
@@ -1688,9 +1430,9 @@ static int ExecCmd(FILE *input, BareosSocket *UA_sock)
 static int EchoCmd(FILE *input, BareosSocket *UA_sock)
 {
    for (int i=1; i < argc; i++) {
-      senditf("%s ", argk[i]);
+      ConsoleOutputFormat("%s ", argk[i]);
    }
-   sendit("\n");
+   ConsoleOutput("\n");
    return 1;
 }
 
@@ -1705,7 +1447,7 @@ static int HelpCmd(FILE *input, BareosSocket *UA_sock)
 {
    int i;
    for (i=0; i<comsize; i++) {
-      senditf("  %-10s %s\n", commands[i].key, commands[i].help);
+      ConsoleOutputFormat("  %-10s %s\n", commands[i].key, commands[i].help);
    }
    return 1;
 }
@@ -1725,30 +1467,6 @@ static int TimeCmd(FILE *input, BareosSocket *UA_sock)
    char sdt[50];
 
    bstrftimes(sdt, sizeof(sdt), time(NULL));
-   senditf("%s\n", sdt);
+   ConsoleOutputFormat("%s\n", sdt);
    return 1;
-}
-
-/**
- * Send a line to the output file and or the terminal
- */
-void senditf(const char *fmt,...)
-{
-   char buf[3000];
-   va_list arg_ptr;
-
-   va_start(arg_ptr, fmt);
-   Bvsnprintf(buf, sizeof(buf), (char *)fmt, arg_ptr);
-   va_end(arg_ptr);
-   sendit(buf);
-}
-
-void sendit(const char *buf)
-{
-   fputs(buf, output);
-   fflush(output);
-   if (teeout) {
-      fputs(buf, stdout);
-      fflush(stdout);
-   }
 }

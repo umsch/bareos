@@ -208,6 +208,11 @@ public:
    void SetTerminated() { terminated_ = true; }
    void StartTimer(int sec) { tid_ = StartBsockTimer(this, sec); }
    void StopTimer() { StopBsockTimer(tid_); }
+   bool DoCramMd5AsInitiator(JobControlRecord *jcr, const char *what,
+      const char *identity, s_password &password, TlsResource *tls_configuration, uint32_t *remote_tls_policy);
+   bool DoCramMd5AsResponder(JobControlRecord *jcr, const char *what,
+      const char *identity, s_password &password, TlsResource *tls_configuration, uint32_t *remote_tls_policy);
+
 };
 
 /**

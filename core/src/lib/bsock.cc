@@ -346,34 +346,25 @@ bail_out:
    return false;
 }
 
-
-bool BareosSocket::AuthenticateOutboundConnection( JobControlRecord *jcr, const char *what,
-      const char *identity, s_password &password, TlsResource *tls_configuration)
+static bool IsPasswordEncodingMd5(s_password password, JobControlRecord *jcr)
 {
-   btimer_t *tid = NULL;
-   const int debuglevel = 50;
-   bool compatible = true;
-   bool auth_success = false;
-   uint32_t local_tls_policy = GetNeedFromConfiguration(tls_configuration);
-   uint32_t remote_tls_policy = 0;
-   alist *verify_list = NULL;
-   TlsBase *selected_local_tls = nullptr;
-
-   if (jcr && JobCanceled(jcr)) {
-      Dmsg0(debuglevel, "Failed, because job is canceled.\n");
-      auth_success = false; /* force quick exit */
-      goto auth_fatal;
-   }
-
    if (password.encoding != p_encoding_md5) {
       Jmsg(jcr, M_FATAL, 0,
             _("Password encoding is not MD5. You are probably restoring a NDMP Backup "
                "with a restore job not configured for NDMP protocol.\n"));
-      goto auth_fatal;
+      return false;
+   } else{
+      return true;
    }
+}
 
-   /* Timeout Hello after 10 min */
-   tid = StartBsockTimer(this, AUTH_TIMEOUT);
+bool BareosSocket::DoCramMd5AsInitiator(JobControlRecord *jcr, const char *what,
+      const char *identity, s_password &password, TlsResource *tls_configuration, uint32_t *remote_tls_policy)
+{
+   const int debuglevel = 50;
+   uint32_t local_tls_policy = GetNeedFromConfiguration(tls_configuration);
+   bool compatible = true;
+   bool auth_success = false;
 
    /* Challenge Remote.  */
    auth_success = cram_md5_challenge(this, password.value, local_tls_policy, compatible);
@@ -381,38 +372,92 @@ bool BareosSocket::AuthenticateOutboundConnection( JobControlRecord *jcr, const 
       Dmsg1(debuglevel, "Challenge cram-auth failed with %s\n", who());
    } else {
       /* Respond to remote challenge */
-      auth_success = cram_md5_respond(this, password.value, &remote_tls_policy, &compatible);
+      auth_success = cram_md5_respond(this, password.value, remote_tls_policy, &compatible);
       if (!auth_success) {
          Dmsg1(debuglevel, "Respond cram-get-auth failed with %s\n", who());
       }
    }
-
    if (!auth_success) {
       Jmsg(jcr, M_FATAL, 0,
             _("Authorization key rejected by %s %s.\n"
                "Please see %s for help.\n"),
             what, identity, MANUAL_AUTH_URL);
-      goto auth_fatal;
+   }
+   return auth_success;
+}
+
+bool BareosSocket::DoCramMd5AsResponder(JobControlRecord *jcr, const char *what,
+      const char *identity, s_password &password, TlsResource *tls_configuration, uint32_t *remote_tls_policy)
+{
+   const int debuglevel = 50;
+   uint32_t local_tls_policy = GetNeedFromConfiguration(tls_configuration);
+   bool compatible = true;
+   bool auth_success = false;
+
+   /* Respond to remote challenge */
+   auth_success = cram_md5_respond(this, password.value, remote_tls_policy, &compatible);
+   if (!auth_success) {
+      Dmsg1(debuglevel, "cram_respond failed for %s\n", who());
+   } else {
+      /* Challenge Remote. */
+      auth_success = cram_md5_challenge(this, password.value, local_tls_policy, compatible);
+      if (!auth_success) {
+         Dmsg1(debuglevel, "cram_challenge failed for %s\n", who());
+      }
    }
 
+   if (!auth_success) {
+    Jmsg(jcr, M_FATAL, 0,
+         _("Authorization key rejected by %s %s.\n"
+           "Please see %s for help.\n"),
+         what, identity, MANUAL_AUTH_URL);
+  }
+   return auth_success;
+}
+
+
+bool IsJobCancelledDuringAuth(JobControlRecord *jcr)
+{
+   const int debuglevel = 50;
    if (jcr && JobCanceled(jcr)) {
       Dmsg0(debuglevel, "Failed, because job is canceled.\n");
-      auth_success = false; /* force quick exit */
-      goto auth_fatal;
+      return false;
    }
+   return true;
+}
 
-   /*
-    * Verify that the remote host is willing to meet our TLS requirements
-    */
+bool BareosSocket::AuthenticateInboundConnection( JobControlRecord *jcr, const char *what,
+      const char *identity, s_password &password, TlsResource *tls_configuration)
+{
+   uint32_t remote_tls_policy = 0;
+   const int debuglevel = 50;
+   btimer_t *tid = NULL;
+   bool auth_success = false;
+   alist *verify_list = NULL;
+   TlsBase *selected_local_tls = nullptr;
+
+   if (IsJobCancelledDuringAuth(jcr)) goto auth_fatal;
+
+   if (!IsPasswordEncodingMd5(password, jcr)) goto auth_fatal;
+
+   /* Timeout Hello after 10 min */
+   tid = StartBsockTimer(this, AUTH_TIMEOUT);
+
+   if (DoCramMd5AsInitiator(jcr, what, identity, password,tls_configuration, &remote_tls_policy))
+      auth_success = true;
+   else
+      goto auth_fatal;
+
+   if (IsJobCancelledDuringAuth(jcr)) goto auth_fatal;
+
+   /* Verify that the remote host is willing to meet our TLS requirements */
    selected_local_tls = SelectTlsFromPolicy(tls_configuration, remote_tls_policy);
    if (selected_local_tls != nullptr) {
       if (selected_local_tls->GetVerifyPeer()) {
          verify_list = selected_local_tls->GetVerifyList();
       }
 
-      /*
-       * See if we are handshaking a passive client connection.
-       */
+      /* See if we are handshaking a passive client connection.  */
       std::shared_ptr<TLS_CONTEXT> tls_ctx = selected_local_tls->CreateServerContext(
             std::make_shared<PskCredentials>(identity, password.value));
       if (jcr) {
@@ -439,77 +484,41 @@ auth_fatal:
    if (jcr) {
       jcr->authenticated = auth_success;
    }
-
    return auth_success;
 }
 
-bool BareosSocket::AuthenticateInboundConnection( JobControlRecord *jcr, const char *what,
+
+bool BareosSocket::AuthenticateOutboundConnection( JobControlRecord *jcr, const char *what,
       const char *identity, s_password &password, TlsResource *tls_configuration)
 {
-
   btimer_t *tid = NULL;
   const int debuglevel = 50;
-  bool compatible = true;
   bool auth_success = false;
-  uint32_t local_tls_policy = GetNeedFromConfiguration(tls_configuration);
   uint32_t remote_tls_policy = 0;
   alist *verify_list = NULL;
   TlsBase *selected_local_tls = nullptr;
 
-  if (jcr && JobCanceled(jcr)) {
-    Dmsg0(debuglevel, "Failed, because job is canceled.\n");
-    auth_success = false; /* force quick exit */
-    goto auth_fatal;
-  }
+  if (IsJobCancelledDuringAuth(jcr)) goto auth_fatal;
 
-  if (password.encoding != p_encoding_md5) {
-    Jmsg(jcr, M_FATAL, 0,
-         _("Password encoding is not MD5. You are probably restoring a NDMP Backup "
-           "with a restore job not configured for NDMP protocol.\n"));
-    goto auth_fatal;
-  }
+  if (!IsPasswordEncodingMd5(password, jcr)) goto auth_fatal;
 
   /* Timeout Hello after 10 min */
   tid = StartBsockTimer(this, AUTH_TIMEOUT);
 
-  /* Respond to remote challenge */
-  auth_success = cram_md5_respond(this, password.value, &remote_tls_policy, &compatible);
-  if (!auth_success) {
-    Dmsg1(debuglevel, "cram_respond failed for %s\n", who());
-  } else {
-    /* Challenge Remote. */
-    auth_success = cram_md5_challenge(this, password.value, local_tls_policy, compatible);
-    if (!auth_success) {
-      Dmsg1(debuglevel, "cram_challenge failed for %s\n", who());
-    }
-  }
+   if (DoCramMd5AsResponder(jcr, what, identity, password,tls_configuration, &remote_tls_policy))
+      auth_success = true;
+   else
+      goto auth_fatal;
 
-  if (!auth_success) {
-    Jmsg(jcr, M_FATAL, 0,
-         _("Authorization key rejected by %s %s.\n"
-           "Please see %s for help.\n"),
-         what, identity, MANUAL_AUTH_URL);
-    goto auth_fatal;
-  }
+  if (IsJobCancelledDuringAuth(jcr)) goto auth_fatal;
 
-  if (jcr && JobCanceled(jcr)) {
-    Dmsg0(debuglevel, "Failed, because job is canceled.\n");
-    auth_success = false; /* force quick exit */
-    goto auth_fatal;
-  }
-
-  /*
-   * Verify that the remote host is willing to meet our TLS requirements
-   */
+  /* Verify that the remote host is willing to meet our TLS requirements */
   selected_local_tls = SelectTlsFromPolicy(tls_configuration, remote_tls_policy);
   if (selected_local_tls != nullptr) {
     if (selected_local_tls->GetVerifyPeer()) {
       verify_list = selected_local_tls->GetVerifyList();
     }
-
-    /*
-     * See if we are handshaking a passive client connection.
-     */
+    /* See if we are handshaking a passive client connection.  */
     std::shared_ptr<TLS_CONTEXT> tls_ctx = selected_local_tls->CreateClientContext(
         std::make_shared<PskCredentials>(identity, password.value));
     if (jcr) {
@@ -528,6 +537,7 @@ bool BareosSocket::AuthenticateInboundConnection( JobControlRecord *jcr, const c
     }
   }
   TlsLogConninfo(jcr, GetTlsConnection(), host(), port(), who());
+
 auth_fatal:
   if (tid) {
     StopBsockTimer(tid);

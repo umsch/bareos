@@ -1002,7 +1002,7 @@ static void ListRunningJobs(UaContext *ua)
    }
    njobs = 0;
    if (!ua->api) {
-      ua->SendMsg(_(" JobId Level   Name                       Status\n"));
+      ua->SendMsg(_(" JobId Level   Name                 Priority   Status\n"));
       ua->SendMsg(_("======================================================================\n"));
    }
    foreach_jcr(jcr) {
@@ -1173,8 +1173,8 @@ static void ListRunningJobs(UaContext *ua)
 
       if (ua->api) {
          BashSpaces(jcr->comment);
-         ua->SendMsg(_("%6d\t%-6s\t%-20s\t%s\t%s\n"),
-                      jcr->JobId, level, jcr->Job, msg, jcr->comment);
+         ua->SendMsg(_("%6d\t%-6s\t%-20s\t%s\t%d\t%s\n"),
+                      jcr->JobId, level, jcr->Job, msg, jcr->JobPriority, jcr->comment);
          UnbashSpaces(jcr->comment);
       } else {
          ua->SendMsg(_("%6d %-6s  %-20s %s\n"),

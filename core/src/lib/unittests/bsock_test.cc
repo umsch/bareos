@@ -35,6 +35,8 @@ class UaContext {
 class StorageResource;
 #include "dird/authenticate.h"
 
+#define CERTDIR "../configs/BASE/tls"
+
 #define MIN_MSG_LEN 15
 #define MAX_MSG_LEN 175 + 25
 #define PORT 54321
@@ -90,7 +92,8 @@ int create_accepted_server_socket(int port)
   return new_socket;
 }
 void start_bareos_server(std::promise<bool> *promise, std::string console_name,
-                         std::string console_password, std::string server_address, int server_port, bool enable_tls_psk)
+                         std::string console_password, std::string server_address, int server_port,
+                         bool enable_tls_psk)
 
 {
   int newsockfd = create_accepted_server_socket(server_port);
@@ -108,17 +111,22 @@ void start_bareos_server(std::promise<bool> *promise, std::string console_name,
   password->encoding = p_encoding_md5;
   password->value = (char *)console_password.c_str();
   ConsoleResource *cons = new (ConsoleResource);
-  cons->tls_psk.enable = enable_tls_psk;
+  cons->tls_psk.enable = false; //enable_tls_psk;
+  cons->tls_cert.CaCertfile = new(std::string)(CERTDIR "/bareos-ca.pem");
+  cons->tls_cert.certfile = new(std::string)(CERTDIR "/console.bareos.org-cert.pem");
+  cons->tls_cert.keyfile = new(std::string)(CERTDIR "/console.bareos.org-key.pem");
+  cons->tls_cert.enable = true;
+
 
   if (bs->recv() <= 0) {
     Dmsg1(10, _("Connection request from %s failed.\n"), bs->who());
-    //Bmicrosleep(5, 0); /* make user wait 5 seconds */
+    // Bmicrosleep(5, 0); /* make user wait 5 seconds */
     bs->close();
   }
   // Do a sanity check on the message received
   if (bs->message_length < MIN_MSG_LEN || bs->message_length > MAX_MSG_LEN) {
     Dmsg2(10, _("Invalid connection from %s. Len=%d\n"), bs->who(), bs->message_length);
-    //Bmicrosleep(5, 0); /* make user wait 5 seconds */
+    // Bmicrosleep(5, 0); /* make user wait 5 seconds */
     bs->close();
   }
   Dmsg1(10, "Cons->Dir: %s", bs->msg);
@@ -148,7 +156,18 @@ int connect_to_server(std::string console_name, std::string console_password,
   DirectorResource *dir = new (DirectorResource);
   dir->address = (char *)server_address.c_str();
   dir->DIRport = htons(server_port);
-  dir->tls_psk.enable = enable_tls_psk;
+
+
+
+  dir->tls_psk.enable = false; //enable_tls_psk;
+  dir->tls_cert.certfile = new(std::string)(CERTDIR "/bareos-dir.bareos.org-cert.pem");
+  dir->tls_cert.keyfile = new(std::string)(CERTDIR "/bareos-dir.bareos.org-key.pem");
+  dir->tls_cert.CaCertfile = new(std::string)(CERTDIR "/bareos-ca.pem");
+  dir->tls_cert.enable = true;
+
+
+
+
 
   s_password *password = new (s_password);
   password->encoding = p_encoding_md5;
@@ -211,7 +230,6 @@ TEST(bsock, auth_works)
   ASSERT_TRUE(future.get());
 }
 
-
 TEST(bsock, auth_works_with_different_names)
 {
   port++;
@@ -235,7 +253,6 @@ TEST(bsock, auth_works_with_different_names)
   server_thread.join();
   ASSERT_TRUE(future.get());
 }
-
 
 TEST(bsock, auth_fails_with_different_passwords)
 {
@@ -307,4 +324,28 @@ TEST(bsock, auth_fails_with_different_names_with_tls_psk)
 
   server_thread.join();
   ASSERT_FALSE(future.get());
+}
+
+TEST(bsock, auth_works_with_tls_cert)
+{
+  port++;
+  std::promise<bool> promise;
+  std::future<bool> future = promise.get_future();
+
+  client_cons_name = "clientname";
+  client_cons_password = "verysecretpassword";
+
+  server_cons_name = client_cons_name;
+  server_cons_password = client_cons_password;
+
+  InitForTest();
+  Dmsg0(10, "starting listen thread...\n");
+  std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
+                            HOST, port, true);
+
+  Dmsg0(10, "connecting to server\n");
+  ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, true));
+
+  server_thread.join();
+  ASSERT_TRUE(future.get());
 }

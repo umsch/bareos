@@ -91,8 +91,9 @@ int create_accepted_server_socket(int port)
   }
   return new_socket;
 }
+
 void start_bareos_server(std::promise<bool> *promise, std::string console_name, std::string console_password,
-                         std::string server_address, int server_port, bool enable_tls_psk)
+                         std::string server_address, int server_port, ConsoleResource *cons)
 
 {
   int newsockfd = create_accepted_server_socket(server_port);
@@ -109,15 +110,6 @@ void start_bareos_server(std::promise<bool> *promise, std::string console_name, 
   s_password *password = new (s_password);
   password->encoding = p_encoding_md5;
   password->value = (char *)console_password.c_str();
-
-  ConsoleResource *cons = new (ConsoleResource);
-  cons->tls_psk.enable = false;  // enable_tls_psk;
-  cons->tls_cert.certfile = new (std::string)(CERTDIR "/console.bareos.org-cert.pem");
-  cons->tls_cert.keyfile = new (std::string)(CERTDIR "/console.bareos.org-key.pem");
-  cons->tls_cert.CaCertfile = new (std::string)(CERTDIR "/bareos-ca.pem");
-  cons->tls_cert.enable = true;
-  cons->tls_cert.VerifyPeer = false;
-  cons->tls_cert.require = true;
 
   if (bs->recv() <= 0) {
     Dmsg1(10, _("Connection request from %s failed.\n"), bs->who());
@@ -143,7 +135,7 @@ void start_bareos_server(std::promise<bool> *promise, std::string console_name, 
 }
 
 int connect_to_server(std::string console_name, std::string console_password,
-                      std::string server_address, int server_port, bool enable_tls_psk)
+                      std::string server_address, int server_port, DirectorResource *dir)
 {
   utime_t heart_beat = 0;
   char errmsg[1024];
@@ -153,18 +145,6 @@ int connect_to_server(std::string console_name, std::string console_password,
   memset(&jcr, 0, sizeof(jcr));
 
   char *name = (char *)console_name.c_str();
-
-  DirectorResource *dir = new (DirectorResource);
-  dir->address = (char *)server_address.c_str();
-  dir->DIRport = htons(server_port);
-
-  dir->tls_psk.enable = false;  // enable_tls_psk;
-  dir->tls_cert.certfile = new (std::string)(CERTDIR "/bareos-dir.bareos.org-cert.pem");
-  dir->tls_cert.keyfile = new (std::string)(CERTDIR "/bareos-dir.bareos.org-key.pem");
-  dir->tls_cert.CaCertfile = new (std::string)(CERTDIR "/bareos-ca.pem");
-  dir->tls_cert.enable = true;
-  dir->tls_cert.VerifyPeer = false;
-  dir->tls_cert.require = true;
 
   s_password *password = new (s_password);
   password->encoding = p_encoding_md5;
@@ -195,6 +175,36 @@ int connect_to_server(std::string console_name, std::string console_password,
   }
 }
 
+ConsoleResource *CreateAndInitializeNewConsoleResource()
+{
+  ConsoleResource *cons = new (ConsoleResource);
+  cons->tls_psk.enable = false;  // enable_tls_psk;
+  cons->tls_cert.certfile = new (std::string)(CERTDIR "/console.bareos.org-cert.pem");
+  cons->tls_cert.keyfile = new (std::string)(CERTDIR "/console.bareos.org-key.pem");
+  cons->tls_cert.CaCertfile = new (std::string)(CERTDIR "/bareos-ca.pem");
+  cons->tls_cert.enable = false; 
+  cons->tls_cert.VerifyPeer = false;
+  cons->tls_cert.require = false;
+  return cons;
+}
+
+DirectorResource *CreateAndInitializeNewDirectorResource()
+{
+  DirectorResource *dir = new (DirectorResource);
+  dir->address = (char *)HOST;
+  dir->DIRport = htons(PORT);
+  dir->tls_psk.enable = false;
+  dir->tls_cert.certfile = new (std::string)(CERTDIR "/bareos-dir.bareos.org-cert.pem");
+  dir->tls_cert.keyfile = new (std::string)(CERTDIR "/bareos-dir.bareos.org-key.pem");
+  dir->tls_cert.CaCertfile = new (std::string)(CERTDIR "/bareos-ca.pem");
+  dir->tls_cert.enable = false;
+  dir->tls_cert.VerifyPeer = false;
+  dir->tls_cert.require = false;
+  return dir;
+}
+
+
+
 std::string client_cons_name;
 std::string client_cons_password;
 
@@ -217,23 +227,16 @@ TEST(bsock, auth_works)
 
   InitForTest();
 
-  ConsoleResource *cons = new (ConsoleResource);
-  cons->tls_psk.enable = false;  // enable_tls_psk;
-  cons->tls_cert.certfile = new (std::string)(CERTDIR "/console.bareos.org-cert.pem");
-  cons->tls_cert.keyfile = new (std::string)(CERTDIR "/console.bareos.org-key.pem");
-  cons->tls_cert.CaCertfile = new (std::string)(CERTDIR "/bareos-ca.pem");
-  cons->tls_cert.enable = true;
-  cons->tls_cert.VerifyPeer = false;
-  cons->tls_cert.require = true;
-
-
+  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
 
   Dmsg0(10, "starting listen thread...\n");
   std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
-                            HOST, port, true);
+                            HOST, port, cons);
 
+  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
+  
   Dmsg0(10, "connecting to server\n");
-  ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, false));
+  ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, dir));
 
   server_thread.join();
   ASSERT_TRUE(future.get());

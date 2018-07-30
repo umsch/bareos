@@ -121,6 +121,12 @@ class TlsConnection {
    std::shared_ptr<TlsContext> GetTls() { return tls_ctx_; }
    SSL *GetSsl() { return openssl_; }
 
+
+   std::string &GetCurrentCipher(){
+      std::string cipher ("hello");
+      return cipher;
+   }
+
    TlsConnection(std::shared_ptr<TlsContext> tls_ctx,
                   int fd,
                   unsigned int (*psk_client_callback)(SSL *ssl,
@@ -866,6 +872,7 @@ void FreeTlsContext(std::shared_ptr<TLS_CONTEXT> &ctx) {
    SSL_CTX_free(ctx->openssl);
    ctx.reset();
 }
+
 
 /**
  * Get connection cipher info and log it into joblog

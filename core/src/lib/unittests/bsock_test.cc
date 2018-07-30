@@ -92,8 +92,9 @@ int create_accepted_server_socket(int port)
   return new_socket;
 }
 
-void start_bareos_server(std::promise<bool> *promise, std::string console_name, std::string console_password,
-                         std::string server_address, int server_port, ConsoleResource *cons)
+void start_bareos_server(std::promise<bool> *promise, std::string console_name,
+                         std::string console_password, std::string server_address, int server_port,
+                         ConsoleResource *cons)
 
 {
   int newsockfd = create_accepted_server_socket(server_port);
@@ -169,6 +170,7 @@ int connect_to_server(std::string console_name, std::string console_password,
       return false;
     } else {
       Dmsg0(10, "Authenticate Connect to Server successful!\n");
+      // TODO: check for currently used cipher
       UA_sock->close();
       return true;
     }
@@ -182,7 +184,7 @@ ConsoleResource *CreateAndInitializeNewConsoleResource()
   cons->tls_cert.certfile = new (std::string)(CERTDIR "/console.bareos.org-cert.pem");
   cons->tls_cert.keyfile = new (std::string)(CERTDIR "/console.bareos.org-key.pem");
   cons->tls_cert.CaCertfile = new (std::string)(CERTDIR "/bareos-ca.pem");
-  cons->tls_cert.enable = false; 
+  cons->tls_cert.enable = false;
   cons->tls_cert.VerifyPeer = false;
   cons->tls_cert.require = false;
   return cons;
@@ -202,8 +204,6 @@ DirectorResource *CreateAndInitializeNewDirectorResource()
   dir->tls_cert.require = false;
   return dir;
 }
-
-
 
 std::string client_cons_name;
 std::string client_cons_password;
@@ -225,16 +225,18 @@ TEST(bsock, auth_works)
   server_cons_name = client_cons_name;
   server_cons_password = client_cons_password;
 
+  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
+  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
+
   InitForTest();
 
-  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
+  dir->tls_psk.enable = false;
+  cons->tls_psk.enable = false;
 
   Dmsg0(10, "starting listen thread...\n");
   std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
                             HOST, port, cons);
 
-  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
-  
   Dmsg0(10, "connecting to server\n");
   ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, dir));
 
@@ -242,122 +244,165 @@ TEST(bsock, auth_works)
   ASSERT_TRUE(future.get());
 }
 
-/* TEST(bsock, auth_works_with_different_names) */
-/* { */
-/*   port++; */
-/*   std::promise<bool> promise; */
-/*   std::future<bool> future = promise.get_future(); */
+TEST(bsock, auth_works_with_different_names)
+{
+  port++;
+  std::promise<bool> promise;
+  std::future<bool> future = promise.get_future();
 
-/*   client_cons_name = "clientname"; */
-/*   client_cons_password = "verysecretpassword"; */
+  client_cons_name = "clientname";
+  client_cons_password = "verysecretpassword";
 
-/*   server_cons_name = "differentclientname"; */
-/*   server_cons_password = client_cons_password; */
+  server_cons_name = "differentclientname";
+  server_cons_password = client_cons_password;
 
-/*   InitForTest(); */
-/*   Dmsg0(10, "starting listen thread...\n"); */
-/*   std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password, */
-/*                             HOST, port, false); */
+  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
+  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
 
-/*   Dmsg0(10, "connecting to server\n"); */
-/*   ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, false)); */
+  InitForTest();
 
-/*   server_thread.join(); */
-/*   ASSERT_TRUE(future.get()); */
-/* } */
+  dir->tls_psk.enable = false;
+  cons->tls_psk.enable = false;
 
-/* TEST(bsock, auth_fails_with_different_passwords) */
-/* { */
-/*   port++; */
-/*   std::promise<bool> promise; */
-/*   std::future<bool> future = promise.get_future(); */
+  Dmsg0(10, "starting listen thread...\n");
+  std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
+                            HOST, port, cons);
 
-/*   client_cons_name = "clientname"; */
-/*   client_cons_password = "verysecretpassword"; */
+  Dmsg0(10, "connecting to server\n");
+  ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, dir));
 
-/*   server_cons_name = client_cons_name; */
-/*   server_cons_password = "a_different_password"; */
+  server_thread.join();
+  ASSERT_TRUE(future.get());
+}
 
-/*   InitForTest(); */
-/*   Dmsg0(10, "starting listen thread...\n"); */
-/*   std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password, */
-/*                             HOST, port, false); */
+TEST(bsock, auth_fails_with_different_passwords)
+{
+  port++;
+  std::promise<bool> promise;
+  std::future<bool> future = promise.get_future();
 
-/*   Dmsg0(10, "connecting to server\n"); */
-/*   ASSERT_FALSE(connect_to_server(client_cons_name, client_cons_password, HOST, port, false)); */
+  client_cons_name = "clientname";
+  client_cons_password = "verysecretpassword";
 
-/*   server_thread.join(); */
-/*   ASSERT_FALSE(future.get()); */
-/* } */
+  server_cons_name = client_cons_name;
+  server_cons_password = "othersecretpassword";
 
-/* TEST(bsock, auth_works_with_tls_psk) */
-/* { */
-/*   port++; */
-/*   std::promise<bool> promise; */
-/*   std::future<bool> future = promise.get_future(); */
+  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
+  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
 
-/*   client_cons_name = "clientname"; */
-/*   client_cons_password = "verysecretpassword"; */
+  InitForTest();
 
-/*   server_cons_name = client_cons_name; */
-/*   server_cons_password = client_cons_password; */
+  dir->tls_psk.enable = false;
+  cons->tls_psk.enable = false;
 
-/*   InitForTest(); */
-/*   Dmsg0(10, "starting listen thread...\n"); */
-/*   std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password, */
-/*                             HOST, port, true); */
+  Dmsg0(10, "starting listen thread...\n");
+  std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
+                            HOST, port, cons);
 
-/*   Dmsg0(10, "connecting to server\n"); */
-/*   ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, true)); */
+  Dmsg0(10, "connecting to server\n");
+  ASSERT_FALSE(connect_to_server(client_cons_name, client_cons_password, HOST, port, dir));
 
-/*   server_thread.join(); */
-/*   ASSERT_TRUE(future.get()); */
-/* } */
+  server_thread.join();
+  ASSERT_FALSE(future.get());
+}
 
-/* TEST(bsock, auth_fails_with_different_names_with_tls_psk) */
-/* { */
-/*   port++; */
-/*   std::promise<bool> promise; */
-/*   std::future<bool> future = promise.get_future(); */
 
-/*   client_cons_name = "clientname"; */
-/*   client_cons_password = "verysecretpassword"; */
 
-/*   server_cons_name = "differentclientname"; */
-/*   server_cons_password = client_cons_password; */
+TEST(bsock, auth_works_with_tls_psk)
+{
+  port++;
+  std::promise<bool> promise;
+  std::future<bool> future = promise.get_future();
 
-/*   InitForTest(); */
-/*   Dmsg0(10, "starting listen thread...\n"); */
-/*   std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password, */
-/*                             HOST, port, true); */
+  client_cons_name = "clientname";
+  client_cons_password = "verysecretpassword";
 
-/*   Dmsg0(10, "connecting to server\n"); */
-/*   ASSERT_FALSE(connect_to_server(client_cons_name, client_cons_password, HOST, port, true)); */
+  server_cons_name = client_cons_name;
+  server_cons_password = client_cons_password;
 
-/*   server_thread.join(); */
-/*   ASSERT_FALSE(future.get()); */
-/* } */
+  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
+  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
 
-/* TEST(bsock, auth_works_with_tls_cert) */
-/* { */
-/*   port++; */
-/*   std::promise<bool> promise; */
-/*   std::future<bool> future = promise.get_future(); */
+  InitForTest();
 
-/*   client_cons_name = "clientname"; */
-/*   client_cons_password = "verysecretpassword"; */
+  dir->tls_psk.enable = true; 
+  cons->tls_psk.enable = true;
 
-/*   server_cons_name = client_cons_name; */
-/*   server_cons_password = client_cons_password; */
+  Dmsg0(10, "starting listen thread...\n");
+  std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
+                            HOST, port, cons);
 
-/*   InitForTest(); */
-/*   Dmsg0(10, "starting listen thread...\n"); */
-/*   std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password, */
-/*                             HOST, port, true); */
+  Dmsg0(10, "connecting to server\n");
+  ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, dir));
 
-/*   Dmsg0(10, "connecting to server\n"); */
-/*   ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, true)); */
+  server_thread.join();
+  ASSERT_TRUE(future.get());
 
-/*   server_thread.join(); */
-/*   ASSERT_TRUE(future.get()); */
-/* } */
+}
+
+
+TEST(bsock, auth_fails_with_different_names_with_tls_psk) 
+{
+  port++;
+  std::promise<bool> promise;
+  std::future<bool> future = promise.get_future();
+
+  client_cons_name = "clientname";
+  client_cons_password = "verysecretpassword";
+
+  server_cons_name = "differentclientname";
+  server_cons_password = client_cons_password;
+
+  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
+  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
+
+  InitForTest();
+
+  dir->tls_psk.enable = true;
+  cons->tls_psk.enable = true;
+
+  Dmsg0(10, "starting listen thread...\n");
+  std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
+                            HOST, port, cons);
+
+  Dmsg0(10, "connecting to server\n");
+  ASSERT_FALSE(connect_to_server(client_cons_name, client_cons_password, HOST, port, dir));
+
+  server_thread.join();
+  ASSERT_FALSE(future.get());
+}
+
+TEST(bsock, auth_works_with_tls_cert)
+{
+  port++;
+  std::promise<bool> promise;
+  std::future<bool> future = promise.get_future();
+
+  client_cons_name = "clientname";
+  client_cons_password = "verysecretpassword";
+
+  server_cons_name = client_cons_name;
+  server_cons_password = client_cons_password;
+
+  ConsoleResource *cons = CreateAndInitializeNewConsoleResource();
+  DirectorResource *dir = CreateAndInitializeNewDirectorResource();
+
+  InitForTest();
+
+  dir->tls_psk.enable = false;
+  cons->tls_psk.enable = false;
+
+  dir->tls_cert.enable = false;
+  cons->tls_cert.enable = false;
+
+
+  Dmsg0(10, "starting listen thread...\n");
+  std::thread server_thread(start_bareos_server, &promise, server_cons_name, server_cons_password,
+                            HOST, port, cons);
+
+  Dmsg0(10, "connecting to server\n");
+  ASSERT_TRUE(connect_to_server(client_cons_name, client_cons_password, HOST, port, dir));
+
+  server_thread.join();
+  ASSERT_TRUE(future.get());
+}

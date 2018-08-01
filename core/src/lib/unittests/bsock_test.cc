@@ -35,14 +35,13 @@ class UaContext {
 class StorageResource;
 #include "dird/authenticate.h"
 
-#define CERTDIR "/home/pstorz/git/worktrees/master/regress/configs/BASE/tls"
-
 #define MIN_MSG_LEN 15
 #define MAX_MSG_LEN 175 + 25
 #define PORT 54321
 #define HOST "127.0.0.1"
 #define CONSOLENAME "testconsole"
 #define CONSOLEPASSWORD "secret"
+
 
 static void InitForTest()
 {
@@ -392,8 +391,8 @@ TEST(bsock, auth_works_with_tls_cert)
   dir->tls_psk.enable = false;
   cons->tls_psk.enable = false;
 
-  dir->tls_cert.enable = false;
-  cons->tls_cert.enable = false;
+  dir->tls_cert.enable = true;
+  cons->tls_cert.enable = true;
 
 
   Dmsg0(10, "starting listen thread...\n");

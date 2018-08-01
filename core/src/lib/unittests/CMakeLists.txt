@@ -31,6 +31,9 @@ set (TEST_SRC
 
 add_definitions(-DTEST_SMALL_HTABLE)
 
+# where to find the certificates
+add_definitions(-DCERTDIR=\"${CMAKE_SOURCE_DIR}/../regress/configs/BASE/tls\")
+
 add_executable(test_lib
     ${TEST_SRC}
     )

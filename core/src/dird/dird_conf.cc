@@ -3803,10 +3803,71 @@ bool GetTlsPskByFullyQualifiedResourceName(const char *fq_name_, std::string &ps
    return success;
 }
 
+
+static bool AddResourceCopyToEndOfChain(UnionOfResources *res_to_add, int type) {
+   int rindex = type - R_FIRST;
+   UnionOfResources *res = (UnionOfResources *)malloc(resources[rindex].size);
+   memcpy(res, res_to_add, resources[rindex].size);
+   if (!res_head[rindex]) {
+      res_head[rindex] = (CommonResourceHeader *)res; /* store first entry */
+      Dmsg3(900, "Inserting first %s res: %s index=%d\n", my_config->res_to_str(type),
+            res->res_dir.name(), rindex);
+   } else {
+      CommonResourceHeader *next, *last;
+      if (!res->res_dir.name()) {
+         Emsg1(M_ERROR, 0, _("Name item is required in %s resource, but not found.\n"),
+               resources[rindex].name);
+         return false;
+      }
+      /*
+       * Add new res to end of chain
+       */
+      for (last = next = res_head[rindex]; next; next = next->next) {
+         last = next;
+         if (bstrcmp(next->name, res->res_dir.name())) {
+            Emsg2(M_ERROR, 0,
+                  _("Attempt to define second %s resource named \"%s\" is not permitted.\n"),
+                  resources[rindex].name, res->res_dir.name());
+            return false;
+         }
+      }
+      last->next = (CommonResourceHeader *)res;
+   }
+   return true;
+}
+
+
+/*
+ * Create a special Console named "*UserAgent*" with
+ * root console password so that incoming console
+ * connections can be handled in unique way
+ *
+ */
+bool CreateAndAddUserAgentConsoleResource(ConfigurationParser &my_config) {
+
+  DirectorResource *dir_resource = (DirectorResource *)my_config.GetNextRes(R_DIRECTOR, NULL);
+  ConsoleResource console;
+
+  memset(&console, 0, sizeof(console));
+  console.password.encoding = dir_resource->password.encoding;
+  console.password.value = bstrdup(dir_resource->password.value);
+  console.tls_psk.enable = true;
+  console.hdr.name = bstrdup("*UserAgent*");
+  console.hdr.desc = bstrdup("root console definition");
+  console.hdr.rcode = 1013;
+  console.hdr.refcnt = 1;
+
+  AddResourceCopyToEndOfChain((UnionOfResources*)&console, R_CONSOLE);
+}
+
+
 static void ConfigInitLateCb(ConfigurationParser &my_config)
 {
   DirectorResource *dir_resource = (DirectorResource *)my_config.GetNextRes(R_DIRECTOR, NULL);
   dir_resource->tls_psk.GetTlsPskByFullyQualifiedResourceNameCb = GetTlsPskByFullyQualifiedResourceName;
+
+  CreateAndAddUserAgentConsoleResource(my_config);
+
 }
 
 ConfigurationParser *InitDirConfig(const char *configfile, int exit_code)
@@ -4379,7 +4440,6 @@ void FreeResource(CommonResourceHeader *sres, int type)
    }
 }
 
-
 /**
  * Save the new resource by chaining it into the head list for
  * the resource. If this is pass 2, we update any resource
@@ -4427,37 +4487,10 @@ bool SaveResource(int type, ResourceItem *items, int pass)
       return UpdateResourcePointer(type, items);
    }
 
-   /*
-    * Common
-    */
-   res = (UnionOfResources *)malloc(resources[rindex].size);
-   memcpy(res, &res_all, resources[rindex].size);
-   if (!res_head[rindex]) {
-      res_head[rindex] = (CommonResourceHeader *)res; /* store first entry */
-      Dmsg3(900, "Inserting first %s res: %s index=%d\n", my_config->res_to_str(type),
-            res->res_dir.name(), rindex);
-   } else {
-      CommonResourceHeader *next, *last;
-      if (!res->res_dir.name()) {
-         Emsg1(M_ERROR, 0, _("Name item is required in %s resource, but not found.\n"),
-               resources[rindex].name);
-         return false;
-      }
-      /*
-       * Add new res to end of chain
-       */
-      for (last = next = res_head[rindex]; next; next = next->next) {
-         last = next;
-         if (bstrcmp(next->name, res->res_dir.name())) {
-            Emsg2(M_ERROR, 0,
-                  _("Attempt to define second %s resource named \"%s\" is not permitted.\n"),
-                  resources[rindex].name, res->res_dir.name());
-            return false;
-         }
-      }
-      last->next = (CommonResourceHeader *)res;
-      Dmsg4(900, _("Inserting %s res: %s index=%d pass=%d\n"), my_config->res_to_str(type),
-            res->res_dir.name(), rindex, pass);
+   if (!AddResourceCopyToEndOfChain(&res_all, type)) {
+     return false;
    }
+   Dmsg4(900, _("Inserting %s res: %s index=%d pass=%d\n"), my_config->res_to_str(type),
+       res->res_dir.name(), rindex, pass);
    return true;
 }

@@ -3787,18 +3787,11 @@ bool GetTlsPskByFullyQualifiedResourceName(const char *fq_name_, std::string &ps
    std::string fq_name(fq_name_buffer);
    free(fq_name_buffer);
 
-   const std::string ua("*UserAgent*");
-
    bool success = false;
-   if (fq_name == ua) {
-      psk_return_value = me->password.value;
-      success = true;
-   } else {
-      ConsoleResource *res = reinterpret_cast<ConsoleResource*>(my_config->GetResWithName(R_CONSOLE, fq_name.c_str()));
-      if(res) {
-         psk_return_value = res->password.value;
-         success = true;
-      }
+   ConsoleResource *res = reinterpret_cast<ConsoleResource*>(my_config->GetResWithName(R_CONSOLE, fq_name.c_str()));
+   if(res) {
+     psk_return_value = res->password.value;
+     success = true;
    }
    return success;
 }

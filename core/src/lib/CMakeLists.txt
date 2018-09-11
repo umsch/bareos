@@ -91,6 +91,6 @@ IF(HAVE_WIN32)
 ENDIF()
 
 IF(NOT HAVE_WIN32 AND GTEST_FOUND)
-   add_subdirectory(unittests)
+#   add_subdirectory(unittests)
 ENDIF()
 

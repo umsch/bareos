@@ -96,6 +96,8 @@ Bareos Debug for Windows versions >= Windows Vista
 %prep
 %setup -q -n bareos-%{version}
 
+pushd core
+
 # unpack addons
 for i in `ls %addonsdir`; do
    tar xvf %addonsdir/$i
@@ -107,6 +109,8 @@ done
 
 
 %build
+
+pushd core
 
 for flavor in %flavors; do
 
@@ -140,11 +144,6 @@ done
 
 
 %install
-#for flavor in %flavors; do
-#   pushd $flavor
-#   make DESTDIR=%{buildroot} install
-#   popd
-#done
 
 %clean
 rm -rf $RPM_BUILD_ROOT

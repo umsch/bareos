@@ -94,10 +94,10 @@ CONFIGURE_FULL        = $(CONFIGURE_COMMON) -Dpython=yes -Dbat=yes -Dtraymonitor
 override_dh_auto_configure:
 	@if [ "`lsb_release --short  --id`" = "Ubuntu" ] && [ "`lsb_release --short  --release`" = "8.04" ]; then \
 		echo "configure common configuration"; \
-		cd core; cmake $(CONFIGURE_COMMON); make -j4 VERBOSE=1 install;\
+		cd core; dh_auto_configure -- $(CONFIGURE_COMMON);\
 	else \
 		echo "configure full configuration"; \
-		cd core; cmake $(CONFIGURE_FULL); make -j4 VERBOSE=1 install;\
+		cd core; dh_auto_configure -- $(CONFIGURE_FULL);\
 	fi
 
 override_dh_fixperms:
@@ -113,7 +113,7 @@ override_dh_strip:
 override_dh_install:
 	chrpath -d $(CURDIR)/debian/tmp/usr/lib/bareos/backends/libbareoscats-mysql* \
 		$(CURDIR)/debian/tmp/usr/lib/bareos/backends/libbareoscats-postgresql* \
-		$(CURDIR)/debian/tmp/usr/lib/bareos/backends/libbareoscats-sqlite3*\
+		$(CURDIR)/debian/tmp/usr/lib/bareos/backends/libbareoscats-sqlite3*
 	dh_install
 
 override_dh_installinit:

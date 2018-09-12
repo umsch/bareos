@@ -709,6 +709,7 @@ export PATH=$PATH:/usr/lib64/qt4/bin:/usr/lib/qt4/bin
 %endif
 export MTX=/usr/sbin/mtx
 
+pushd core
 
 mkdir %{CMAKE_BUILDDIR}
 pushd %{CMAKE_BUILDDIR}
@@ -805,6 +806,7 @@ cmake  .. \
 %__make CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" %{?_smp_mflags};
 
 %check
+pushd core
 # run unit tests
 pushd %{CMAKE_BUILDDIR}
 make check
@@ -817,6 +819,7 @@ make check
 ##endif
 #make DESTDIR=#{buildroot} install-autostart
 
+pushd core
 pushd %{CMAKE_BUILDDIR}
 make  DESTDIR=%{buildroot} install
 

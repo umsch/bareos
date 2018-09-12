@@ -94,10 +94,10 @@ CONFIGURE_FULL        = $(CONFIGURE_COMMON) -Dpython=yes -Dbat=yes -Dtraymonitor
 override_dh_auto_configure:
 	@if [ "`lsb_release --short  --id`" = "Ubuntu" ] && [ "`lsb_release --short  --release`" = "8.04" ]; then \
 		echo "configure common configuration"; \
-		cd core; dh_auto_configure -- $(CONFIGURE_COMMON);\
+		cd core; dh_auto_configure --sourcedirectory=core -- $(CONFIGURE_COMMON);\
 	else \
 		echo "configure full configuration"; \
-		cd core; dh_auto_configure -- $(CONFIGURE_FULL);\
+		cd core; dh_auto_configure --sourcedirectory=core -- $(CONFIGURE_FULL);\
 	fi
 
 override_dh_fixperms:

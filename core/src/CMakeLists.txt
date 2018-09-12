@@ -19,7 +19,7 @@
 
 IF(NOT client-only)
    add_subdirectory(tools)
-   add_subdirectory(../../regress/helpers ${CMAKE_CURRENT_BINARY_DIR}/helpers)
+   add_subdirectory(${PROJECT_SOURCE_DIR}/../regress/helpers ${CMAKE_CURRENT_BINARY_DIR}/helpers)
    add_subdirectory(cats)
    IF(NOT HAVE_WIN32)
       add_subdirectory(ndmp)

@@ -94,10 +94,10 @@ CONFIGURE_FULL        = $(CONFIGURE_COMMON) -Dpython=yes -Dbat=yes -Dtraymonitor
 override_dh_auto_configure:
 	@if [ "`lsb_release --short  --id`" = "Ubuntu" ] && [ "`lsb_release --short  --release`" = "8.04" ]; then \
 		echo "configure common configuration"; \
-		cd core; cmake $(CONFIGURE_COMMON); make -j4 verbose=1;\
+		cd core; cmake $(CONFIGURE_COMMON); make -j4 VERBOSE=1;\
 	else \
 		echo "configure full configuration"; \
-		cd core; cmake $(CONFIGURE_FULL); make -j4 verbose=1;\
+		cd core; cmake $(CONFIGURE_FULL); make -j4 VERBOSE=1;\
 	fi
 
 override_dh_fixperms:

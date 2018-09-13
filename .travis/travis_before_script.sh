@@ -15,7 +15,8 @@ if [ "${COVERITY_SCAN}" ]; then
    eval "$COVERITY_SCAN_BUILD"
 else
    print_header "build Bareos packages"
-   fakeroot debian/rules binary
+   #fakeroot debian/rules binary
+   debian/rules binary
 
    print_header "create Debian package repository"
    cd ..

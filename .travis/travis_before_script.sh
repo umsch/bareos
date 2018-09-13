@@ -8,7 +8,7 @@ print_header()
    printf "#\n"
 }
 
-cd core
+#cd core
 if [ "${COVERITY_SCAN}" ]; then
    # run configure with default options
    debian/rules override_dh_auto_configure

@@ -47,6 +47,9 @@ target_link_libraries(bwild bareos ${JANSSON_LIBRARIES})
 add_executable(bscrypto bscrypto.cc)
 target_link_libraries(bscrypto bareos ${JANSSON_LIBRARIES})
 
+add_executable(btestls btestls.cc)
+target_link_libraries(btestls bareosfind bareos ${JANSSON_LIBRARIES})
+
 IF(NOT HAVE_WIN32)
    add_executable(bpluginfo bpluginfo.cc)
    target_link_libraries(bpluginfo bareos ${DL_LIBRARIES} ${JANSSON_LIBRARIES})
@@ -55,7 +58,7 @@ IF(NOT HAVE_WIN32)
 ENDIF()
 
 set (TOOLS_BIN
-   bsmtp bwild bregex
+   bsmtp bwild bregex btestls
    )
 
 set (TOOLS_SBIN

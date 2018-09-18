@@ -75,6 +75,7 @@ class BareosSocket : public SmartAlloc {
   void SetTlsEstablished() { tls_established_ = true; }
   bool TlsEstablished() const { return tls_established_; }
   std::shared_ptr<Tls> tls_conn; /* Associated tls connection */
+  std::unique_ptr<Tls> tls_conn_init; /* during initialization */
 
  protected:
   JobControlRecord *jcr_; /* JobControlRecord or NULL for error msgs */
@@ -242,6 +243,8 @@ class BareosSocket : public SmartAlloc {
   void SetTerminated() { terminated_ = true; }
   void StartTimer(int sec) { tid_ = StartBsockTimer(this, sec); }
   void StopTimer() { StopBsockTimer(tid_); }
+  void LockMutex();
+  void UnlockMutex();
 };
 
 /**

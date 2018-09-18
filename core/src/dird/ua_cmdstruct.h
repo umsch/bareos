@@ -1,7 +1,7 @@
 /*
    BAREOS® - Backup Archiving REcovery Open Sourced
 
-   Copyright (C) 2004-2006 Free Software Foundation Europe e.V.
+   Copyright (C) 2018-2018 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -19,25 +19,22 @@
    02110-1301, USA.
 */
 
-#ifndef BAREOS_CONSOLE_CONIO_H_
-#define BAREOS_CONSOLE_CONIO_H_
+#ifndef BAREOS_DIRD_UA_COMMANDSTRUCT_H_
+#define BAREOS_DIRD_UA_COMMANDSTRUCT_H_
 
-namespace console {
+namespace directordaemon {
 
-extern int  InputLine(char *line, int len);
-extern void ConInit(FILE *input);
+class UaContext;
 
-extern "C" {
-extern void ConTerm();
-}
+struct ua_cmdstruct {
+   const char *key;        /**< Command */
+   bool (*func)(UaContext *ua, const char *cmd); /**< Handler */
+   const char *help;       /**< Main purpose */
+   const char *usage;      /**< All arguments to build usage */
+   const bool use_in_rs;   /**< Can use it in Console RunScript */
+   const bool audit_event; /**< Log an audit event when this Command is executed */
+};
 
-extern void ConSetZedKeys();
-extern void t_sendl(char *buf, int len);
-extern void t_send(char *buf);
-extern void t_char(char c);
-extern int  usrbrk(void);
-extern void clrbrk(void);
-extern void trapctlc(void);
+} /* namespace directordaemon  */
 
-} /* namespace console */
-#endif
+#endif /* BAREOS_DIRD_UA_COMMANDSTRUCT_H_ */

@@ -19,14 +19,16 @@
    02110-1301, USA.
 */
 
-#ifndef BAREOS_DIRD_UA_SERVER_H_
-#define BAREOS_DIRD_UA_SERVER_H_
+#ifndef BAREOS_CONSOLE_CONSOLE_OUTPUT_H_
+#define BAREOS_CONSOLE_CONSOLE_OUTPUT_H_
 
-namespace directordaemon {
+#include <cstdio>
 
-void *HandleUserAgentClientRequest(BareosSocket *user);
-JobControlRecord *new_control_jcr(const char *base_name, int job_type);
-void FreeUaContext(UaContext *ua);
+void ConsoleOutputFormat(const char *fmt, ...);
+void ConsoleOutput(const char *buf);
+void EnableTeeOut();
+void DisableTeeOut();
+void SetTeeFile(FILE* f);
+void CloseTeeFile();
 
-} /* namespace directordaemon */
-#endif // BAREOS_DIRD_UA_SERVER_H_
+#endif /* BAREOS_CONSOLE_CONSOLE_OUTPUT_H_ */

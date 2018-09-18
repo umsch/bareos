@@ -1,7 +1,9 @@
 /*
    BAREOS® - Backup Archiving REcovery Open Sourced
 
-   Copyright (C) 2018-2018 Bareos GmbH & Co. KG
+   Copyright (C) 2000-2011 Free Software Foundation Europe e.V.
+   Copyright (C) 2011-2012 Planets Communications B.V.
+   Copyright (C) 2013-2018 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -19,14 +21,16 @@
    02110-1301, USA.
 */
 
-#ifndef BAREOS_DIRD_UA_SERVER_H_
-#define BAREOS_DIRD_UA_SERVER_H_
+#ifndef BAREOS_CONSOLE_AUTH_PAM_H_
+#define BAREOS_CONSOLE_AUTH_PAM_H_
 
-namespace directordaemon {
+#include <cstdio>
 
-void *HandleUserAgentClientRequest(BareosSocket *user);
-JobControlRecord *new_control_jcr(const char *base_name, int job_type);
-void FreeUaContext(UaContext *ua);
+class BareosSocket;
 
-} /* namespace directordaemon */
-#endif // BAREOS_DIRD_UA_SERVER_H_
+namespace console {
+
+bool ConsolePamAuthenticate(FILE *stdin, BareosSocket *UA_sock);
+
+} /* namespace console */
+#endif

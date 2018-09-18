@@ -23,10 +23,9 @@
 #define BAREOS_DIRD_JOB_H_
 
 class JobControlRecord;
+class UaContext;
 
 namespace directordaemon {
-
-class UaContext;
 
 bool AllowDuplicateJob(JobControlRecord *jcr);
 void SetJcrDefaults(JobControlRecord *jcr, JobResource *job);

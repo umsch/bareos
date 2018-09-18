@@ -31,27 +31,33 @@
 #ifndef BAREOS_DIRD_UA_H_
 #define BAREOS_DIRD_UA_H_ 1
 
-namespace directordaemon {
+#include "include/bareos.h"
+#include "include/bc_types.h"
+#include "dird/dird_conf.h"
 
-class UaContext;
-class RestoreBootstrapRecord;
+class JobControlRecord;
+class BareosSocket;
+class BareosDb;
+class guid_list;
+
+namespace directordaemon {
 
 #define MAX_ID_LIST_LEN 2000000
 
-struct ua_cmdstruct {
-   const char *key; /**< Command */
-   bool (*func)(UaContext *ua, const char *cmd); /**< Handler */
-   const char *help; /**< Main purpose */
-   const char *usage; /**< All arguments to build usage */
-   const bool use_in_rs; /**< Can use it in Console RunScript */
-   const bool audit_event; /**< Log an audit event when this Command is executed */
-};
+class RestoreBootstrapRecord;
+struct ua_cmdstruct;
+class CatalogResource;
+class ConsoleResource;
+class UnifiedStorageResource;
+class PoolResource;
+class StorageResource;
+class ClientResource;
+class JobResource;
+class FilesetResource;
+class ScheduleResource;
 
 class UaContext {
 public:
-   /*
-    * Members
-    */
    BareosSocket *UA_sock;
    BareosSocket *sd;
    JobControlRecord *jcr;
@@ -85,14 +91,8 @@ public:
    OutputFormatter *send;            /**< object instance to handle output */
 
 private:
-   /*
-    * Members
-    */
    ua_cmdstruct *cmddef;              /**< Definition of the currently executed command */
 
-   /*
-    * Methods
-    */
    bool AclAccessOk(int acl, const char *item, int len, bool audit_event = false);
    int RcodeToAcltype(int rcode);
    void LogAuditEventAclFailure(int acl, const char *item);
@@ -100,10 +100,8 @@ private:
    void SetCommandDefinition(ua_cmdstruct *cmdstruct) { cmddef = cmdstruct; }
 
 public:
-   /*
-    * Methods
-    */
-   void signal(int sig) { UA_sock->signal(sig); }
+   UaContext();
+   void signal(int sig);
    bool execute(ua_cmdstruct *cmd);
 
    /*
@@ -251,13 +249,11 @@ public:
    bool accurate_set;
    bool ignoreduplicatecheck_set;
 
-   /*
-    * Methods
-    */
-   RunContext() { memset(this, 0, sizeof(RunContext));
-               store = new UnifiedStorageResource; }
-   ~RunContext() { delete store; }
+   RunContext();
+   ~RunContext();
 };
 
+UaContext *new_ua_context(JobControlRecord *jcr);
+
 } /* namespace directordaemon */
-#endif /* BAREOS_DIRD_UA_H_ */
+#endif

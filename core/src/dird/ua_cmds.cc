@@ -32,12 +32,14 @@
 #include "dird.h"
 #include "dird/dird_globals.h"
 #include "dird/backup.h"
+#include "dird/ua_cmdstruct.h"
 #include "dird/expand.h"
 #include "dird/fd_cmds.h"
 #include "dird/job.h"
 #include "dird/next_vol.h"
 #include "dird/sd_cmds.h"
 #include "dird/storage.h"
+#include "dird/ua.h"
 #include "dird/ua_db.h"
 #include "dird/ua_impexp.h"
 #include "dird/ua_input.h"
@@ -50,14 +52,6 @@
 #include "lib/edit.h"
 
 namespace directordaemon {
-
-/* Imported subroutines */
-
-/* Imported variables */
-
-/*
- * Imported functions
- */
 
 /* ua_cmds.c */
 extern bool AutodisplayCmd(UaContext *ua, const char *cmd);

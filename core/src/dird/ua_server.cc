@@ -32,6 +32,7 @@
 #include "dird.h"
 #include "dird/dird_globals.h"
 #include "dird/authenticate.h"
+#include "dird/auth_pam.h"
 #include "dird/job.h"
 #include "dird/ua_cmds.h"
 #include "dird/ua_db.h"
@@ -76,20 +77,26 @@ JobControlRecord *new_control_jcr(const char *base_name, int job_type)
  */
 void *HandleUserAgentClientRequest(BareosSocket *user_agent_socket)
 {
-   int status;
-   UaContext *ua;
-   JobControlRecord *jcr;
-
    pthread_detach(pthread_self());
 
-   jcr = new_control_jcr("-Console-", JT_CONSOLE);
+   JobControlRecord *jcr = new_control_jcr("-Console-", JT_CONSOLE);
 
-   ua = new_ua_context(jcr);
+   UaContext *ua = new_ua_context(jcr);
    ua->UA_sock = user_agent_socket;
    SetJcrInTsd(INVALID_JCR);
 
-   if (!AuthenticateUserAgent(ua)) {
-      goto getout;
+   bool success = AuthenticateUserAgent(ua);
+
+   if (success) {
+      std::string username;
+      if (ua->cons) {
+         username = ua->cons->name();
+      }
+      success = PamAuthenticateUseragent(ua->UA_sock, username);
+   }
+
+   if (!success) {
+      ua->quit = true;
    }
 
    while (!ua->quit) {
@@ -97,7 +104,7 @@ void *HandleUserAgentClientRequest(BareosSocket *user_agent_socket)
          user_agent_socket->signal(BNET_MAIN_PROMPT);
       }
 
-      status = user_agent_socket->recv();
+      int status = user_agent_socket->recv();
       if (status >= 0) {
          PmStrcpy(ua->cmd, ua->UA_sock->msg);
          ParseUaArgs(ua);
@@ -129,9 +136,8 @@ void *HandleUserAgentClientRequest(BareosSocket *user_agent_socket)
       } else { /* signal */
          user_agent_socket->signal(BNET_POLL);
       }
-   }
+   } /* while (!ua->quit) */
 
-getout:
    CloseDb(ua);
    FreeUaContext(ua);
    FreeJcr(jcr);
@@ -139,57 +145,5 @@ getout:
    delete user_agent_socket;
 
    return NULL;
-}
-
-/**
- * Create a UaContext for a Job that is running so that
- *   it can the User Agent routines and
- *   to ensure that the Job gets the proper output.
- *   This is a sort of mini-kludge, and should be
- *   unified at some point.
- */
-UaContext *new_ua_context(JobControlRecord *jcr)
-{
-   UaContext *ua;
-
-   ua = (UaContext *)malloc(sizeof(UaContext));
-   memset(ua, 0, sizeof(UaContext));
-   ua->jcr = jcr;
-   ua->db = jcr->db;
-   ua->cmd = GetPoolMemory(PM_FNAME);
-   ua->args = GetPoolMemory(PM_FNAME);
-   ua->errmsg = GetPoolMemory(PM_FNAME);
-   ua->verbose = true;
-   ua->automount = true;
-   ua->send = New(OutputFormatter(printit, ua, filterit, ua));
-
-   return ua;
-}
-
-void FreeUaContext(UaContext *ua)
-{
-   if (ua->guid) {
-      FreeGuidList(ua->guid);
-   }
-   if (ua->cmd) {
-      FreePoolMemory(ua->cmd);
-   }
-   if (ua->args) {
-      FreePoolMemory(ua->args);
-   }
-   if (ua->errmsg) {
-      FreePoolMemory(ua->errmsg);
-   }
-   if (ua->prompt) {
-      free(ua->prompt);
-   }
-   if (ua->send) {
-      delete ua->send;
-   }
-   if (ua->UA_sock) {
-      ua->UA_sock->close();
-      ua->UA_sock = NULL;
-   }
-   free(ua);
 }
 } /* namespace directordaemon */

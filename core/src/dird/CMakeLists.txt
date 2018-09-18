@@ -21,7 +21,7 @@
 set(DIRDSRCS dird.cc)
 
 #DIRD_OBJECTS_SRCS also used in a separate library for unittests
-set(DIRD_OBJECTS_SRCS admin.cc archive.cc authenticate.cc autoprune.cc backup.cc bsr.cc catreq.cc
+set(DIRD_OBJECTS_SRCS admin.cc archive.cc authenticate.cc auth_pam.cc autoprune.cc backup.cc bsr.cc catreq.cc
    consolidate.cc dird_globals.cc dir_plugins.cc dird_conf.cc expand.cc fd_cmds.cc
    getmsg.cc inc_conf.cc job.cc jobq.cc migrate.cc mountreq.cc msgchan.cc
    ndmp_dma_storage.cc
@@ -31,7 +31,7 @@ set(DIRD_OBJECTS_SRCS admin.cc archive.cc authenticate.cc autoprune.cc backup.cc
    ndmp_fhdb_common.cc ndmp_fhdb_helpers.cc
    ndmp_fhdb_mem.cc ndmp_fhdb_lmdb.cc ndmp_ndmmedia_db_helpers.cc
    newvol.cc next_vol.cc quota.cc socket_server.cc recycle.cc restore.cc
-   run_conf.cc sd_cmds.cc scheduler.cc stats.cc storage.cc ua_acl.cc ua_audit.cc
+   run_conf.cc sd_cmds.cc scheduler.cc stats.cc storage.cc ua.cc ua_acl.cc ua_audit.cc
    ua_cmds.cc ua_configure.cc ua_db.cc ua_dotcmds.cc ua_input.cc ua_impexp.cc
    ua_label.cc ua_output.cc ua_prune.cc ua_purge.cc ua_query.cc ua_restore.cc
    ua_run.cc ua_select.cc ua_server.cc ua_status.cc ua_tree.cc ua_update.cc
@@ -41,11 +41,15 @@ IF(HAVE_WIN32)
 ENDIF()
 
 IF(HAVE_WIN32)
-   include_directories(${CMAKE_SOURCE_DIR}/src/win32/generic ${CMAKE_SOURCE_DIR}/src/win32/dird)
+   include_directories(${CMAKE_SOURCE_DIR}/src/win32/generic 
+                       ${CMAKE_SOURCE_DIR}/src/win32/dird
+                       ${PAM_INCLUDE_DIRS})
    LIST(APPEND DIRDSRCS
       ../win32/generic/main.cc
       ../win32/generic/service.cc
       )
+ELSE()
+   include_directories(${PAM_INCLUDE_DIRS})
 ENDIF()
 
 
@@ -79,7 +83,7 @@ IF(HAVE_WIN32)
       )
 ENDIF()
 
-target_link_libraries(bareos-dir ${BAREOS_DIR_LIBRARIES})
+target_link_libraries(bareos-dir ${BAREOS_DIR_LIBRARIES} ${PAM_LIBRARIES})
 
 
 add_executable(bareos-dbcheck ${DBCHKSRCS})
@@ -100,7 +104,6 @@ target_link_libraries(bareos-dbcheck
 #target_link_libraries(testfind bareos bareosfind 
 #                      jansson ${OPENSSL_LIBS} acl cap lzo2
 #)
-
 
 INSTALL(TARGETS bareos-dir bareos-dbcheck DESTINATION "${sbindir}")
 INSTALL(FILES query.sql DESTINATION "${scriptdir}")

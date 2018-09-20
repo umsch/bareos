@@ -1083,11 +1083,13 @@ int main(int argc, char *argv[])
 
    ConsoleOutput(errmsg);
 
-   if (director_resource && director_resource->use_pam_authentication) {
-      if (!ConsolePamAuthenticate(stdin, UA_sock)) {
-         TerminateConsole(0);
-         return 1;
-      }
+   if (console_resource) { /* not for root console */
+     if (director_resource && director_resource->use_pam_authentication) {
+        if (!ConsolePamAuthenticate(stdin, UA_sock)) {
+           TerminateConsole(0);
+           return 1;
+        }
+     }
    }
 
    Dmsg0(40, "Opened connection with Director daemon\n");

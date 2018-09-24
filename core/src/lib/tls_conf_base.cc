@@ -37,8 +37,7 @@ uint32_t GetLocalTlsPolicyFromConfiguration(TlsResource *tls_resource)
 TlsConfigBase *SelectTlsFromPolicy(TlsResource *tls_resource, uint32_t remote_policy)
 {
   if (remote_policy == TlsConfigBase::BNET_TLS_AUTO) {
-    static TlsConfigAuto tls_auto_dummy;
-    return &tls_auto_dummy;
+    return &tls_resource->tls_cert;
   }
   uint32_t local_policy = GetLocalTlsPolicyFromConfiguration(tls_resource);
 

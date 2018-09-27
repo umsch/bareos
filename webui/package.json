@@ -8,5 +8,10 @@
     "api": "node api/index.js"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.5.3",
+    "koa-router": "^7.4.0",
+    "lodash": "^4.17.11"
+  }
 }

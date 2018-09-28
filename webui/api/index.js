@@ -1,4 +1,5 @@
 const Koa = require('koa')
+const cors = require('koa2-cors')
 const app = new Koa()
 const Router = require('koa-router')
 const _ = require('lodash')
@@ -31,6 +32,8 @@ router.get('/status/:res', async (ctx, next) => {
 router.get('/list/:res', async (ctx, next) => {
   ctx.body = await sendCommand(`list ${ctx.params.res}`)
 })
+
+app.use(cors())
 
 app.use(router.routes())
 app.use(router.allowedMethods())

@@ -1,67 +1,37 @@
 const Koa = require('koa')
 const app = new Koa()
 const Router = require('koa-router')
-
 const _ = require('lodash')
 
 const spawn = require('child_process').spawn
-const prc = spawn('/home/torsten/git/bareos-umsch/regress/bin/bconsole')
-prc.stdin.write('.api 2\n')
 
-let result = []
+const sendCommand = async (command) => {
+  const bconsole = spawn('/home/torsten/git/bareos-umsch/regress/bin/bconsole')
+  bconsole.stdin.write('.api 2\n')
+  bconsole.stdin.write(command + '\n')
+  bconsole.stdin.write('exit\n')
 
-prc.stdout.on('data', function (data) {
-  var str = data.toString()
-  var lines = str.split(/(\r?\n)/g)
-
-  for (let line of lines) {
-    if (line === '}') {
-      console.log('schluss')
-    }
+  let consoleOutput = []
+  for await (const data of bconsole.stdout) {
+    let str = data.toString()
+    let lines = str.split(/(\r?\n)/g)
+    consoleOutput.push(lines.join(''))
+    console.log(data.toString())
   }
-
-  var cleanJson = _.dropWhile(lines, o => !o.startsWith('{'))
-  _.dropRightWhile(cleanJson, o => !o.startsWith('}'))
-
-  console.log(cleanJson.join(''))
-})
-
-prc.on('close', function (code) {
-  console.log('process exit code ' + code)
-})
+  let commandOutput = _.find(consoleOutput, o => o.endsWith('exit\n'))
+  let result = commandOutput.substring(0, commandOutput.length - 'exit\n'.length)
+  return JSON.parse(result).result
+}
 
 const router = new Router()
-
-router.get('/status', async (ctx, next) => {
-  buffer = ''
-
-  prc.stdin.write('status dir\n')
-
-  ctx.body = 'ok'
+router.get('/status/:res', async (ctx, next) => {
+  ctx.body = await sendCommand(`status ${ctx.params.res}`)
 })
 
-router.get('/stop', (ctx, next) => {
-  prc.stdin.write('exit\n')
-  ctx.body = 'ok'
-})
-
-router.get('/list/jobs/:jobid', (ctx, next) => {
-  const jobid = ctx.params.jobid
-  prc.stdin.write(`list joblog jobid=${jobid}\n`)
-  ctx.body = 'ok'
-})
-
-router.get('/list/clients', (ctx, next) => {
-  // const clientid = ctx.params.clientid
-  // prc.stdin.write(`list clients jobid=${clientid}\n`)
-  prc.stdin.write(`list clients\n`)
-  ctx.body = 'ok client'
+router.get('/list/:res', async (ctx, next) => {
+  ctx.body = await sendCommand(`list ${ctx.params.res}`)
 })
 
 app.use(router.routes())
 app.use(router.allowedMethods())
-
 app.listen(3000)
-
-
-

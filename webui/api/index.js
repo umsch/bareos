@@ -30,7 +30,7 @@ router.get('/status/:res', async (ctx, next) => {
 })
 
 router.get('/list/:res', async (ctx, next) => {
-  ctx.body = await sendCommand(`list ${ctx.params.res}`)
+  ctx.body = await sendCommand(`llist ${ctx.params.res}`)
 })
 
 app.use(cors())

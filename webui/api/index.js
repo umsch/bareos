@@ -7,7 +7,7 @@ const _ = require('lodash')
 const spawn = require('child_process').spawn
 
 const sendCommand = async (command) => {
-  const bconsole = spawn('/home/torsten/git/bareos-umsch/regress/bin/bconsole')
+  const bconsole = spawn(process.env.BCONSOLE)
   bconsole.stdin.write('.api 2\n')
   bconsole.stdin.write(command + '\n')
   bconsole.stdin.write('exit\n')
@@ -37,4 +37,11 @@ app.use(cors())
 
 app.use(router.routes())
 app.use(router.allowedMethods())
-app.listen(3000)
+
+if (!process.env.BCONSOLE) {
+  console.error('environment variable BCONSOLE not set.')
+} else {
+  console.log(`using bconsole: ${process.env.BCONSOLE}`)
+  console.log('listening on port 3000 for api calls')
+  app.listen(3000)
+}

@@ -1,33 +1,36 @@
-# bareos-webui
+# webui
 
-> bareos-webui
-
-## Build Setup
-
-``` bash
-# install dependencies
+## Web-Service setup
+```
 npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# server api at localhost:3000
-npm run api
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-
-# run unit tests
-npm run unit
-
-# run e2e tests
-npm run e2e
-
-# run all tests
-npm test
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+```
+npm run build
+```
+
+### Run your tests
+```
+npm run test
+```
+
+### Lints and fixes files
+```
+npm run lint
+```
+
+### Run your unit tests
+```
+npm run test:unit
+```
+
+## Api-Service setup
+```sh
+npm run dev  
+```

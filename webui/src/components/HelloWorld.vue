@@ -10,6 +10,8 @@
 </template>
 
 <script>
+import { api } from '@/config'
+
 export default {
   name: 'HelloWorld',
 
@@ -44,7 +46,7 @@ export default {
   methods: {
     getList: async function () {
       try {
-        const response = await this.$http.get('http://localhost:3000/list/clients')
+        const response = await this.$http.get(`${api}/list/clients`)
         return response.data.clients
       } catch (e) {
         console.warn(e)

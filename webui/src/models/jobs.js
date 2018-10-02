@@ -1,7 +1,9 @@
+import { api } from '@/config'
+
 export async function getJobs (http) {
   console.log('getJobs')
   try {
-    const response = await http.get('http://localhost:3000/list/jobs')
+    const response = await http.get(`${api}/list/jobs`)
     return response.data.jobs
   } catch (e) {
     console.warn(e)

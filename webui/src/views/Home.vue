@@ -1,7 +1,13 @@
 <template>
   <div class="home">
-    <HelloWorld/>
-    <Jobs/>
+    <div class="box">
+      <h3 class="title is-3">Client status</h3>
+      <HelloWorld/>
+    </div>
+    <div class="box">
+      <h3 class="title is-3">Jobs</h3>
+      <Jobs/>
+    </div>
   </div>
 </template>
 

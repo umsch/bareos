@@ -1,26 +1,27 @@
 <template>
-  <section class="section">
-    <div class="hero-head">
-      <nav class="navbar" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-          <!-- navbar items, navbar burger... -->
-          <img src="@/assets/bareos-logo-small.png"/>
-        </div>
-        <div class="navbar-menu">
-          <div class="navbar-item">
-            <router-link to="/">Home</router-link>
+  <div>
+    <section class="hero">
+      <div class="hero-head">
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+          <div class="navbar-brand">
+            <!-- navbar items, navbar burger... -->
+            <img src="@/assets/bareos-logo-small.png"/>
           </div>
-          <div class="navbar-item">
-            <router-link to="/about">About</router-link>
+          <div class="navbar-menu">
+            <div class="navbar-item">
+              <router-link to="/">Home</router-link>
+            </div>
+            <div class="navbar-item">
+              <router-link to="/about">About</router-link>
+            </div>
           </div>
-        </div>
-      </nav>
-    </div>
-
+        </nav>
+      </div>
+    </section>
     <div class="container">
       <router-view/>
     </div>
-  </section>
+  </div>
 </template>
 
 <style lang="scss">

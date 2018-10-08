@@ -1,7 +1,8 @@
 const Koa = require('koa')
 const cors = require('koa2-cors')
+
 const app = new Koa()
-const Router = require('koa-router')
+
 const _ = require('lodash')
 
 const spawn = require('child_process').spawn
@@ -24,18 +25,36 @@ const sendCommand = async (command) => {
   return JSON.parse(result).result
 }
 
-const router = new Router()
-router.get('/status/:res', async (ctx, next) => {
-  ctx.body = await sendCommand(`status ${ctx.params.res}`)
-})
+const uniqueConsoles = new Map()
 
-router.get('/list/:res', async (ctx, next) => {
-  ctx.body = await sendCommand(`llist ${ctx.params.res}`)
-})
+//
+// router.get('/status/:res', async (ctx, next) => {
+//   ctx.body = await sendCommand(`status ${ctx.params.res}`)
+// })
+//
+// router.get('/list/:res', async (ctx, next) => {
+//   ctx.body = await sendCommand(`llist ${ctx.params.res}`)
+// })
+//
+// router.get('/unique/open/:id', async (ctx, next) => {
+//   console.log(uniqueConsoles.get(ctx.params.id))
+//   if (uniqueConsoles.get(ctx.params.id)) {
+//     ctx.body = { id: ctx.params.id, isopen: true, created: false }
+//   } else {
+//     uniqueConsoles.set(ctx.params.id, Math.random())
+//     ctx.body = { id: ctx.params.id, isopen: true, created: true }
+//   }
+// })
+//
+// router.get('/unique/close/:id', async (ctx, next) => {
+//
+// })
 
 app.use(cors())
 
+const router = require('./router')()
 app.use(router.routes())
+
 app.use(router.allowedMethods())
 
 if (!process.env.BCONSOLE) {

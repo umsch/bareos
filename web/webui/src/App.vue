@@ -39,6 +39,7 @@
 
 <style lang="scss">
   @import "~bulma";
+  @import "~buefy/src/scss/buefy";
 
   #app {
     font-family: 'Avenir', Helvetica, Arial, sans-serif;

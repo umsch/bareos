@@ -12,6 +12,7 @@
     "axios": "^0.18.0",
     "buefy": "^0.7.1",
     "bulma": "^0.7.2",
+    "moment": "^2.22.2",
     "register-service-worker": "^1.5.2",
     "vue": "^2.5.17",
     "vue-axios": "^2.1.4",
@@ -19,6 +20,9 @@
     "vuex": "^3.0.1"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.4",
+    "@fortawesome/free-solid-svg-icons": "^5.3.1",
+    "@fortawesome/vue-fontawesome": "^0.1.1",
     "@vue/cli": "^3.2.1",
     "@vue/cli-plugin-babel": "^3.2.0",
     "@vue/cli-plugin-eslint": "^3.2.0",

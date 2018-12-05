@@ -4,11 +4,15 @@ import router from './router'
 import store from './store'
 import './registerServiceWorker'
 
+import axios from 'axios'
+import VueAxios from 'vue-axios'
+
 import { Field, Input } from 'buefy/dist/components'
 import 'buefy/dist/buefy.css'
 
 Vue.use(Field)
 Vue.use(Input)
+Vue.use(VueAxios, axios)
 
 Vue.config.productionTip = false
 

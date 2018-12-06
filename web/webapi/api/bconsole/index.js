@@ -7,7 +7,7 @@ const bconsoleAsync = async (command, api = 2) => {
   bconsole.stdin.write(command + '\n')
   bconsole.stdin.write('exit\n')
 
-  console.log(command)
+  // console.log(command)
 
   let consoleOutput = []
   for await (const data of bconsole.stdout) {
@@ -16,8 +16,14 @@ const bconsoleAsync = async (command, api = 2) => {
     consoleOutput.push(lines.join(''))
     // console.log(data.toString())
   }
-  let commandOutput = find(consoleOutput, o => o.endsWith('exit\n'))
-  let result = commandOutput.substring(0, commandOutput.length - 'exit\n'.length)
+  let completeResult = consoleOutput.join('')
+  // console.log(completeResult)
+  const commandpos = completeResult.indexOf(command) + command.length
+  const exitpos = completeResult.indexOf('exit\n{')
+  // console.log({ commandpos, exitpos })
+  // console.log('and the answer is: ' + completeResult.substr(commandpos, exitpos - commandpos))
+  let result = completeResult.substr(commandpos, exitpos - commandpos)
+  console.log(JSON.parse(result).result)
   return JSON.parse(result).result
 }
 

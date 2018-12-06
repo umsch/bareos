@@ -1,4 +1,4 @@
-const _ = require('lodash')
+const find = require('lodash/find')
 const spawn = require('child_process').spawn
 
 const bconsoleAsync = async (command, api = 2) => {
@@ -16,7 +16,7 @@ const bconsoleAsync = async (command, api = 2) => {
     consoleOutput.push(lines.join(''))
     // console.log(data.toString())
   }
-  let commandOutput = _.find(consoleOutput, o => o.endsWith('exit\n'))
+  let commandOutput = find(consoleOutput, o => o.endsWith('exit\n'))
   let result = commandOutput.substring(0, commandOutput.length - 'exit\n'.length)
   return JSON.parse(result).result
 }

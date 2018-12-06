@@ -8,7 +8,7 @@ const listClients = params => bconsoleAsync(`llist ${params}`)
 
 module.exports = router => {
   router.get(`/${routeBasePath}/jobs`, async (ctx, data) => {
-    const validQueryParams = [ 'job', 'jobstatus' ]
+    const validQueryParams = ['job', 'jobstatus']
     const queryKeys = Object.keys(ctx.query)
     const isQueryValid = isEmpty(difference(queryKeys, validQueryParams))
 
@@ -26,12 +26,32 @@ module.exports = router => {
       const result = await listClients(call)
       ctx.body = result
     }
+  })
 
+  router.get(`/${routeBasePath}/job/:jobid`, async (ctx, data) => {
+    const jobId = Number(ctx.params.jobid)
+    if (!jobId) {
+      ctx.status = 400
+      ctx.body = 'jobid is not a number'
+    } else {
+      const result = await listClients(`jobid=${ctx.params.jobid}`)
+      ctx.body = result
+    }
+  })
+  router.get(`/${routeBasePath}/joblog/:jobid`, async (ctx, data) => {
+    const jobId = Number(ctx.params.jobid)
+    if (!jobId) {
+      ctx.status = 400
+      ctx.body = 'jobid is not a number'
+    } else {
+      const result = await listClients(`joblog jobid=${ctx.params.jobid}`)
+      ctx.body = result
+    }
   })
 
   // backups client=<client-name> [fileset=<fileset-name>] [jobstatus=<status>] [level=<level>] [order=<asc|desc>] [limit=<number>]
   router.get(`/backups/client=:clientName`, async (ctx, data) => {
-    const validQueryParams = [ 'fileset', 'jobstatus', 'level', 'order', 'limit' ]
+    const validQueryParams = ['fileset', 'jobstatus', 'level', 'order', 'limit']
     const queryparams = Object.keys(ctx.query)
     const isQueryValid = isEmpty(difference(queryparams, validQueryParams))
 

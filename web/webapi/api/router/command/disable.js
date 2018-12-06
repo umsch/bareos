@@ -7,6 +7,5 @@ module.exports = router => {
   })
 }
 
-
 // actions
 // disable job=<name>

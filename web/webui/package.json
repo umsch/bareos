@@ -17,7 +17,8 @@
     "vue": "^2.5.17",
     "vue-axios": "^2.1.4",
     "vue-router": "^3.0.1",
-    "vuex": "^3.0.1"
+    "vuex": "^3.0.1",
+    "lodash": "latest"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.4",
@@ -45,10 +46,20 @@
       "node": true
     },
     "extends": [
-      "plugin:vue/essential",
+      "plugin:vue/recommended",
       "@vue/standard"
     ],
-    "rules": {},
+    "rules": {
+      "vue": {
+        "script-indent": [
+          "error",
+          "space",
+          {
+            "baseIndent": 2
+          }
+        ]
+      }
+    },
     "parserOptions": {
       "parser": "babel-eslint"
     }

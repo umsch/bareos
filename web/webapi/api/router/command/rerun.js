@@ -7,6 +7,5 @@ module.exports = router => {
   })
 }
 
-
 // actions
 // rerun jobid=<n>

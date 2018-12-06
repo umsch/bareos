@@ -1,37 +1,41 @@
 <template>
-  <b-table :data="jobs"
-           :bordered="false"
-           :striped="true"
-           :narrowed="false"
-           :hoverable="true"
-           :loading="false"
-           :focusable="false"
-           :mobile-cards="false">
+  <BTable
+    :data="jobs"
+    :bordered="false"
+    :striped="true"
+    :narrowed="false"
+    :hoverable="true"
+    :loading="false"
+    :focusable="false"
+    :mobile-cards="false"
+    :selected.sync="selectedJob"
+  >
     <template slot-scope="props">
-      <b-table-column field="id" label="ID" width="40" numeric>
+      <BTableColumn field="id" label="ID" width="40" numeric>
         {{ props.row.jobid }}
-      </b-table-column>
-      <b-table-column field="jobstatus" label="Status" sortable centered>
-        <font-awesome-icon icon="coffee" v-if="props.row.jobstatus === 'T'"/>
-        <font-awesome-icon icon="walking" v-if="props.row.jobstatus === 'R'"/>
-        <font-awesome-icon icon="exclamation-triangle" v-if="props.row.jobstatus === 'E'"/>
+      </BTableColumn>
+      <BTableColumn
+        field="jobstatus" label="Status" sortable centered>
+        <FontAwesomeIcon icon="coffee" v-if="props.row.jobstatus === 'T'"/>
+        <FontAwesomeIcon icon="walking" v-if="props.row.jobstatus === 'R'"/>
+        <FontAwesomeIcon icon="exclamation-triangle" v-if="props.row.jobstatus === 'E'"/>
         {{ js(props.row.jobstatus) }}
-      </b-table-column>
-      <b-table-column field="name" label="Name" sortable>
+      </BTableColumn>
+      <BTableColumn field="name" label="Name" sortable>
         {{ props.row.name }}
-      </b-table-column>
-      <b-table-column field="level" label="Level" sortable centered>
+      </BTableColumn>
+      <BTableColumn field="level" label="Level" sortable centered>
         {{ jl(props.row.level) }}
-      </b-table-column>
-      <b-table-column field="type" label="Type" sortable centered>
+      </BTableColumn>
+      <BTableColumn field="type" label="Type" sortable centered>
         {{ jt(props.row.type) }}
-      </b-table-column>
-      <b-table-column field="starttime" label="Started at" sortable centered>
+      </BTableColumn>
+      <BTableColumn field="starttime" label="Started at" sortable centered>
         {{ dateFormat(props.row.starttime) }}
-      </b-table-column>
-      <b-table-column field="endtime" label="Ended at" sortable centered>
+      </BTableColumn>
+      <BTableColumn field="endtime" label="Ended at" sortable centered>
         {{ dateFormat(props.row.endtime) }}
-      </b-table-column>
+      </BTableColumn>
       <!--"job": "backup-bareos-fd.2018-10-01_15.50.49_04",-->
       <!--"purgedfiles": "0",-->
       <!--"level": "F",-->
@@ -51,9 +55,8 @@
       <!--"priorjobid": "0",-->
       <!--"filesetid": "1",-->
       <!--"fileset": "SelfTest"-->
-
     </template>
-  </b-table>
+  </BTable>
 </template>
 
 <script>
@@ -64,7 +67,8 @@ export default {
   name: 'JobListing',
   data () {
     return {
-      jobs: ['nix']
+      jobs: ['nix'],
+      selectedJob: null
     }
   },
   computed: {},
@@ -85,11 +89,14 @@ export default {
   created: async function () {
     const jobs = await getJobs(this.$http)
     this.jobs = jobs
-    console.log(jobs)
+  },
+  watch: {
+    selectedJob: function (val) {
+      this.$emit('job-selected', Number(val.jobid))
+    }
   }
 }
 </script>
 
 <style scoped>
-
 </style>

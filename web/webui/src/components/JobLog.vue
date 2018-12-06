@@ -7,8 +7,8 @@
       </thead>
       <template v-for="log in jobLog">
         <tr>
-          <td>{{log.time}}</td>
-          <td>{{log.logtext}}</td>
+          <td> <span class="is-size-8">{{log.time}}</span></td>
+          <td><pre>{{log.logtext}}</pre></td>
         </tr>
       </template>
     </table>
@@ -17,6 +17,7 @@
 
 <script>
 import { getJobLog } from '@/models/jobs'
+import * as moment from 'moment'
 
 export default {
   name: 'JobLog',
@@ -27,6 +28,12 @@ export default {
     return {
       job: Object,
       jobLog: Object
+    }
+  },
+  computed: {
+    formatTimeStamp: function (date) {
+      // todo: date formate here
+      return date
     }
   },
   watch: {

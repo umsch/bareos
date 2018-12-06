@@ -12,7 +12,7 @@
     detailed
     detail-key="jobid"
     :opened-detailed="openedDetails"
-    paginated=true,
+    paginated
     per-page="20"
 
   >

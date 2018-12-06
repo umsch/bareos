@@ -1,5 +1,5 @@
 <template>
-  <BTable
+  <b-table
     :data="jobs"
     :bordered="false"
     :striped="true"
@@ -9,33 +9,39 @@
     :focusable="false"
     :mobile-cards="false"
     :selected.sync="selectedJob"
+    detailed
+    detail-key="jobid"
+    :opened-detailed="openedDetails"
+    paginated=true,
+    per-page="20"
+
   >
     <template slot-scope="props">
-      <BTableColumn field="id" label="ID" width="40" numeric>
+      <b-table-column field="id" label="ID" width="40" numeric>
         {{ props.row.jobid }}
-      </BTableColumn>
-      <BTableColumn
+      </b-table-column>
+      <b-table-column
         field="jobstatus" label="Status" sortable centered>
-        <FontAwesomeIcon icon="coffee" v-if="props.row.jobstatus === 'T'"/>
-        <FontAwesomeIcon icon="walking" v-if="props.row.jobstatus === 'R'"/>
-        <FontAwesomeIcon icon="exclamation-triangle" v-if="props.row.jobstatus === 'E'"/>
+        <font-awesome-icon icon="coffee" v-if="props.row.jobstatus === 'T'"/>
+        <font-awesome-icon icon="walking" v-if="props.row.jobstatus === 'R'"/>
+        <font-awesome-icon icon="exclamation-triangle" v-if="props.row.jobstatus === 'E'"/>
         {{ js(props.row.jobstatus) }}
-      </BTableColumn>
-      <BTableColumn field="name" label="Name" sortable>
+      </b-table-column>
+      <b-table-column field="name" label="Name" sortable>
         {{ props.row.name }}
-      </BTableColumn>
-      <BTableColumn field="level" label="Level" sortable centered>
+      </b-table-column>
+      <b-table-column field="level" label="Level" sortable centered>
         {{ jl(props.row.level) }}
-      </BTableColumn>
-      <BTableColumn field="type" label="Type" sortable centered>
+      </b-table-column>
+      <b-table-column field="type" label="Type" sortable centered>
         {{ jt(props.row.type) }}
-      </BTableColumn>
-      <BTableColumn field="starttime" label="Started at" sortable centered>
+      </b-table-column>
+      <b-table-column field="starttime" label="Started at" sortable centered>
         {{ dateFormat(props.row.starttime) }}
-      </BTableColumn>
-      <BTableColumn field="endtime" label="Ended at" sortable centered>
+      </b-table-column>
+      <b-table-column field="endtime" label="Ended at" sortable centered>
         {{ dateFormat(props.row.endtime) }}
-      </BTableColumn>
+      </b-table-column>
       <!--"job": "backup-bareos-fd.2018-10-01_15.50.49_04",-->
       <!--"purgedfiles": "0",-->
       <!--"level": "F",-->
@@ -56,7 +62,27 @@
       <!--"filesetid": "1",-->
       <!--"fileset": "SelfTest"-->
     </template>
-  </BTable>
+    <template slot="detail" slot-scope="props">
+      <article class="media">
+        <figure class="media-left">
+          <p class="image is-64x64">
+            <font-awesome-icon icon="coffee" v-if="props.row.jobstatus === 'T'"/>
+            <font-awesome-icon icon="walking" v-if="props.row.jobstatus === 'R'"/>
+            <font-awesome-icon icon="exclamation-triangle" v-if="props.row.jobstatus === 'E'"/>
+          </p>
+        </figure>
+        <div class="media-content">
+          <div class="content">
+            <div class="columns is-multiline">
+              <div class="column is-half" v-for="item in getDetails(props.row)">
+                <span class="has-text-weight-bold">{{ item.key }}</span>: <span>{{ item.value }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </template>
+  </b-table>
 </template>
 
 <script>
@@ -68,10 +94,20 @@ export default {
   data () {
     return {
       jobs: ['nix'],
+      openedDetails: [],
       selectedJob: null
     }
   },
   computed: {},
+  watch: {
+    selectedJob: function (val) {
+      this.$emit('job-selected', Number(val.jobid))
+    }
+  },
+  created: async function () {
+    const jobs = await getJobs(this.$http)
+    this.jobs = jobs
+  },
   methods: {
     js: function (code) {
       return jobStatus.get(code)
@@ -84,15 +120,9 @@ export default {
     },
     dateFormat: function (date) {
       return moment(date).fromNow()
-    }
-  },
-  created: async function () {
-    const jobs = await getJobs(this.$http)
-    this.jobs = jobs
-  },
-  watch: {
-    selectedJob: function (val) {
-      this.$emit('job-selected', Number(val.jobid))
+    },
+    getDetails: function (selectedItem) {
+      return Object.entries(selectedItem).map(([key, value]) => ({ key, value }))
     }
   }
 }

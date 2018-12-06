@@ -1,7 +1,8 @@
 <template>
   <section>
-    <job-listing v-on:job-selected="selectedJob = $event"/>
-    <job-details :jobid="selectedJob"></job-details>
+    <div class="box">
+      <job-listing v-on:job-selected="selectedJob = $event"/>
+    </div>
     <job-log :jobid="selectedJob"></job-log>
   </section>
 </template>
@@ -13,15 +14,14 @@ import JobLog from '../components/JobLog'
 
 export default {
   name: 'Jobs',
+  components: {
+    JobLog,
+    JobListing
+  },
   data () {
     return {
       selectedJob: 0
     }
-  },
-  components: {
-    JobLog,
-    JobDetails,
-    JobListing
   },
   methods: {}
 }

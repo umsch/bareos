@@ -3,7 +3,9 @@
     <div class="box">
       <job-listing v-on:job-selected="selectedJob = $event"/>
     </div>
-    <job-log :jobid="selectedJob"></job-log>
+    <div class="box" v-if="selectedJob">
+      <job-log :jobid="selectedJob"></job-log>
+    </div>
   </section>
 </template>
 

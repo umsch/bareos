@@ -1,8 +1,9 @@
-const find = require('lodash/find')
 const spawn = require('child_process').spawn
+const config = require('config')
 
 const bconsoleAsync = async (command, api = 2) => {
-  const bconsole = spawn(process.env.BCONSOLE)
+  const bconsole = spawn(config.get('bareos.bconsole_executable'))
+  console.log(bconsole)
   bconsole.stdin.write(`.api ${api}\n`)
   bconsole.stdin.write(command + '\n')
   bconsole.stdin.write('exit\n')

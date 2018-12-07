@@ -2,8 +2,19 @@
 const Koa = require('koa')
 const app = new Koa()
 
+const checkConfig = async (ctx, next) => {
+  if (!process.env.BCONSOLE) {
+    console.log('env BCONSOLE not set')
+    ctx.status = 500
+    ctx.body = 'env BSONSOLE not set'
+  } else {
+    await next()
+  }
+}
+
 const cors = require('@koa/cors')
 app.use(cors())
+app.use(checkConfig)
 
 const router = require('./router')()
 app.use(router.routes())

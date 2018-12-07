@@ -17,7 +17,6 @@
 
 <script>
 import { getJobLog } from '@/models/jobs'
-import * as moment from 'moment'
 
 export default {
   name: 'JobLog',

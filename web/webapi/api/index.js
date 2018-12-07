@@ -5,5 +5,6 @@ if (!process.env.BCONSOLE) {
 } else {
   console.log(`using bconsole: ${process.env.BCONSOLE}`)
   console.log('listening on port 3000 for api calls')
-  app.listen(3000)
 }
+
+app.listen(3000)

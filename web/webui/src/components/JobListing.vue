@@ -14,7 +14,6 @@
     :opened-detailed="openedDetails"
     paginated
     per-page="20"
-    hoverable
   >
     <template slot-scope="props">
       <b-table-column field="id" label="ID" width="40" numeric>

@@ -7,17 +7,14 @@ const bconsoleAsync = async (command, api = 2) => {
   bconsole.stdin.write(command + '\n')
   bconsole.stdin.write('exit\n')
 
-  let consoleOutput = []
+  let consoleOutput = ''
   for await (const data of bconsole.stdout) {
-    let str = data.toString()
-    let lines = str.split(/(\r?\n)/g)
-    consoleOutput.push(lines.join(''))
+    consoleOutput += data.toString()
   }
-  let completeResult = consoleOutput.join('')
-  const commandpos = completeResult.indexOf(command) + command.length
-  const exitpos = completeResult.indexOf('exit\n{')
-  let result = completeResult.substr(commandpos, exitpos - commandpos)
-  console.log(JSON.parse(result).result)
+
+  const commandPos = consoleOutput.indexOf(command) + command.length
+  const exitPos = consoleOutput.indexOf('exit\n{', commandPos)
+  let result = consoleOutput.substr(commandPos, exitPos - commandPos)
   return JSON.parse(result).result
 }
 

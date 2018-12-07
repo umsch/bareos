@@ -15,7 +15,7 @@ module.exports = router => {
   fs.readdirSync(path.join(routeBasePath))
     .filter(file => file !== thisModuleFileName)
     .forEach(file => {
-      console.log(`register route module '${routeBase}/${file}'`)
+      // console.log(`register route module '${routeBase}/${file}'`)
       require(path.join(routeBasePath, file))(subRouter)
     })
 

@@ -33,6 +33,6 @@ app.use(router.allowedMethods({
   methodNotAllowed: () => new Boom.methodNotAllowed()
 }))
 
-console.log(router.stack.map(i => `[${i.methods.join()}]: ${i.path}`))
+// console.log(router.stack.map(i => `[${i.methods.join()}]: ${i.path}`))
 
 module.exports = app

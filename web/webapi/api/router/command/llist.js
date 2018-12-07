@@ -65,14 +65,14 @@ module.exports = router => {
 }
 
 // views
-// filter: job, days, status
+// todo: filter: job, days, status
 // llist jobs job=<name> days=[1, 3, 7, 30, 365, all] jobstatus=[all, successful, warning, unsusccessful, runnimg, waiting]
 
 // job details: messages
-//  llist joblog jobid=<n>
+//  todo: llist joblog jobid=<n>
 
 // used volumes
-// llist media jobid=<n>
+// todo: llist media jobid=<n>
 
 // basefiles jobid=<jobid> |
 // basefiles ujobid=<complete_name> |

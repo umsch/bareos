@@ -8,4 +8,4 @@ module.exports = router => {
 }
 
 // actions
-// disable job=<name>
+// todo: disable job=<name>

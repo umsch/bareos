@@ -14,7 +14,7 @@
     :opened-detailed="openedDetails"
     paginated
     per-page="20"
-
+    hoverable
   >
     <template slot-scope="props">
       <b-table-column field="id" label="ID" width="40" numeric>
@@ -82,6 +82,16 @@
         </div>
       </article>
     </template>
+    <template slot="empty">
+      <section class="section">
+        <div class="content has-text-grey has-text-centered">
+          <p>
+            <font-awesome-icon icon="coffee" size="5x"/>
+          </p>
+          <p>No jobs</p>
+        </div>
+      </section>
+    </template>
   </b-table>
 </template>
 
@@ -93,7 +103,7 @@ export default {
   name: 'JobListing',
   data () {
     return {
-      jobs: ['nix'],
+      jobs: [],
       openedDetails: [],
       selectedJob: null
     }

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="app">
     <nav class="navbar is-white" role="navigation" aria-label="main navigation">
       <div class="container">
         <div class="navbar-brand">
@@ -36,3 +36,19 @@
     margin-bottom: 1rem;
   }
 </style>
+
+<script>
+import { Snackbar } from 'buefy/dist/components/snackbar'
+import { messages } from './lib/http-client'
+
+messages.subscribe(mes => Snackbar.open({
+  duration: 5000,
+  message: mes,
+  type: 'is-danger',
+  queue: false,
+  indefinite: true
+}))
+
+export default {}
+
+</script>

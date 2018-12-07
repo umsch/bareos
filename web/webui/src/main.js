@@ -3,8 +3,9 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import './registerServiceWorker'
+import { apiBaseUrl } from '@/config'
 
-import axios from 'axios'
+import httpClient from './lib/http-client'
 import VueAxios from 'vue-axios'
 
 import Buefy from 'buefy'
@@ -42,7 +43,9 @@ Vue.use(Buefy, {
   defaultIconPack: 'fas'
 })
 
-Vue.use(VueAxios, axios)
+Vue.use(VueAxios, httpClient({
+  baseUrl: apiBaseUrl
+}))
 
 Vue.config.productionTip = false
 

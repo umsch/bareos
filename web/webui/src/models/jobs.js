@@ -1,11 +1,10 @@
-import { api } from '@/config'
 
 // todo: replace \n by <br /> or wrap into <p></p>
 
 export async function getJobs (http) {
   console.log('getJobs')
   try {
-    const response = await http.get(`${api}command/llist/jobs`)
+    const response = await http.get(`/command/llist/jobs`)
     return response.data.jobs
   } catch (e) {
     console.warn(e)
@@ -16,7 +15,7 @@ export async function getJobs (http) {
 export async function getJob (http, jobid) {
   console.log('getJob')
   try {
-    const response = await http.get(`${api}command/llist/job/${jobid}`)
+    const response = await http.get(`/command/llist/job/${jobid}`)
     return response.data.jobs
   } catch (e) {
     console.warn(e)
@@ -27,7 +26,7 @@ export async function getJob (http, jobid) {
 export async function getJobLog (http, jobid) {
   console.log('getJoblog')
   try {
-    const response = await http.get(`${api}command/llist/joblog/${jobid}`)
+    const response = await http.get(`/command/llist/joblog/${jobid}`)
     return response.data.joblog
   } catch (e) {
     console.warn(e)

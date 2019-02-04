@@ -7,6 +7,7 @@ module.exports = () => {
   })
 
   require('./command')(router)
+  require('./bconsole')(router)
 
   return router
 }

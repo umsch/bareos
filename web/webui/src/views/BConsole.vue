@@ -1,20 +1,36 @@
 <template>
   <div class="container">
-    <p>BConsole</p>
-    <vue-static-terminal></vue-static-terminal>
+    <section>
+      <pre>{{ result }}</pre>
+    </section>
+    <section>
+      <b-field label="Command">
+        <b-input
+          v-model="command"
+          @keydown.native.enter="onSubmit"
+        />
+      </b-field>
+    </section>
   </div>
 </template>
-
 <script>
-import VueStaticTerminal from 'vue-static-terminal'
 
 export default {
   name: 'BConsole',
-  components: { VueStaticTerminal }
+  data () {
+    return {
+      command: '',
+      result: 'test\nnewline'
+    }
+  },
+  methods: {
+    onSubmit: function () {
+      console.log(this.command)
+      this.command = ''
+    }
+  }
 }
 </script>
 
 <style scoped>
-  @import '~vue-static-terminal/dist/vue-static-terminal.css';
-
 </style>

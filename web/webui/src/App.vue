@@ -9,7 +9,12 @@
         </div>
         <div class="navbar-menu is-active">
           <div class="navbar-start">
-            <router-link class="navbar-item" to="/jobs"> Jobs</router-link>
+            <router-link class="navbar-item" to="/jobs">Jobs</router-link>
+          </div>
+        </div>
+        <div class="navbar-menu is-active">
+          <div class="navbar-start">
+            <router-link class="navbar-item" to="/bconsole">BConsole</router-link>
           </div>
         </div>
       </div>

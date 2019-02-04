@@ -47,6 +47,10 @@ Vue.use(VueAxios, httpClient({
   baseUrl: apiBaseUrl
 }))
 
+import VueStaticTerminal from 'vue-static-terminal'
+
+Vue.use(VueStaticTerminal)
+
 Vue.config.productionTip = false
 
 new Vue({

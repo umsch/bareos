@@ -6,7 +6,7 @@
       <th>Log</th>
       </thead>
       <template v-for="log in jobLog">
-        <tr>
+        <tr :key="log.time">
           <td> <span class="is-size-8">{{log.time}}</span></td>
           <td><pre>{{log.logtext}}</pre></td>
         </tr>

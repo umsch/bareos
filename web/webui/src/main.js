@@ -3,10 +3,9 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import VueSocketIO from 'vue-socket.io'
+import io from 'socket.io-client'
 
 import './registerServiceWorker'
-import { apiBaseUrl, socketBaseUrl } from '@/config'
-
 import httpClient from './lib/http-client'
 import VueAxios from 'vue-axios'
 
@@ -46,12 +45,16 @@ Vue.use(Buefy, {
 })
 
 Vue.use(VueAxios, httpClient({
-  baseUrl: apiBaseUrl
+  baseUrl: process.env.VUE_APP_API
 }))
+
+const socket = io(process.env.VUE_APP_SOCKET, {
+  transports: ['websocket']
+})
 
 Vue.use(new VueSocketIO({
   debug: true,
-  connection: socketBaseUrl,
+  connection: socket,
   vuex: {
     store,
     actionPrefix: 'SOCKET_',

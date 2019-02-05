@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <section>
-      <pre>{{ $route.params.id }}</pre>
+      <pre>{{ consoleOutput }}</pre>
     </section>
     <section>
       <b-field label="Command">
@@ -20,12 +20,26 @@ export default {
   data () {
     return {
       command: '',
-      result: 'test\nnewline'
+      consoleOutput: ''
     }
   },
+  created () {
+    const enc = new TextDecoder('utf-8')
+
+    this.sockets.subscribe(this.$route.params.id, data => {
+      const result = enc.decode(data)
+      this.consoleOutput += result
+      console.log(result)
+    })
+  },
+  destroyed () {},
   methods: {
     onSubmit: function () {
       console.log(this.command)
+      if (this.$route.params.id) {
+        console.log(this.$route.params.id)
+        this.$socket.emit(this.$route.params.id, this.command)
+      }
       this.command = ''
     }
   }

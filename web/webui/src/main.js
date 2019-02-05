@@ -2,8 +2,10 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+import VueSocketIO from 'vue-socket.io'
+
 import './registerServiceWorker'
-import { apiBaseUrl } from '@/config'
+import { apiBaseUrl, socketBaseUrl } from '@/config'
 
 import httpClient from './lib/http-client'
 import VueAxios from 'vue-axios'
@@ -45,6 +47,16 @@ Vue.use(Buefy, {
 
 Vue.use(VueAxios, httpClient({
   baseUrl: apiBaseUrl
+}))
+
+Vue.use(new VueSocketIO({
+  debug: true,
+  connection: socketBaseUrl,
+  vuex: {
+    store,
+    actionPrefix: 'SOCKET_',
+    mutationPrefix: 'SOCKET_'
+  }
 }))
 
 Vue.config.productionTip = false

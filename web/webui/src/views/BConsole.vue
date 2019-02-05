@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <section>
-      <pre>{{ result }}</pre>
+      <pre>{{ $route.params.id }}</pre>
     </section>
     <section>
       <b-field label="Command">

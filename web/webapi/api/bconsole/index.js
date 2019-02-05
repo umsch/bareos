@@ -19,7 +19,7 @@ const bconsoleAsync = async (command, api = 2) => {
 }
 
 const create = (api = 0) => {
-  const bconsole = spawn(process.env.BCONSOLE)
+  const bconsole = spawn(config.get('bareos.bconsole_executable'))
   bconsole.stdin.write(`.api ${api}\n`)
 
   return bconsole

@@ -22,7 +22,7 @@ module.exports = router => {
     const process = createConsole()
     consoles.set(id, { process })
     ctx.body = { id }
-
+    ctx.status = 201
     return next
   })
 
@@ -43,12 +43,13 @@ module.exports = router => {
     return next
   })
 
-  subRouter.delete('/:id', (ctx, next) => {
+  subRouter.del('/:id', (ctx, next) => {
     const id = ctx.params.id
     if (consoles.has(id)) {
       const process = consoles.get(id).process
       closeConsole(process)
       consoles.delete(id)
+      ctx.status = 200
     } else {
       ctx.status = 400
     }

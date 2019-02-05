@@ -2,8 +2,15 @@
 const Koa = require('koa')
 const app = new Koa()
 
-const server = require('http').createServer(app.callback())
-const io = require('socket.io')(server)
+app.server = require('http').createServer(app.callback())
+app.listen = (...args) => {
+  app.server.listen.call(app.server, ...args)
+  return app.server
+}
+
+app.io = require('socket.io')(app.server, {
+  transports: ['websocket']
+})
 
 const cors = require('@koa/cors')
 app.use(cors())
@@ -20,10 +27,6 @@ app.use(router.allowedMethods({
 
 console.log(router.stack.map(i => `[${i.methods.join()}]: ${i.path}`))
 
-io.on('connection', client => {
-  client.on('event', data => {
-    console.log(data)
-  })
-})
+app.io.on('connection', function (socket) { console.log('a user connected') })
 
-module.exports = app
+module.exports.app = app

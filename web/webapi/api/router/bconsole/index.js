@@ -19,8 +19,18 @@ module.exports = router => {
 
   subRouter.post('/', (ctx, next) => {
     const id = uuidv4()
-    const process = createConsole()
-    consoles.set(id, { process })
+    const bc = createConsole()
+    bc.stdout.on('data', data => {
+      console.log(`console ${id}: ${data}`)
+      ctx.app.io.emit(id, data)
+    })
+    ctx.app.io.on('connection', client => {
+      client.on(id, data => {
+        console.log(`${id} sent: ${data}`)
+        bc.stdin.write(data + '\n')
+      })
+    })
+    consoles.set(id, { bc })
     ctx.body = { id }
     ctx.status = 201
     return next

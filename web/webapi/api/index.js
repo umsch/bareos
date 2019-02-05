@@ -1,4 +1,4 @@
-const app = require('./server')
+const { app } = require('./server')
 const config = require('config')
 
 const bconsole = config.get('bareos.bconsole_executable')

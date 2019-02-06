@@ -2,12 +2,9 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import VueSocketIO from 'vue-socket.io'
-import io from 'socket.io-client'
+import VueNativeSock from 'vue-native-websocket'
 
 import './registerServiceWorker'
-import httpClient from './lib/http-client'
-import VueAxios from 'vue-axios'
 
 import Buefy from 'buefy'
 import 'buefy/dist/buefy.css'
@@ -44,23 +41,10 @@ Vue.use(Buefy, {
   defaultIconPack: 'fas'
 })
 
-Vue.use(VueAxios, httpClient({
-  baseUrl: process.env.VUE_APP_API
-}))
-
-const socket = io(process.env.VUE_APP_SOCKET, {
-  transports: ['websocket']
+Vue.use(VueNativeSock, process.env.VUE_APP_SOCKET, {
+  store: store,
+  connectManually: false
 })
-
-Vue.use(new VueSocketIO({
-  debug: true,
-  connection: socket,
-  vuex: {
-    store,
-    actionPrefix: 'SOCKET_',
-    mutationPrefix: 'SOCKET_'
-  }
-}))
 
 Vue.config.productionTip = false
 

@@ -73,7 +73,7 @@
         <div class="media-content">
           <div class="content">
             <div class="columns is-multiline">
-              <div class="column is-half" v-for="item in getDetails(props.row)">
+              <div class="column is-half" v-for="item in getDetails(props.row)" :key="item.key">
                 <span class="has-text-weight-bold">{{ item.key }}</span>: <span>{{ item.value }}</span>
               </div>
             </div>

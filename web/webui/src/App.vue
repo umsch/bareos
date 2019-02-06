@@ -43,17 +43,7 @@
 </style>
 
 <script>
-import { Snackbar } from 'buefy/dist/components/snackbar'
-import { messages } from './lib/http-client'
-
-messages.subscribe(mes => Snackbar.open({
-  duration: 5000,
-  message: mes,
-  type: 'is-danger',
-  queue: false,
-  indefinite: true
-}))
-
-export default {}
-
+  export default {
+    name: 'BareosUi'
+  }
 </script>

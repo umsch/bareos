@@ -1,13 +1,13 @@
 <template>
   <section>
     <div class="box">
-      <job-listing @job-selected="selectedJob = $event"/>
+      <job-listing @job-selected="selectedJob = $event" />
     </div>
     <div
       class="box"
       v-if="selectedJob"
     >
-      <job-log :jobid="selectedJob"/>
+      <job-log :jobid="selectedJob" />
     </div>
   </section>
 </template>

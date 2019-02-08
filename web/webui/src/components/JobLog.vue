@@ -2,8 +2,8 @@
   <section>
     <table class="table is-striped">
       <thead>
-      <th>Timestamp</th>
-      <th>Log</th>
+        <th>Timestamp</th>
+        <th>Log</th>
       </thead>
       <template v-for="log in jobLog">
         <tr :key="log.time">

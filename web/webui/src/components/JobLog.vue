@@ -7,8 +7,14 @@
       </thead>
       <template v-for="log in jobLog">
         <tr :key="log.time">
-          <td> <span class="is-size-8">{{log.time}}</span></td>
-          <td><pre>{{log.logtext}}</pre></td>
+          <td>
+            <span class="is-size-8">
+              {{ log.time }}
+            </span>
+          </td>
+          <td>
+            <pre>{{ log.logtext }}</pre>
+          </td>
         </tr>
       </template>
     </table>
@@ -21,7 +27,10 @@ import { getJobLog } from '@/models/jobs'
 export default {
   name: 'JobLog',
   props: {
-    jobid: Number
+    jobid: {
+      type: Number,
+      default: 0
+    }
   },
   data () {
     return {

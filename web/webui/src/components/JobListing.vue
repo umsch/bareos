@@ -16,29 +16,71 @@
     per-page="20"
   >
     <template slot-scope="props">
-      <b-table-column field="id" label="ID" width="40" numeric>
+      <b-table-column
+        field="id"
+        label="ID"
+        width="40"
+        numeric
+      >
         {{ props.row.jobid }}
       </b-table-column>
       <b-table-column
-        field="jobstatus" label="Status" sortable centered>
-        <font-awesome-icon icon="coffee" v-if="props.row.jobstatus === 'T'"/>
-        <font-awesome-icon icon="walking" v-if="props.row.jobstatus === 'R'"/>
-        <font-awesome-icon icon="exclamation-triangle" v-if="props.row.jobstatus === 'E'"/>
+        field="jobstatus"
+        label="Status"
+        sortable
+        centered
+      >
+        <font-awesome-icon
+          icon="coffee"
+          v-if="props.row.jobstatus === 'T'"
+        />
+        <font-awesome-icon
+          icon="walking"
+          v-if="props.row.jobstatus === 'R'"
+        />
+        <font-awesome-icon
+          icon="exclamation-triangle"
+          v-if="props.row.jobstatus === 'E'"
+        />
         {{ js(props.row.jobstatus) }}
       </b-table-column>
-      <b-table-column field="name" label="Name" sortable>
+      <b-table-column
+        field="name"
+        label="Name"
+        sortable
+      >
         {{ props.row.name }}
       </b-table-column>
-      <b-table-column field="level" label="Level" sortable centered>
+      <b-table-column
+        field="level"
+        label="Level"
+        sortable
+        centered
+      >
         {{ jl(props.row.level) }}
       </b-table-column>
-      <b-table-column field="type" label="Type" sortable centered>
+      <b-table-column
+        field="type"
+        label="Type"
+        sortable
+        centered
+      >
         {{ jt(props.row.type) }}
       </b-table-column>
-      <b-table-column field="starttime" label="Started at" sortable centered>
+      <b-table-column
+        field="starttime"
+        label="Started at"
+        sortable
+        centered
+      >
         {{ dateFormat(props.row.starttime) }}
       </b-table-column>
-      <b-table-column field="endtime" label="Ended at" sortable centered>
+      <b-table-column
+        field="endtime"
+        label="Ended at"
+        sortable
+        centered
+      >
         {{ dateFormat(props.row.endtime) }}
       </b-table-column>
       <!--"job": "backup-bareos-fd.2018-10-01_15.50.49_04",-->
@@ -61,20 +103,38 @@
       <!--"filesetid": "1",-->
       <!--"fileset": "SelfTest"-->
     </template>
-    <template slot="detail" slot-scope="props">
+    <template
+      slot="detail"
+      slot-scope="props"
+    >
       <article class="media">
         <figure class="media-left">
           <p class="image is-64x64">
-            <font-awesome-icon icon="coffee" v-if="props.row.jobstatus === 'T'"/>
-            <font-awesome-icon icon="walking" v-if="props.row.jobstatus === 'R'"/>
-            <font-awesome-icon icon="exclamation-triangle" v-if="props.row.jobstatus === 'E'"/>
+            <font-awesome-icon
+              icon="coffee"
+              v-if="props.row.jobstatus === 'T'"
+            />
+            <font-awesome-icon
+              icon="walking"
+              v-if="props.row.jobstatus === 'R'"
+            />
+            <font-awesome-icon
+              icon="exclamation-triangle"
+              v-if="props.row.jobstatus === 'E'"
+            />
           </p>
         </figure>
         <div class="media-content">
           <div class="content">
             <div class="columns is-multiline">
-              <div class="column is-half" v-for="item in getDetails(props.row)" :key="item.key">
-                <span class="has-text-weight-bold">{{ item.key }}</span>: <span>{{ item.value }}</span>
+              <div
+                class="column is-half"
+                v-for="item in getDetails(props.row)"
+                :key="item.key"
+              >
+                <span class="has-text-weight-bold">
+                  {{ item.key }}
+                </span>: <span>{{ item.value }}</span>
               </div>
             </div>
           </div>
@@ -85,7 +145,10 @@
       <section class="section">
         <div class="content has-text-grey has-text-centered">
           <p>
-            <font-awesome-icon icon="coffee" size="5x"/>
+            <font-awesome-icon
+              icon="coffee"
+              size="5x"
+            />
           </p>
           <p>No jobs</p>
         </div>

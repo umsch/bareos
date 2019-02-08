@@ -1,7 +1,10 @@
 <template>
   <div class="container">
     <section>
-      <pre v-for="m in consoleOutput">
+      <pre
+        v-for="m in consoleOutput"
+        :key="m.timeStamp"
+      >
         {{ m.data }}
       </pre>
     </section>
@@ -22,7 +25,7 @@ export default {
   data () {
     return {
       command: ''
-      //consoleOutput: ''
+      // consoleOutput: ''
     }
   },
   created () {
@@ -39,7 +42,7 @@ export default {
     // })
   },
   destroyed () {
-    //this.$disconnect()
+    // this.$disconnect()
   },
   methods: {
     onSubmit: function () {

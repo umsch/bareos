@@ -1,20 +1,41 @@
 <template>
   <div id="app">
-    <nav class="navbar is-white" role="navigation" aria-label="main navigation">
+    <nav
+      class="navbar is-white"
+      role="navigation"
+      aria-label="main navigation"
+    >
       <div class="container">
         <div class="navbar-brand">
-          <router-link class="navbar-item" to="/">
-            <img src="./assets/bareos-logo-small.png" width="48" height="45">
+          <router-link
+            class="navbar-item"
+            to="/"
+          >
+            <img
+              src="./assets/bareos-logo-small.png"
+              width="48"
+              height="45"
+            >
           </router-link>
         </div>
         <div class="navbar-menu is-active">
           <div class="navbar-start">
-            <router-link class="navbar-item" to="/jobs">Jobs</router-link>
+            <router-link
+              class="navbar-item"
+              to="/jobs"
+            >
+              Jobs
+            </router-link>
           </div>
         </div>
         <div class="navbar-menu is-active">
           <div class="navbar-start">
-            <router-link class="navbar-item" to="/bconsole">BConsole</router-link>
+            <router-link
+              class="navbar-item"
+              to="/bconsole"
+            >
+              BConsole
+            </router-link>
           </div>
         </div>
       </div>
@@ -46,7 +67,7 @@
 export default {
   name: 'BareosWebUI',
   beforeCreate () {
-    this.$store.commit('initializeStore')
+    this.$store.commit('bconsole/initializeStore')
   }
 }
 </script>

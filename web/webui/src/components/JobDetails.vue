@@ -2,11 +2,11 @@
   <table class="table is-striped">
     <tr>
       <td>Name:</td>
-      <td>{{job.name}}</td>
+      <td>{{ job.name }}</td>
     </tr>
     <tr>
       <td>Job ID:</td>
-      <td>{{job.jobid}}</td>
+      <td>{{ job.jobid }}</td>
     </tr>
   </table>
 </template>
@@ -45,7 +45,10 @@ import { getJob } from '@/models/jobs'
 export default {
   name: 'JobDetails',
   props: {
-    jobid: Number
+    jobid: {
+      type: Number,
+      default: 0
+    }
   },
   data () {
     return {

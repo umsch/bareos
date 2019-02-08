@@ -67,7 +67,7 @@
 export default {
   name: 'BareosWebUI',
   beforeCreate () {
-    this.$store.commit('bconsole/initializeStore')
+    this.$store.commit('initializeStore')
   }
 }
 </script>

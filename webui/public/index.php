@@ -1,9 +1,19 @@
 <?php
 
-if ($_SERVER['APPLICATION_ENV'] == 'development') {
-   error_reporting(E_ALL);
-   ini_set("display_errors", 1);
-   define('REQUEST_MICROTIME', microtime(true));
+if (isset($_ENV['APPLICATION_ENV'])) {
+    $appenv = $_ENV['APPLICATION_ENV'];
+} else if (isset($_SERVER['APPLICATION_ENV'])) {
+    $appenv = $_SERVER['APPLICATION_ENV'];
+} else {
+    $appenv = "";
+}
+
+if ($appenv == 'development') {
+    error_reporting(E_ALL);
+    ini_set("display_errors", 1);
+    define('REQUEST_MICROTIME', microtime(true));
+} else {
+    // debug breakpoint here ...
 }
 
 /**
@@ -13,7 +23,11 @@ if ($_SERVER['APPLICATION_ENV'] == 'development') {
 chdir(dirname(__DIR__));
 
 // Decline static file requests back to the PHP built-in webserver
-if (php_sapi_name() === 'cli-server' && is_file(__DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH))) {
+if (php_sapi_name() === 'cli-server'
+    && is_file(
+        __DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)
+    )
+) {
     return false;
 }
 

@@ -54,12 +54,16 @@ class ApiController extends AbstractActionController
         if (!$request->isPost()) {
             $response->setStatusCode(Response::STATUS_CODE_404);
         } else {
+            $this->bsock = $this->getServiceLocator()->get('director');
+
             $raw = $this->request->getContent();
             $request = Json::decode($raw);
 
             // und ab in die bconsole
             $model = $this->getApiModel();
-            $model->executeCommand(null, null);
+            $cmdResult = $model->executeCommand($this->bsock, $request->cmd);
+
+            $request->result = $cmdResult;
 
             $response = $this->getResponse();
             $response->getHeaders()->addHeaderLine(

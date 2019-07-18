@@ -5,3 +5,5 @@ config.ini
 Makefile
 config.log
 config.status
+
+**/.idea

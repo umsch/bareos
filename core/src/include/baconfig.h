@@ -470,6 +470,28 @@ int msg_(const char* file, int line, POOLMEM*& pool_buf, const char* fmt, ...);
  * Replace codes needed in both file routines and non-file routines
  * Job replace codes -- in "replace"
  */
+enum class replace_option : int
+{
+  Always = 'a',
+  IfNewer = 'w',
+  Never = 'n',
+  IfOlder = 'o',
+};
+
+inline constexpr const char* enum_name(replace_option opt)
+{
+  switch (opt) {
+    case replace_option::Always:
+      return "Always";
+    case replace_option::IfNewer:
+      return "IfNewer";
+    case replace_option::IfOlder:
+      return "IfOlder";
+    case replace_option::Never:
+      return "Never";
+  }
+}
+
 #define REPLACE_ALWAYS 'a'
 #define REPLACE_IFNEWER 'w'
 #define REPLACE_NEVER 'n'

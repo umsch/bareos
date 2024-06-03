@@ -1,12 +1,13 @@
 syntax = "proto3";
 
 service BareosDirector {
-  rpc ListClients (ListClientsRequest) returns (stream ClientListing) {}
+  rpc ListClients (ListClientsRequest) returns (stream SqlResponse) {}
 }
 
 message ListClientsRequest {
+  optional string clientname = 1;
 }
 
-message ClientListing {
-  string name = 1;
+message SqlResponse {
+  map<string, string> row = 1;
 }

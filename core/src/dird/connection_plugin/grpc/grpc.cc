@@ -66,7 +66,7 @@ bool loadPlugin(const bareos_api* bareos_)
 class DirectorServiceImpl final : public BareosDirector::Service {
   Status ListClients(ServerContext* context,
                      const ListClientsRequest* request,
-                     ServerWriter<ClientListing>* writer) override;
+                     ServerWriter<SqlResponse>* writer) override;
 };
 
 bool Start(int port)
@@ -117,30 +117,52 @@ plugin_api CONN_PLUGIN_API_SYMBOL_NAME = {
     .start = &Start,
 };
 
+template <typename Callback>
+bool sql_callback_helper(size_t num_fields,
+                         const char* const fields[],
+                         const char* const rows[],
+                         void* user)
+{
+  auto* cb = reinterpret_cast<Callback*>(user);
+  return (*cb)(num_fields, fields, rows);
+}
+
 template <typename Callback> bool ListClients(Callback&& callback)
 {
-  return lcc.list_clients(
-      +[](const client* Client, void* user) -> bool {
-        auto* cb = reinterpret_cast<Callback*>(user);
-        return (*cb)(Client);
-      },
-      &callback);
+  return lcc.list_clients(sql_callback_helper<Callback>, &callback);
+}
+
+template <typename Callback>
+bool ListClient(const char* name, Callback&& callback)
+{
+  return lcc.list_client(name, sql_callback_helper<Callback>, &callback);
 }
 
 
 Status DirectorServiceImpl::ListClients(ServerContext* context,
                                         const ListClientsRequest* request,
-                                        ServerWriter<ClientListing>* writer)
+                                        ServerWriter<SqlResponse>* writer)
 {
   ignore(context);
-  ignore(request);
-  ignore(writer);
 
-  if (!::ListClients([writer](const client* Client) -> bool {
-        ignore(Client);
-        return false;
-      })) {
-    return Status(grpc::StatusCode::UNKNOWN, "Internal error");
+  auto cb = [writer](size_t num_fields, const char* const fields[],
+                     const char* const rows[]) -> bool {
+    SqlResponse response;
+    for (size_t i = 0; i < num_fields; ++i) {
+      auto [_, inserted] = response.mutable_row()->insert({fields[i], rows[i]});
+      if (!inserted) { return false; }
+    }
+    writer->Write(response);
+    return true;
+  };
+  if (request->has_clientname()) {
+    if (!::ListClient(request->clientname().c_str(), std::move(cb))) {
+      return Status(grpc::StatusCode::UNKNOWN, "Internal error");
+    }
+  } else {
+    if (!::ListClients(std::move(cb))) {
+      return Status(grpc::StatusCode::UNKNOWN, "Internal error");
+    }
   }
 
   return grpc::Status::OK;

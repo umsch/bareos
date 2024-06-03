@@ -41,17 +41,41 @@ void Log(log_severity severity, const char* str)
   Dmsg2(500, "%d: %s\n", severity, str);
 }
 
-bool PluginListClients(list_client_callback* cb, void* user)
+struct plugin_sql_result_handler : public list_result_handler {
+  plugin_sql_result_handler(sql_callback* cb_, void* user_)
+      : cb(cb_), user(user_)
+  {
+  }
+
+  void begin(const char* name_) override { name = name_; }
+  void add_field(SQL_FIELD* field, field_flags) override
+  {
+    fields.emplace_back(strdup(field->name));
+  }
+
+  bool handle(SQL_ROW row) override
+  {
+    return cb(fields.size(), fields.data(), row, user);
+  }
+
+  void end() override {}
+
+
+  ~plugin_sql_result_handler()
+  {
+    for (auto* field : fields) { free(field); }
+  }
+
+  std::string name;
+  sql_callback* cb;
+  void* user;
+
+  std::vector<char*> fields;
+};
+
+bool PluginListClientsImpl(const char* name, sql_callback* cb, void* user)
 {
   auto* jcr = NewDirectorJcr(DirdFreeJcr);
-
-  // ua->db = DbSqlGetPooledConnection(
-  //     ua->jcr, ua->catalog->db_driver, ua->catalog->db_name,
-  //     ua->catalog->db_user, ua->catalog->db_password.value,
-  //     ua->catalog->db_address, ua->catalog->db_port, ua->catalog->db_socket,
-  //     mult_db_conn, ua->catalog->disable_batch_insert,
-  //     ua->catalog->try_reconnect, ua->catalog->exit_on_fatal, use_private);
-  // DbSqlGetPooledConnection();
 
   auto* db = [jcr]() -> BareosDb* {
     ResLocker _{my_config};
@@ -69,24 +93,23 @@ bool PluginListClients(list_client_callback* cb, void* user)
 
   if (!db) { return false; }
 
-  // db->ListClientRecords(jcr, NULL, formatter, RAW_LIST);
+  plugin_sql_result_handler handler(cb, user);
 
-  //   ;
+  db->ListClientRecords(jcr, name, false, &handler);
 
   DbSqlClosePooledConnection(jcr, db);
 
-  (void)jcr;
-  (void)cb;
-  (void)user;
   return true;
 }
 
-bool PluginListClient(const char* name, list_client_callback* cb, void* user)
+bool PluginListClients(sql_callback* cb, void* user)
 {
-  (void)name;
-  (void)cb;
-  (void)user;
-  return false;
+  return PluginListClientsImpl(NULL, cb, user);
+}
+
+bool PluginListClient(const char* name, sql_callback* cb, void* user)
+{
+  return PluginListClientsImpl(name, cb, user);
 }
 
 bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)

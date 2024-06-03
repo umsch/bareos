@@ -31,6 +31,7 @@
 #if HAVE_POSTGRESQL
 
 #  include "cats.h"
+#  include "sql.h"
 #  include "lib/edit.h"
 #  include "lib/util.h"
 
@@ -161,41 +162,47 @@ void BareosDb::ListPoolRecords(JobControlRecord* jcr,
   SqlFreeResult();
 }
 
-void BareosDb::ListClientRecords(JobControlRecord* jcr,
+bool BareosDb::ListClientRecords(JobControlRecord* jcr,
                                  const char* clientname,
+                                 bool extended,
                                  list_result_handler* handler)
 {
   DbLocker _{this};
   PoolMem clientfilter(PM_MESSAGE);
 
   if (clientname) { clientfilter.bsprintf("WHERE Name = '%s'", clientname); }
-  // if (type == VERT_LIST) {
-  //   Mmsg(cmd,
-  //        "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
-  //        "JobRetention "
-  //        "FROM Client %s ORDER BY ClientId ",
-  //        clientfilter.c_str());
-  // } else {
-  Mmsg(cmd,
-       "SELECT ClientId,Name,FileRetention,JobRetention "
-       "FROM Client %s ORDER BY ClientId ",
-       clientfilter.c_str());
-  // }
+  if (extended) {
+    Mmsg(cmd,
+         "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
+         "JobRetention "
+         "FROM Client %s ORDER BY ClientId ",
+         clientfilter.c_str());
+  } else {
+    Mmsg(cmd,
+         "SELECT ClientId,Name,FileRetention,JobRetention "
+         "FROM Client %s ORDER BY ClientId ",
+         clientfilter.c_str());
+  }
 
-  if (!QUERY_DB(jcr, cmd)) { return; }
+  if (!QUERY_DB(jcr, cmd)) { return false; }
 
   handler->begin("clients");
-  ListResult(handler);
+  auto res = ListResult(handler);
   handler->end();
 
   SqlFreeResult();
+
+  return res >= 0;
 }
 
-void BareosDb::ListClientRecords(JobControlRecord* jcr,
+bool BareosDb::ListClientRecords(JobControlRecord* jcr,
                                  char* clientname,
                                  OutputFormatter* sendit,
                                  e_list_type type)
 {
+  output_handler handler(jcr->gui, sendit, type);
+  return ListClientRecords(jcr, clientname, type == VERT_LIST, &handler);
+#  if 0
   DbLocker _{this};
   PoolMem clientfilter(PM_MESSAGE);
 
@@ -220,6 +227,7 @@ void BareosDb::ListClientRecords(JobControlRecord* jcr,
   sendit->ArrayEnd("clients");
 
   SqlFreeResult();
+#  endif
 }
 
 /**

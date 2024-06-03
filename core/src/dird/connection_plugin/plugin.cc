@@ -41,7 +41,38 @@ void Log(log_severity severity, const char* str)
   Dmsg2(500, "%d: %s\n", severity, str);
 }
 
-bool PluginListClients(list_client_callback* cb, void* user)
+struct plugin_sql_result_handler : public list_result_handler {
+  plugin_sql_result_handler(sql_callback* cb, void* user) : cb(cb), user(user)
+  {
+  }
+
+  void begin(const char* name_) override { name = name_; }
+  void add_field(SQL_FIELD* field, field_flags) override
+  {
+    fields.emplace_back(strdup(field->name));
+  }
+
+  void handle(SQL_ROW row) override
+  {
+    cb(fields.size(), fields.data(), row, user);
+  }
+
+  void end() override {}
+
+
+  ~plugin_sql_result_handler()
+  {
+    for (auto* field : fields) { free(field); }
+  }
+
+  std::string name;
+  sql_callback* cb;
+  void* user;
+
+  std::vector<char*> fields;
+};
+
+bool PluginListClients(sql_callback* cb, void* user)
 {
   auto* jcr = NewDirectorJcr(DirdFreeJcr);
 
@@ -69,16 +100,13 @@ bool PluginListClients(list_client_callback* cb, void* user)
 
   if (!db) { return false; }
 
-  // db->ListClientRecords(jcr, NULL, formatter, RAW_LIST);
+  plugin_sql_result_handler handler(cb, user);
 
-  //   ;
+  db->ListClientRecords(jcr, NULL, false, &handler);
 
   DbSqlClosePooledConnection(jcr, db);
 
-  (void)jcr;
-  (void)cb;
-  (void)user;
-  return false;
+  return true;
 }
 
 bool PluginListClient(const char* name, list_client_callback* cb, void* user)

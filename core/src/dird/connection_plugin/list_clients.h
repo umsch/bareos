@@ -26,15 +26,14 @@
 extern "C" {
 #endif
 
-struct client {
-  const char* name;
-};
+typedef bool(sql_callback)(size_t num_fields,
+                           char const* const fields[],
+                           char const* const row[],
+                           void* user);
 
-typedef bool(list_client_callback)(const client*, void* user);
-
-typedef bool(ListClients_t)(list_client_callback* cb, void* user);
+typedef bool(ListClients_t)(sql_callback* cb, void* user);
 typedef bool(ListClient_t)(const char* client_name,
-                           list_client_callback* cb,
+                           sql_callback* cb,
                            void* user);
 
 struct list_client_capability {

@@ -36,6 +36,199 @@
 
 #  include "cats.h"
 #  include "lib/edit.h"
+#  include "cats/sql.h"
+
+output_handler::output_handler(bool gui_,
+                               OutputFormatter* send_,
+                               e_list_type type_)
+    : gui{gui_}, send{send_}, type{type_}, has_filters{send->HasFilters()}
+{
+}
+
+void output_handler::begin(const char* name_)
+{
+  send->ArrayStart(name_);
+  name.emplace(name_);
+}
+
+void output_handler::add_field(SQL_FIELD* field, field_flags flags)
+{
+  auto i = num_fields++;
+  if (type == HORZ_LIST) {
+    if (send->IsHiddenColumn(i)) { return; }
+
+    auto& new_field = fields.emplace_back();
+    new_field.name = field->name;
+    new_field.index = i;
+    new_field.numeric = flags.numeric;
+
+    auto col_len = field->max_length;
+
+    if (col_len < (int)new_field.name.size()) {
+      col_len = new_field.name.size();
+    }
+
+    if (flags.numeric && (int)field->max_length > 0
+        && strcmp(field->name, "jobid") != 0) { /* fixup for commas */
+      auto new_max = field->max_length + (field->max_length - 1) / 3;
+      if (col_len < new_max) { col_len = new_max; }
+    }
+
+    if (col_len < 4 && !flags.nonnull) {
+      col_len = 4; /* 4 = length of the word "NULL" */
+    }
+
+    ASSERT(col_len > 0);
+
+    new_field.maxlen = col_len; /* reset column info */
+  } else if (type == VERT_LIST) {
+    if (send->IsHiddenColumn(i)) { return; }
+
+    auto& new_field = fields.emplace_back();
+    new_field.name = field->name;
+    new_field.index = i;
+    new_field.numeric = flags.numeric;
+    new_field.maxlen = field->max_length > 0 ? field->max_length : 2;
+
+    size_t col_len = cstrlen(field->name);
+    if (col_len > max_len) { max_len = col_len; }
+  }
+}
+
+bool output_handler::handle(SQL_ROW row)
+{
+  num_rows += 1;
+  switch (type) {
+    case E_LIST_INIT:
+    case NF_LIST:
+    case RAW_LIST: {
+      Dmsg1(800, "ListResult starts second loop looking at %d fields\n",
+            num_fields);
+      // See if we should allow this under the current filtering.
+      if (has_filters && !send->FilterData(row)) { return true; }
+
+      for (auto& field : fields) {
+        value.bsprintf("%s", row[field.index] ? row[field.index] : "NULL");
+        send->ObjectKeyValue(field.name.c_str(), value.c_str(), " %s");
+      }
+
+      if (type != RAW_LIST) { send->Decoration("\n"); }
+      send->ObjectEnd();
+    } break;
+    case HORZ_LIST: {
+      if (num_rows == 1) {
+        // only print the headers with the first row
+        Dmsg1(800, "ListResult starts second loop looking at %d fields\n",
+              num_fields);
+        ListDashes();
+        send->Decoration("|");
+        for (auto& field : fields) {
+          Dmsg1(800, "ListResult looking at field %d\n", field.index);
+          max_len = std::min(field.maxlen, size_t{max_width});
+          send->Decoration(" %-*s |", max_len, field.name.c_str());
+        }
+        send->Decoration("\n");
+
+        ListDashes();
+      }
+
+      Dmsg1(800, "ListResult starts third loop looking at %d fields\n",
+            num_fields);
+      // See if we should allow this under the current filtering.
+      if (SkipRow(row)) { return true; }
+
+      send->ObjectStart();
+      send->Decoration("|");
+
+      char ewc[30];
+      for (auto& field : fields) {
+        {
+          max_len = std::min(field.maxlen, max_width);
+          const char* val = row[field.index];
+          if (val == NULL) {
+            value.bsprintf(" %-*s |", max_len, "NULL");
+          } else if (field.numeric && !gui && IsAnInteger(val)) {
+            if (field.name == "jobid") {
+              value.bsprintf(" %*s |", max_len, val);
+            } else {
+              value.bsprintf(" %*s |", max_len, add_commas(val, ewc));
+            }
+
+          } else {
+            value.bsprintf(" %-*s |", max_len, val);
+          }
+          if (&field == &fields.back()) { value.strcat("\n"); }
+
+          // Use value format string to send preformated value
+          send->ObjectKeyValue(field.name.c_str(), val, value.c_str());
+        }
+        send->ObjectEnd();
+      }
+    } break;
+    case VERT_LIST: {
+      Dmsg1(800, "ListResult starts vertical list at %d fields\n", num_fields);
+      // See if we should allow this under the current filtering.
+      if (SkipRow(row)) { return true; }
+
+      send->ObjectStart();
+      char ewc[30];
+      for (auto& field : fields) {
+        auto* val = row[field.index];
+        if (val == NULL) {
+          key.bsprintf(" %*s: ", max_len, field.name.c_str());
+          value.bsprintf("%s\n", "NULL");
+        } else if (field.numeric && !gui && IsAnInteger(val)) {
+          key.bsprintf(" %*s: ", max_len, field.name.c_str());
+          if (field.name != "jobid") {
+            value.bsprintf("%s\n", add_commas(val, ewc));
+          } else {
+            value.bsprintf("%s\n", val);
+          }
+
+        } else {
+          key.bsprintf(" %*s: ", max_len, field.name.c_str());
+          value.bsprintf("%s\n", val);
+        }
+
+        // Use value format string to send preformated value
+        send->ObjectKeyValue(field.name.c_str(), key.c_str(), val,
+                             value.c_str());
+      }
+      send->Decoration("\n");
+      send->ObjectEnd();
+    } break;
+  }
+
+  return true;
+}
+void output_handler::end()
+{
+  if (num_rows == 0) {
+    send->Decoration(T_("No results to list.\n"));
+  } else if (type == HORZ_LIST) {
+    ListDashes();
+  }
+  ASSERT(name.has_value());
+  send->ArrayEnd(name->c_str());
+}
+
+void output_handler::ListDashes()
+{
+  std::string dashes;
+  send->Decoration("+");
+  for (auto& field : fields) {
+    dashes.resize(std::min(field.maxlen + 2, max_width));
+    memset(dashes.data(), '-', dashes.size());
+    send->Decoration(dashes.c_str());
+    send->Decoration("+");
+  }
+  send->Decoration("\n");
+}
+
+bool output_handler::SkipRow(SQL_ROW row)
+{
+  return has_filters && !send->FilterData(row);
+}
 
 /* Forward referenced subroutines */
 
@@ -627,214 +820,12 @@ int BareosDb::ListResult(list_result_handler* handler)
 
   SQL_ROW current;
 
-  while ((current = SqlFetchRow())) { handler->handle(current); }
+  while ((current = SqlFetchRow())) {
+    if (!handler->handle(current)) { return -1; }
+  }
 
   return SqlNumRows();
 }
-
-struct output_handler : public list_result_handler {
-  output_handler(JobControlRecord* jcr_,
-                 OutputFormatter* send_,
-                 e_list_type type_)
-      : jcr{jcr_}, send{send_}, type{type_}, has_filters{send->HasFilters()}
-  {
-  }
-
-  void begin(const char* name_) override
-  {
-    send->ArrayStart(name_);
-    name.emplace(name_);
-  }
-
-  void add_field(SQL_FIELD* field, field_flags flags) override
-  {
-    auto i = num_fields++;
-    if (type == HORZ_LIST) {
-      if (send->IsHiddenColumn(i)) { return; }
-
-      auto& new_field = fields.emplace_back();
-      new_field.name = field->name;
-      new_field.index = i;
-      new_field.numeric = flags.numeric;
-
-      auto col_len = field->max_length;
-
-      if (col_len < (int)new_field.name.size()) {
-        col_len = new_field.name.size();
-      }
-
-      if (flags.numeric && (int)field->max_length > 0
-          && strcmp(field->name, "jobid") != 0) { /* fixup for commas */
-        auto new_max = field->max_length + (field->max_length - 1) / 3;
-        if (col_len < new_max) { col_len = new_max; }
-      }
-
-      if (col_len < 4 && !flags.nonnull) {
-        col_len = 4; /* 4 = length of the word "NULL" */
-      }
-
-      new_field.maxlen = col_len; /* reset column info */
-    } else if (type == VERT_LIST) {
-      if (send->IsHiddenColumn(i)) { return; }
-
-      size_t col_len = cstrlen(field->name);
-      if (col_len > max_len) { max_len = col_len; }
-    }
-  }
-
-  void handle(SQL_ROW row) override
-  {
-    num_rows += 1;
-    switch (type) {
-      case E_LIST_INIT:
-      case NF_LIST:
-      case RAW_LIST: {
-        Dmsg1(800, "ListResult starts second loop looking at %d fields\n",
-              num_fields);
-        // See if we should allow this under the current filtering.
-        if (has_filters && !send->FilterData(row)) { return; }
-
-        for (auto& field : fields) {
-          value.bsprintf("%s", row[field.index] ? row[field.index] : "NULL");
-          send->ObjectKeyValue(field.name.c_str(), value.c_str(), " %s");
-        }
-
-        if (type != RAW_LIST) { send->Decoration("\n"); }
-        send->ObjectEnd();
-      } break;
-      case HORZ_LIST: {
-        if (num_rows == 1) {
-          // only print the headers with the first row
-          Dmsg1(800, "ListResult starts second loop looking at %d fields\n",
-                num_fields);
-          ListDashes();
-          send->Decoration("|");
-          for (auto& field : fields) {
-            Dmsg1(800, "ListResult looking at field %d\n", field.index);
-            max_len = MaxLength(field.maxlen);
-            send->Decoration(" %-*s |", max_len, field.name.c_str());
-          }
-          send->Decoration("\n");
-
-          ListDashes();
-        }
-
-        Dmsg1(800, "ListResult starts third loop looking at %d fields\n",
-              num_fields);
-        // See if we should allow this under the current filtering.
-        if (SkipRow(row)) { return; }
-
-        send->ObjectStart();
-        send->Decoration("|");
-
-        char ewc[30];
-        for (auto& field : fields) {
-          {
-            max_len = MaxLength(field.maxlen);
-            const char* val = row[field.index];
-            if (val == NULL) {
-              value.bsprintf(" %-*s |", max_len, "NULL");
-            } else if (field.numeric && !jcr->gui && IsAnInteger(val)) {
-              if (field.name == "jobid") {
-                value.bsprintf(" %*s |", max_len, val);
-              } else {
-                value.bsprintf(" %*s |", max_len, add_commas(val, ewc));
-              }
-
-            } else {
-              value.bsprintf(" %-*s |", max_len, val);
-            }
-            if (&field == &fields.back()) { value.strcat("\n"); }
-
-            // Use value format string to send preformated value
-            send->ObjectKeyValue(field.name.c_str(), val, value.c_str());
-          }
-          send->ObjectEnd();
-        }
-      } break;
-      case VERT_LIST: {
-        Dmsg1(800, "ListResult starts vertical list at %d fields\n",
-              num_fields);
-        // See if we should allow this under the current filtering.
-        if (SkipRow(row)) { return; }
-
-        send->ObjectStart();
-        char ewc[30];
-        for (auto& field : fields) {
-          auto* val = row[field.index];
-          if (val == NULL) {
-            key.bsprintf(" %*s: ", max_len, field.name.c_str());
-            value.bsprintf("%s\n", "NULL");
-          } else if (field.numeric && !jcr->gui && IsAnInteger(val)) {
-            key.bsprintf(" %*s: ", max_len, field.name.c_str());
-            if (field.name != "jobid") {
-              value.bsprintf("%s\n", add_commas(val, ewc));
-            } else {
-              value.bsprintf("%s\n", val);
-            }
-
-          } else {
-            key.bsprintf(" %*s: ", max_len, field.name.c_str());
-            value.bsprintf("%s\n", val);
-          }
-
-          // Use value format string to send preformated value
-          send->ObjectKeyValue(field.name.c_str(), key.c_str(), val,
-                               value.c_str());
-        }
-        send->Decoration("\n");
-        send->ObjectEnd();
-      } break;
-    }
-  }
-  void end() override
-  {
-    if (num_rows == 0) {
-      send->Decoration(T_("No results to list.\n"));
-    } else if (type == HORZ_LIST) {
-      ListDashes();
-    }
-    ASSERT(name.has_value());
-    send->ArrayEnd(name->c_str());
-  }
-
- private:
-  void ListDashes()
-  {
-    std::string dashes;
-    send->Decoration("+");
-    for (auto& field : fields) {
-      dashes.resize(std::min(field.maxlen + 2, size_t{100}));
-      memset(dashes.data(), '-', dashes.size());
-      send->Decoration(dashes.c_str());
-      send->Decoration("+");
-    }
-    send->Decoration("\n");
-  }
-
-  bool SkipRow(SQL_ROW row) { return has_filters && !send->FilterData(row); }
-
-  struct db_field {
-    std::string name;
-    std::size_t maxlen;
-    std::size_t index;
-    bool numeric;
-  };
-
-  JobControlRecord* jcr;
-  OutputFormatter* send;
-  e_list_type type;
-  bool has_filters;
-
-  size_t num_rows{0};
-  size_t num_fields{0};
-  std::vector<db_field> fields;
-  size_t max_len{0};
-  std::optional<std::string> name;
-
-  PoolMem key;
-  PoolMem value;
-};
 
 /**
  * If full_list is set, we list vertically, otherwise, we list on one line
@@ -846,7 +837,7 @@ int BareosDb::ListResult(JobControlRecord* jcr,
                          OutputFormatter* send,
                          e_list_type type)
 {
-  output_handler handler(jcr, send, type);
+  output_handler handler(jcr->gui, send, type);
 
   return ListResult(&handler);
 #  if 0

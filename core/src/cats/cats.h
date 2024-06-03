@@ -496,8 +496,44 @@ struct list_result_handler {
   virtual ~list_result_handler() = default;
   virtual void begin(const char* name) = 0;
   virtual void add_field(SQL_FIELD* field, field_flags flags) = 0;
-  virtual void handle(SQL_ROW row) = 0;
+  virtual bool handle(SQL_ROW row) = 0;
   virtual void end() = 0;
+};
+
+struct output_handler : public list_result_handler {
+  output_handler(bool gui_, OutputFormatter* send_, e_list_type type_);
+
+  void begin(const char* name_) override;
+  void add_field(SQL_FIELD* field, field_flags flags) override;
+  bool handle(SQL_ROW row) override;
+  void end() override;
+
+ private:
+  void ListDashes();
+  bool SkipRow(SQL_ROW row);
+
+  struct db_field {
+    std::string name;
+    std::size_t maxlen;
+    std::size_t index;
+    bool numeric;
+  };
+
+  bool gui;
+  OutputFormatter* send;
+  e_list_type type;
+  bool has_filters;
+
+  size_t num_rows{0};
+  size_t num_fields{0};
+  std::vector<db_field> fields;
+  size_t max_len{0};
+  std::optional<std::string> name;
+
+  static constexpr size_t max_width = 100;
+
+  PoolMem key;
+  PoolMem value;
 };
 
 class BareosDb : public BareosDbQueryEnum {
@@ -878,12 +914,13 @@ class BareosDb : public BareosDbQueryEnum {
                     const bool verbose,
                     const CollapseMode collapse = CollapseMode::NoCollapse);
 
-  void ListClientRecords(JobControlRecord* jcr,
+  bool ListClientRecords(JobControlRecord* jcr,
                          char* clientname,
                          OutputFormatter* sendit,
                          e_list_type type);
-  void ListClientRecords(JobControlRecord* jcr,
+  bool ListClientRecords(JobControlRecord* jcr,
                          const char* client,
+                         bool extended,
                          list_result_handler* handler);
   void ListCopiesRecords(JobControlRecord* jcr,
                          const char* range,

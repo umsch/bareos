@@ -162,6 +162,36 @@ void BareosDb::ListPoolRecords(JobControlRecord* jcr,
 }
 
 void BareosDb::ListClientRecords(JobControlRecord* jcr,
+                                 const char* clientname,
+                                 list_result_handler* handler)
+{
+  DbLocker _{this};
+  PoolMem clientfilter(PM_MESSAGE);
+
+  if (clientname) { clientfilter.bsprintf("WHERE Name = '%s'", clientname); }
+  // if (type == VERT_LIST) {
+  //   Mmsg(cmd,
+  //        "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
+  //        "JobRetention "
+  //        "FROM Client %s ORDER BY ClientId ",
+  //        clientfilter.c_str());
+  // } else {
+  Mmsg(cmd,
+       "SELECT ClientId,Name,FileRetention,JobRetention "
+       "FROM Client %s ORDER BY ClientId ",
+       clientfilter.c_str());
+  // }
+
+  if (!QUERY_DB(jcr, cmd)) { return; }
+
+  handler->begin("clients");
+  ListResult(handler);
+  handler->end();
+
+  SqlFreeResult();
+}
+
+void BareosDb::ListClientRecords(JobControlRecord* jcr,
                                  char* clientname,
                                  OutputFormatter* sendit,
                                  e_list_type type)

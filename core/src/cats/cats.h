@@ -485,6 +485,21 @@ class BareosSqlError : public std::runtime_error {
   BareosSqlError(const char* what) : std::runtime_error(what) {}
 };
 
+class BareosDb;
+
+struct list_result_handler {
+  struct field_flags {
+    bool numeric;
+    bool nonnull;
+  };
+
+  virtual ~list_result_handler() = default;
+  virtual void begin(const char* name) = 0;
+  virtual void add_field(SQL_FIELD* field, field_flags flags) = 0;
+  virtual void handle(SQL_ROW row) = 0;
+  virtual void end() = 0;
+};
+
 class BareosDb : public BareosDbQueryEnum {
  protected:
   brwlock_t lock_; /**< Transaction lock */
@@ -598,6 +613,7 @@ class BareosDb : public BareosDbQueryEnum {
   int GetSqlRecordMax(JobControlRecord* jcr);
   void SplitPathAndFile(JobControlRecord* jcr, const char* fname);
   void ListDashes(OutputFormatter* send);
+  int ListResult(list_result_handler* callback);
   int ListResult(void* vctx, int nb_col, char** row);
   int ListResult(JobControlRecord* jcr,
                  OutputFormatter* send,
@@ -866,6 +882,9 @@ class BareosDb : public BareosDbQueryEnum {
                          char* clientname,
                          OutputFormatter* sendit,
                          e_list_type type);
+  void ListClientRecords(JobControlRecord* jcr,
+                         const char* client,
+                         list_result_handler* handler);
   void ListCopiesRecords(JobControlRecord* jcr,
                          const char* range,
                          const char* jobids,

@@ -50,6 +50,7 @@
 #include "lib/cli.h"
 
 #include "dird/reload.h"
+#include "dird/connection_plugin.h"
 
 #ifndef HAVE_REGEX_H
 #  include "lib/bregex.h"
@@ -310,6 +311,11 @@ int main(int argc, char* argv[])
   SetJcrInThreadSpecificData(nullptr);
 
   LoadDirPlugins(me->plugin_directory, me->plugin_names);
+  std::vector<std::string> conn_plugin_names{"grpc-plugin"};
+  if (!LoadConnectionPlugins(me->plugin_directory, conn_plugin_names)) {
+    // Emsg(M_FATAL, "No plugins loaded\n");
+    exit(1);
+  }
 
 
   // If we are in testing mode, we don't try to fix the catalog

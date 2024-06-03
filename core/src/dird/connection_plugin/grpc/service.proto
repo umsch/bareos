@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+service BareosDirector {
+  rpc ListClients (ListClientsRequest) returns (stream ClientListing) {}
+}
+
+message ListClientsRequest {
+}
+
+message ClientListing {
+  string name = 1;
+}

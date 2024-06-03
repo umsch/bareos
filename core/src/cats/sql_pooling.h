@@ -1,7 +1,7 @@
 /*
    BAREOS® - Backup Archiving REcovery Open Sourced
 
-   Copyright (C) 2018-2019 Bareos GmbH & Co. KG
+   Copyright (C) 2018-2024 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -21,6 +21,7 @@
 #ifndef BAREOS_CATS_SQL_POOLING_H_
 #define BAREOS_CATS_SQL_POOLING_H_
 
+#include "include/jcr.h"
 class BareosDb;
 
 bool db_sql_pool_initialize(const char* db_drivername,

@@ -30,6 +30,7 @@
 #include "dird/director_jcr_impl.h"
 #include "dir_plugins.h"
 #include "lib/edit.h"
+#include "dird/connection_plugin.h"
 
 namespace directordaemon {
 
@@ -279,13 +280,15 @@ void LoadDirPlugins(const char* plugin_dir, alist<const char*>* plugin_names)
                    (void*)&bareos_core_functions, dird_plugin_list, plugin_dir,
                    plugin_names, plugin_type, IsPluginCompatible)) {
     /* Either none found, or some error */
-    if (dird_plugin_list->size() == 0) {
+    if (dird_plugin_list->size() == 0 && plugin_names
+        && plugin_names->size() > 0) {
       delete dird_plugin_list;
       dird_plugin_list = NULL;
       Dmsg0(debuglevel, "No plugins loaded\n");
       return;
     }
   }
+
   /* Verify that the plugin is acceptable, and print information
    *  about it. */
   foreach_alist_index (i, plugin, dird_plugin_list) {

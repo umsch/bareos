@@ -20,6 +20,8 @@ message("Entering ${CMAKE_CURRENT_SOURCE_DIR}")
 
 include(BareosConfigureFile)
 
+add_subdirectory(connection_plugin)
+
 if(NOT ENABLE_JANSSON)
   message(FATAL_ERROR "Bareos Director requires Jansson support")
 endif()
@@ -38,6 +40,7 @@ set(DIRD_OBJECTS_SRCS
     bsr.cc
     catreq.cc
     check_catalog.cc
+    connection_plugin.cc
     consolidate.cc
     console_connection_lease.cc
     create.cc
@@ -167,7 +170,7 @@ else()
   add_executable(bareos-dir)
 endif()
 
-target_sources(bareos-dir PRIVATE dird.cc)
+target_sources(bareos-dir PRIVATE ${DIRDSRCS})
 
 target_link_libraries(
   bareos-dir PRIVATE dird_objects bareossql bareosfind CLI11::CLI11

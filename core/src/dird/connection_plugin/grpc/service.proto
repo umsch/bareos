@@ -19,7 +19,17 @@ service Restore {
   rpc Commit (CommitRequest) returns (CommitResponse);
   rpc Abort (AbortRequest) returns (AbortResponse);
   rpc ChangeMarkedStatus (ChangeMarkedRequest) returns (ChangeMarkedResponse);
+  rpc FinishSelection (FinishSelectionRequest) returns (FinishSelectionResponse);
 }
+
+message FinishSelectionRequest {
+  string token = 1;
+  optional string bootstrappath = 2;
+};
+
+message FinishSelectionResponse {
+  string bootstrappath = 1;
+};
 
 message ChangeMarkedRequest {
   string token = 1;

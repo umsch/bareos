@@ -91,9 +91,18 @@ class RestoreImpl : public Restore::Service {
     }
 
     auto& session = found->second;
-    ignore(session);
+    auto* handle = session.handle;
 
-    return Status(grpc::StatusCode::UNIMPLEMENTED, "No");
+    job_started_info info;
+    if (!cap.commit_restore_session(handle, &info)) {
+      const char* error = cap.error_string(handle);
+      return Status(grpc::StatusCode::UNKNOWN,
+                    error ? error : "Internal error.");
+    }
+
+    response->set_jobid(info.jobid);
+
+    return Status::OK;
   }
   Status Abort(ServerContext* context,
                const AbortRequest* request,
@@ -111,6 +120,42 @@ class RestoreImpl : public Restore::Service {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
                     "No session with that key.");
     }
+  }
+
+  Status FinishSelection(ServerContext* context,
+                         const FinishSelectionRequest* request,
+                         FinishSelectionResponse* response) override
+  {
+    ignore(context, request, response);
+
+    auto& key = request->token();
+
+    auto found = sessions.find(key);
+    if (found == sessions.end()) {
+      return Status(grpc::StatusCode::INVALID_ARGUMENT,
+                    "No session with that key.");
+    }
+
+    auto& session = found->second;
+    auto* handle = session.handle;
+
+    if (!cap.finish_selection(handle, request->has_bootstrappath()
+                                          ? request->bootstrappath().c_str()
+                                          : nullptr)) {
+      const char* error = cap.error_string(handle);
+      return Status(grpc::StatusCode::UNKNOWN,
+                    error ? error : "Internal error.");
+    }
+
+    const char* bsr = cap.get_bootstrap_path(handle);
+    if (!bsr) {
+      const char* error = cap.error_string(handle);
+      return Status(grpc::StatusCode::UNKNOWN,
+                    error ? error : "Internal error.");
+    }
+
+    response->set_bootstrappath(bsr);
+    return Status::OK;
   }
 
   Status ChangeDirectory(ServerContext* context,
@@ -136,8 +181,15 @@ class RestoreImpl : public Restore::Service {
                     error ? error : "Internal error.");
     }
 
-    response->set_directory(request->directory());
+    auto* current_dir = cap.current_directory(handle);
 
+    if (!current_dir) {
+      const char* error = cap.error_string(handle);
+      return Status(grpc::StatusCode::UNKNOWN,
+                    error ? error : "Internal error.");
+    }
+
+    response->set_directory(current_dir);
     return Status::OK;
   }
 

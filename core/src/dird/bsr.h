@@ -2,7 +2,7 @@
    BAREOS® - Backup Archiving REcovery Open Sourced
 
    Copyright (C) 2002-2010 Free Software Foundation Europe e.V.
-   Copyright (C) 2013-2023 Bareos GmbH & Co. KG
+   Copyright (C) 2013-2024 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -87,6 +87,19 @@ struct bootstrap_info {
   char storage[MAX_NAME_LENGTH + 1];
 };
 
+
+struct serialized_bsr {
+  std::string serialized;
+  std::size_t expected_count;
+};
+
+std::optional<std::string> AddVolumeInformationToBsr(
+    BareosDb* db,
+    JobControlRecord* jcr,
+    RestoreBootstrapRecord* bsr);
+std::string MakeUniqueBootstrapPath();
+serialized_bsr SerializeBsr(RestoreBootstrapRecord* bsr);
+std::unique_ptr<RestoreBootstrapRecord> BsrFromTree(TREE_ROOT* root);
 bool AddVolumeInformationToBsr(UaContext* ua, RestoreBootstrapRecord* bsr);
 uint32_t WriteBsrFile(UaContext* ua, RestoreContext& rx);
 void DisplayBsrInfo(UaContext* ua, RestoreContext& rx);

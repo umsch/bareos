@@ -40,11 +40,17 @@ struct file_status {
   bool marked;
 };
 
+
+// ALWAYS
+typedef void(AbortRestoreSession_t)(struct restore_session_handle*);
+typedef const char*(ErrorString_t)(struct restore_session_handle*);
+// START
 typedef struct restore_session_handle*(CreateRestoreSession_t)(void);
 typedef bool(StartFromJobIds_t)(struct restore_session_handle*,
                                 size_t count,
                                 const int64_t jobids[],
                                 bool select_parents);
+// SELECT FILES
 typedef bool(file_callback)(void* user, struct file_status status);
 typedef bool(ListFiles_t)(struct restore_session_handle*,
                           file_callback* cb,
@@ -56,12 +62,20 @@ typedef bool(MarkUnmark_t)(struct restore_session_handle*,
                            bool mark,
                            file_callback* cb,
                            void* user);
-typedef const char*(ErrorString_t)(struct restore_session_handle*);
+typedef const char*(CurrentDirectory_t)(struct restore_session_handle*);
+typedef bool(FinishSelection_t)(struct restore_session_handle*,
+                                const char* bootstrap_path);
+
+
+// DO RESTORE
+typedef const char*(GetBootstrapPath_t)(struct restore_session_handle*);
 typedef bool(SetRestoreClient_t)(struct restore_session_handle*,
                                  const char* clientname);
+// TODO:
+// set job
+// set catalog
+// show options
 
-
-typedef void(AbortRestoreSession_t)(struct restore_session_handle*);
 typedef bool(CommitRestoreSession_t)(struct restore_session_handle*,
                                      struct job_started_info*);
 
@@ -74,6 +88,10 @@ struct restore_capability {
   StartFromJobIds_t* start_from_jobids;
   SetRestoreClient_t* set_restore_client;
   AbortRestoreSession_t* abort_restore_session;
+  CurrentDirectory_t* current_directory;
+  CommitRestoreSession_t* commit_restore_session;
+  FinishSelection_t* finish_selection;
+  GetBootstrapPath_t* get_bootstrap_path;
 };
 
 #ifdef __cplusplus

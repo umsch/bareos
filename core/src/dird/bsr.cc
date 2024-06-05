@@ -37,6 +37,7 @@
 #include "lib/berrno.h"
 #include "lib/edit.h"
 #include "lib/parse_conf.h"
+#include "lib/tree.h"
 
 #include <algorithm>
 #include <optional>
@@ -217,19 +218,16 @@ static inline bool is_volume_selected(RestoreBootstrapRecordFileIndex* fi,
 }
 
 
-/**
- * Complete the BootStrapRecord by filling in the VolumeName and
- * VolSessionId and VolSessionTime using the JobId
- */
-bool AddVolumeInformationToBsr(UaContext* ua, RestoreBootstrapRecord* bsr)
+std::optional<std::string> AddVolumeInformationToBsr(
+    BareosDb* db,
+    JobControlRecord* jcr,
+    RestoreBootstrapRecord* bsr)
 {
   for (; bsr; bsr = bsr->next.get()) {
     JobDbRecord jr;
     jr.JobId = bsr->JobId;
-    if (!ua->db->GetJobRecord(ua->jcr, &jr)) {
-      ua->ErrorMsg(T_("Unable to get Job record. ERR=%s\n"),
-                   ua->db->strerror());
-      return false;
+    if (!db->GetJobRecord(jcr, &jr)) {
+      return std::string{"Unable to get Job record. ERR=%s"} + db->strerror();
     }
     bsr->VolSessionId = jr.VolSessionId;
     bsr->VolSessionTime = jr.VolSessionTime;
@@ -238,22 +236,33 @@ bool AddVolumeInformationToBsr(UaContext* ua, RestoreBootstrapRecord* bsr)
       continue;
     }
     if ((bsr->VolCount
-         = ua->db->GetJobVolumeParameters(ua->jcr, bsr->JobId, &bsr->VolParams))
+         = db->GetJobVolumeParameters(jcr, bsr->JobId, &bsr->VolParams))
         == 0) {
-      ua->ErrorMsg(T_("Unable to get Job Volume Parameters. ERR=%s\n"),
-                   ua->db->strerror());
+      auto error = std::string{"Unable to get Job Volume Parameters. ERR=%s\n"}
+                   + db->strerror();
       if (bsr->VolParams) {
         free(bsr->VolParams);
         bsr->VolParams = NULL;
       }
-      return false;
+      return error;
     }
+  }
+  return std::nullopt;
+}
+/**
+ * Complete the BootStrapRecord by filling in the VolumeName and
+ * VolSessionId and VolSessionTime using the JobId
+ */
+bool AddVolumeInformationToBsr(UaContext* ua, RestoreBootstrapRecord* bsr)
+{
+  if (std::optional error = AddVolumeInformationToBsr(ua->db, ua->jcr, bsr)) {
+    ua->ErrorMsg("%s\n", error->c_str());
+    return false;
   }
   return true;
 }
 
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static uint32_t uniq = 0;
+static std::atomic<std::size_t> unique{0};
 
 static void MakeUniqueRestoreFilename(UaContext* ua, PoolMem& fname)
 {
@@ -263,14 +272,25 @@ static void MakeUniqueRestoreFilename(UaContext* ua, PoolMem& fname)
     Mmsg(fname, "%s", ua->argv[i]);
     jcr->dir_impl->unlink_bsr = false;
   } else {
-    lock_mutex(mutex);
-    uniq++;
-    unlock_mutex(mutex);
+    auto uniq = unique.fetch_add(1);
     Mmsg(fname, "%s/%s.restore.%u.bsr", working_directory, my_name, uniq);
     jcr->dir_impl->unlink_bsr = true;
   }
   if (jcr->RestoreBootstrap) { free(jcr->RestoreBootstrap); }
   jcr->RestoreBootstrap = strdup(fname.c_str());
+}
+
+std::string MakeUniqueBootstrapPath()
+{
+  std::string buffer;
+  buffer += working_directory;
+  buffer += "/";
+  buffer += my_name;
+  buffer += ".restore.";
+  buffer += std::to_string(unique.fetch_add(1));
+  buffer += ".bsr";
+
+  return buffer;
 }
 
 uint32_t WriteBsrFile(UaContext* ua, RestoreContext& rx)
@@ -386,10 +406,20 @@ void DisplayBsrInfo(UaContext* ua, RestoreContext& rx)
   return;
 }
 
+static void FindRequiredStorageResource(RestoreBootstrapRecord* bsr,
+                                        UaContext* ua,
+                                        RestoreContext& rx)
+{
+  for (int i = 0; i < bsr->VolCount; i++) {
+    if (!rx.store) {
+      FindStorageResource(ua, rx, bsr->VolParams[i].Storage,
+                          bsr->VolParams[i].MediaType);
+    }
+  }
+}
+
 // Write bsr data for a single bsr record
 static uint32_t write_bsr_item(RestoreBootstrapRecord* bsr,
-                               UaContext* ua,
-                               RestoreContext& rx,
                                std::string& buffer,
                                bool& first,
                                uint32_t& LastIndex)
@@ -407,11 +437,6 @@ static uint32_t write_bsr_item(RestoreBootstrapRecord* bsr,
                             bsr->VolParams[i].LastIndex)) {
       bsr->VolParams[i].VolumeName[0] = 0; /* zap VolumeName */
       continue;
-    }
-
-    if (!rx.store) {
-      FindStorageResource(ua, rx, bsr->VolParams[i].Storage,
-                          bsr->VolParams[i].MediaType);
     }
 
     PrintBsrItem(buffer, "Storage=\"%s\"\n", bsr->VolParams[i].Storage);
@@ -454,6 +479,46 @@ static uint32_t write_bsr_item(RestoreBootstrapRecord* bsr,
   return total_count;
 }
 
+std::unique_ptr<RestoreBootstrapRecord> BsrFromTree(TREE_ROOT* root)
+{
+  auto bsr = std::make_unique<RestoreBootstrapRecord>();
+
+  for (TREE_NODE* node = FirstTreeNode(root); node; node = NextTreeNode(node)) {
+    if (node->extract || node->extract_dir) {
+      // TODO: handle delta_list
+      AddFindex(bsr.get(), node->JobId, node->FileIndex);
+    }
+  }
+
+  return bsr;
+}
+
+serialized_bsr SerializeBsr(RestoreBootstrapRecord* bsr)
+{
+  std::optional<std::pair<std::size_t, std::size_t>> last_job;
+  uint32_t LastIndex = 0;
+  size_t total_count = 0;
+
+  std::string buffer;
+  bool first = true;
+
+  for (auto* current = bsr; current; current = current->next.get()) {
+    std::pair<std::size_t, std::size_t> this_job{current->VolSessionId,
+                                                 current->VolSessionTime};
+
+    if (last_job != this_job) {
+      // cannot compare indices between jobs
+      LastIndex = 0;
+    }
+
+    total_count += write_bsr_item(bsr, buffer, first, LastIndex);
+
+    last_job = this_job;
+  }
+
+  return {.serialized = buffer, .expected_count = total_count};
+}
+
 /**
  * Here we actually write out the details of the bsr file.
  * Note, there is one bsr for each JobId, but the bsr may
@@ -484,7 +549,8 @@ uint32_t WriteBsr(UaContext* ua, RestoreContext& rx, std::string& buffer)
         LastIndex = 0;
       }
 
-      total_count += write_bsr_item(bsr, ua, rx, buffer, first, LastIndex);
+      FindRequiredStorageResource(bsr, ua, rx);
+      total_count += write_bsr_item(bsr, buffer, first, LastIndex);
 
       last_job = this_job;
     }
@@ -502,7 +568,8 @@ uint32_t WriteBsr(UaContext* ua, RestoreContext& rx, std::string& buffer)
           LastIndex = 0;
         }
 
-        total_count += write_bsr_item(bsr, ua, rx, buffer, first, LastIndex);
+        FindRequiredStorageResource(bsr, ua, rx);
+        total_count += write_bsr_item(bsr, buffer, first, LastIndex);
 
         last_job = this_job;
       }

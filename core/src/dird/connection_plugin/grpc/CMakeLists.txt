@@ -77,7 +77,7 @@ add_library(grpc-proto ${protosrcs} ${protohdrs} ${grpcsrcs} ${grpchdrs})
 target_link_libraries(
   grpc-proto ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF}
 )
-add_library(grpc-plugin SHARED grpc.cc)
+add_library(grpc-plugin SHARED grpc.cc restore.cc)
 # Include generated *.pb.h files
 target_link_libraries(
   grpc-plugin ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF}

@@ -20,12 +20,14 @@
 */
 
 #include "service.grpc.pb.h"
+#include "include/baconfig.h"
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
 #include <string>
+#include <thread>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -33,7 +35,7 @@ using grpc::ServerContext;
 using grpc::ServerWriter;
 using grpc::Status;
 
-template <typename T> void ignore(T&&) {}
+template <typename... Ts> void ignore(Ts&&...) {}
 
 // grpcurl -plaintext -format json -d '{ "username": "admin", "password": "123"
 // }' 0.0.0.0:34343 Greeter/Authenticate
@@ -41,33 +43,37 @@ template <typename T> void ignore(T&&) {}
 
 #include "dird/connection_plugin/plugin.h"
 #include "dird/connection_plugin/list_clients.h"
+#include "restore.h"
 
 const bareos_api* bareos;
 std::unique_ptr<Server> server;
-std::unique_ptr<BareosDirector::Service> service;
+std::vector<std::unique_ptr<grpc::Service>> services;
 
 auto QueryCapability(bareos_capability cap, size_t bufsize, void* buffer)
 {
   return bareos->query(cap, bufsize, buffer);
 }
 
-list_client_capability lcc;
-
 bool loadPlugin(const bareos_api* bareos_)
 {
   if (bareos_->size != sizeof(*bareos_)) { return false; }
   bareos = bareos_;
 
-  if (!QueryCapability(CAP_ListClients, sizeof(lcc), &lcc)) { return false; }
-
   return true;
 }
 
-class DirectorServiceImpl final : public BareosDirector::Service {
+class SqlImpl final : public Sql::Service {
+ public:
+  SqlImpl(list_client_capability lcc) : cap{lcc} { Dmsg1(5, "Impl Created"); }
+
+ private:
   Status ListClients(ServerContext* context,
                      const ListClientsRequest* request,
                      ServerWriter<SqlResponse>* writer) override;
+
+  list_client_capability cap;
 };
+
 
 bool Start(int port)
 {
@@ -76,7 +82,6 @@ bool Start(int port)
   try {
     std::string server_address = "0.0.0.0:" + std::to_string(port);
 
-    service = std::make_unique<DirectorServiceImpl>();
 
     grpc::EnableDefaultHealthCheckService(true);
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
@@ -85,7 +90,20 @@ bool Start(int port)
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
-    builder.RegisterService(service.get());
+
+    if (list_client_capability lcc;
+        QueryCapability(CAP_ListClients, sizeof(lcc), &lcc)) {
+      auto sql = std::make_unique<SqlImpl>(lcc);
+      builder.RegisterService(sql.get());
+      services.emplace_back(std::move(sql));
+    }
+
+    if (restore_capability rc; QueryCapability(CAP_Restore, sizeof(rc), &rc)) {
+      auto restore = MakeRestoreService(rc);
+      builder.RegisterService(restore.get());
+      services.emplace_back(std::move(restore));
+    }
+
     // Finally assemble the server.
     server = builder.BuildAndStart();
 
@@ -102,7 +120,7 @@ bool unloadPlugin()
 
   // delete completion queues here
   server.reset();
-  service.reset();
+  services.clear();
 
   return true;
 }
@@ -127,21 +145,24 @@ bool sql_callback_helper(size_t num_fields,
   return (*cb)(num_fields, fields, rows);
 }
 
-template <typename Callback> bool ListClients(Callback&& callback)
+template <typename Callback>
+bool ListClients(list_client_capability& lcc, Callback&& callback)
 {
   return lcc.list_clients(sql_callback_helper<Callback>, &callback);
 }
 
 template <typename Callback>
-bool ListClient(const char* name, Callback&& callback)
+bool ListClient(list_client_capability& lcc,
+                const char* name,
+                Callback&& callback)
 {
   return lcc.list_client(name, sql_callback_helper<Callback>, &callback);
 }
 
 
-Status DirectorServiceImpl::ListClients(ServerContext* context,
-                                        const ListClientsRequest* request,
-                                        ServerWriter<SqlResponse>* writer)
+Status SqlImpl::ListClients(ServerContext* context,
+                            const ListClientsRequest* request,
+                            ServerWriter<SqlResponse>* writer)
 {
   ignore(context);
 
@@ -156,14 +177,16 @@ Status DirectorServiceImpl::ListClients(ServerContext* context,
     return true;
   };
   if (request->has_clientname()) {
-    if (!::ListClient(request->clientname().c_str(), std::move(cb))) {
+    if (!::ListClient(cap, request->clientname().c_str(), std::move(cb))) {
       return Status(grpc::StatusCode::UNKNOWN, "Internal error");
     }
   } else {
-    if (!::ListClients(std::move(cb))) {
+    if (!::ListClients(cap, std::move(cb))) {
       return Status(grpc::StatusCode::UNKNOWN, "Internal error");
     }
   }
+
+  std::this_thread::sleep_for(std::chrono::seconds(5));
 
   return grpc::Status::OK;
 }

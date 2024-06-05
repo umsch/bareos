@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-service BareosDirector {
+service Sql {
   rpc ListClients (ListClientsRequest) returns (stream SqlResponse) {}
 }
 
@@ -10,4 +10,65 @@ message ListClientsRequest {
 
 message SqlResponse {
   map<string, string> row = 1;
+}
+
+service Restore {
+  rpc Begin (BeginRequest) returns (BeginResponse);
+  rpc ListFiles (ListFilesRequest) returns (stream File);
+  rpc ChangeDirectory (ChangeDirectoryRequest) returns (ChangeDirectoryResponse);
+  rpc Commit (CommitRequest) returns (CommitResponse);
+  rpc Abort (AbortRequest) returns (AbortResponse);
+  rpc ChangeMarkedStatus (ChangeMarkedRequest) returns (ChangeMarkedResponse);
+}
+
+message ChangeMarkedRequest {
+  string token = 1;
+  bool mark = 2;
+  string regex = 3;
+};
+
+message ChangeMarkedResponse {
+  int64 affected_count = 1;
+};
+
+message BeginRequest {
+  repeated int64 jobids = 1;
+  bool select_parents = 2;
+}
+
+message BeginResponse {
+  string token = 1;
+}
+
+message CommitRequest {
+  string token = 1;
+}
+
+message AbortRequest {
+  string token = 1;
+}
+
+message CommitResponse {
+  sint64 jobid = 1;
+}
+
+message AbortResponse {
+}
+
+message ListFilesRequest {
+  string token = 1;
+}
+
+message File {
+  string name = 1;
+  bool marked = 2;
+}
+
+message ChangeDirectoryRequest {
+  string token = 1;
+  string directory = 2;
+}
+
+message ChangeDirectoryResponse {
+  string directory = 1;
 }

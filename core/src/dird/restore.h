@@ -98,6 +98,27 @@ struct RestoreOptions {
   std::optional<std::string> file_regex;
 };
 
+struct TreeArgs {
+  enum class selection
+  {
+    None,
+    All,
+  };
+
+  std::unordered_set<JobId_t> jobids;
+  std::size_t estimated_size;
+  selection initial_selection;
+};
+
+struct InsertTreeContext {
+  std::size_t TotalCount;
+  TREE_ROOT* root;
+
+  std::optional<std::string> error;
+  bool mark_on_create;
+};
+
+InsertTreeContext BuildDirectoryTree(BareosDb* db, TreeArgs args);
 
 } /* namespace directordaemon */
 #endif  // BAREOS_DIRD_RESTORE_H_

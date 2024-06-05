@@ -595,26 +595,6 @@ void GenerateRestoreSummary(JobControlRecord* jcr,
   }
 }
 
-struct TreeArgs {
-  enum class selection
-  {
-    None,
-    All,
-  };
-
-  std::unordered_set<JobId_t> jobids;
-  std::size_t estimated_size;
-  selection initial_selection;
-};
-
-struct InsertTreeContext {
-  std::size_t TotalCount;
-  TREE_ROOT* root;
-
-  std::optional<std::string> error;
-  bool mark_on_create;
-};
-
 static inline bool ShouldOverwriteNode(TREE_NODE* node,
                                        JobId_t jobid,
                                        int32_t FileIndex,
@@ -749,7 +729,7 @@ InsertTreeContext BuildDirectoryTree(BareosDb* db, TreeArgs args)
   std::string jobids;
   for (auto& jobid : args.jobids) {
     if (jobids.size()) { jobids += ","; }
-    jobids += jobid;
+    jobids += std::to_string(jobid);
   }
   bool get_md5 = false;
   bool get_delta = true;
@@ -766,6 +746,5 @@ InsertTreeContext BuildDirectoryTree(BareosDb* db, TreeArgs args)
 
   return ctx;
 }
-
 
 } /* namespace directordaemon */

@@ -74,6 +74,10 @@ struct select_restore_option_state {
   }
 };
 
+struct job_started_state {
+  JobId_t jobid;
+};
+
 struct restore_session_handle {
   std::string error;
   JobControlRecord* jcr;
@@ -81,8 +85,16 @@ struct restore_session_handle {
 
   std::variant<select_start_state,
                select_tree_state,
-               select_restore_option_state>
+               select_restore_option_state,
+               job_started_state>
       state;
+
+
+  ~restore_session_handle()
+  {
+    if (db) { DbSqlClosePooledConnection(jcr, db); }
+    if (jcr) { FreeJcr(jcr); }
+  }
 };
 
 namespace directordaemon {
@@ -332,6 +344,11 @@ bool PluginCommitRestoreSession(restore_session_handle* handle,
   }
 
   info->jobid = jobid;
+
+  state->bsr.clear();
+
+  handle->state = job_started_state{jobid};
+
   return true;
 }
 
@@ -414,8 +431,79 @@ bool PluginSetRestoreClient(restore_session_handle* handle,
     handle->error = "Handle in wrong state.";
     return false;
   }
-  handle->error = std::string{"Client not found: "} + clientname;
-  return false;
+  bool lock = false;
+
+  auto* client
+      = (ClientResource*)my_config->GetResWithName(R_CLIENT, clientname, lock);
+  if (!client) {
+    handle->error = std::string{"Client not found: "} + clientname;
+    return false;
+  }
+
+  state->restore_client = client;
+  return true;
+}
+bool PluginSetRestoreJob(restore_session_handle* handle, const char* jobname)
+{
+  auto* state = std::get_if<select_restore_option_state>(&handle->state);
+  if (!state) {
+    handle->error = "Handle in wrong state.";
+    return false;
+  }
+  bool lock = false;
+  auto* job = (JobResource*)my_config->GetResWithName(R_JOB, jobname, lock);
+  if (!job) {
+    handle->error = std::string{"Job not found: "} + jobname;
+    return false;
+  }
+
+  state->job = job;
+  return true;
+}
+bool PluginSetCatalog(restore_session_handle* handle, const char* catalogname)
+{
+  auto* state = std::get_if<select_restore_option_state>(&handle->state);
+  if (!state) {
+    handle->error = "Handle in wrong state.";
+    return false;
+  }
+  bool lock = false;
+  auto* catalog = (CatalogResource*)my_config->GetResWithName(
+      R_CATALOG, catalogname, lock);
+  if (!catalog) {
+    handle->error = std::string{"Catalog not found: "} + catalogname;
+    return false;
+  }
+
+  state->catalog = catalog;
+  return true;
+}
+bool PluginEnumerateOptions(restore_session_handle* handle,
+                            key_value_handler* handler,
+                            void* user)
+{
+  auto* state = std::get_if<select_restore_option_state>(&handle->state);
+  if (!state) {
+    handle->error = "Handle in wrong state.";
+    return false;
+  }
+
+  if (!(*handler)(user, "job",
+                  state->job ? state->job->resource_name_ : "UNSET")) {
+    return false;
+  }
+  if (!(*handler)(user, "client",
+                  state->restore_client ? state->restore_client->resource_name_
+                                        : "UNSET")) {
+    return false;
+  }
+  if (!(*handler)(user, "catalog",
+                  state->catalog ? state->catalog->resource_name_ : "UNSET")) {
+    return false;
+  }
+  if (!(*handler)(user, "bsr", state->bsr.c_str())) { return false; }
+
+  return true;
 }
 
 void PluginAbortRestoreSession(restore_session_handle* handle)
@@ -512,6 +600,9 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .commit_restore_session = &PluginCommitRestoreSession,
             .finish_selection = &PluginFinishSelection,
             .get_bootstrap_path = &PluginGetBootstrapPath,
+            .set_restore_job = &PluginSetRestoreJob,
+            .set_catalog = &PluginSetCatalog,
+            .enumerate_options = &PluginEnumerateOptions,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

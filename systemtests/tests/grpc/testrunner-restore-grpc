@@ -50,7 +50,9 @@ grpc()
 
 start_test
 
+grpc Restore/ListSessions "{}" | tee "$log_home/sessions.txt"
 grpc Restore/Begin '{ "jobids" : [1], "select_parents" : "false"  }' | tee "$log_home/begin.txt"
+grpc Restore/ListSessions "{}" | tee "$log_home/sessions.txt"
 
 TOKEN=$(jq ".token" "$log_home/begin.txt")
 
@@ -68,6 +70,8 @@ cat "${BSR}"
 echo "--- BSR END ---"
 
 grpc Restore/ChangeDirectory "{ \"token\" : $TOKEN, \"directory\" : \"..\" }" | tee "$log_home/cd.txt" ||:
+grpc Restore/SetOptions  "{ \"token\" : $TOKEN, \"client\" : \"bareos-fd\", \"catalog\" : \"MyCatalog\", \"job\" : \"RestoreFiles\" }"
+grpc Restore/Commit "{ \"token\": $TOKEN }"
 
 grpc Restore/Abort "{ \"token\" : $TOKEN }" | tee "$log_home/abort.txt"
 

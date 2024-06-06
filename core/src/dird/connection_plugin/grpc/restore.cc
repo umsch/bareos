@@ -30,6 +30,14 @@ struct restore_session {
   restore_session_handle* handle{nullptr};
 };
 
+
+template <typename Callback>
+bool kv_cb_helper(void* user, const char* key, const char* value)
+{
+  auto* cb = reinterpret_cast<Callback*>(user);
+  return (*cb)(key, value);
+}
+
 template <typename Callback>
 bool file_callback_helper(void* user, file_status status)
 {
@@ -263,6 +271,76 @@ class RestoreImpl : public Restore::Service {
     }
 
     response->set_affected_count(num_affected);
+    return Status::OK;
+  }
+
+  Status ListSessions(ServerContext* context,
+                      const ListSessionsRequest* request,
+                      ListSessionsResponse* response) override
+  {
+    ignore(context, request);
+
+    auto* array = response->mutable_tokens();
+    for (auto& [key, _] : sessions) {
+      auto* str = array->Add();
+      if (!str) { return Status(grpc::StatusCode::UNKNOWN, "Internal error."); }
+      *str = key;
+    }
+
+    return Status::OK;
+  }
+
+  Status SetOptions(ServerContext* context,
+                    const SetOptionsRequest* request,
+                    SetOptionsResponse* response) override
+  {
+    ignore(context);
+
+    auto& session_key = request->token();
+
+    auto found = sessions.find(session_key);
+    if (found == sessions.end()) {
+      return Status(grpc::StatusCode::INVALID_ARGUMENT,
+                    "No session with that key.");
+    }
+
+    auto& session = found->second;
+    auto* handle = session.handle;
+
+    if (request->has_job()) {
+      if (!cap.set_restore_job(handle, request->job().c_str())) {
+        const char* error = cap.error_string(handle);
+        return Status(grpc::StatusCode::UNKNOWN,
+                      error ? error : "Internal error.");
+      }
+    }
+    if (request->has_client()) {
+      if (!cap.set_restore_client(handle, request->client().c_str())) {
+        const char* error = cap.error_string(handle);
+        return Status(grpc::StatusCode::UNKNOWN,
+                      error ? error : "Internal error.");
+      }
+    }
+    if (request->has_catalog()) {
+      if (!cap.set_catalog(handle, request->catalog().c_str())) {
+        const char* error = cap.error_string(handle);
+        return Status(grpc::StatusCode::UNKNOWN,
+                      error ? error : "Internal error.");
+      }
+    }
+
+    auto lambda = [map = response->mutable_current_options()](const char* key,
+                                                              const char* val) {
+      auto [_, inserted] = map->insert({key, val});
+      return inserted;
+    };
+    if (!cap.enumerate_options(handle, kv_cb_helper<decltype(lambda)>,
+                               &lambda)) {
+      const char* error = cap.error_string(handle);
+      return Status(grpc::StatusCode::UNKNOWN,
+                    error ? error : "Internal error.");
+    }
+
     return Status::OK;
   }
 

@@ -68,13 +68,18 @@ typedef bool(FinishSelection_t)(struct restore_session_handle*,
 
 
 // DO RESTORE
+
+typedef bool(key_value_handler)(void* user, const char* key, const char* value);
+
 typedef const char*(GetBootstrapPath_t)(struct restore_session_handle*);
 typedef bool(SetRestoreClient_t)(struct restore_session_handle*,
                                  const char* clientname);
-// TODO:
-// set job
-// set catalog
-// show options
+typedef bool(SetRestoreJob_t)(struct restore_session_handle*,
+                              const char* restorejob);
+typedef bool(SetCatalog_t)(struct restore_session_handle*, const char* catalog);
+typedef bool(EnumerateOptions_t)(struct restore_session_handle*,
+                                 key_value_handler* handler,
+                                 void* user);
 
 typedef bool(CommitRestoreSession_t)(struct restore_session_handle*,
                                      struct job_started_info*);
@@ -92,6 +97,10 @@ struct restore_capability {
   CommitRestoreSession_t* commit_restore_session;
   FinishSelection_t* finish_selection;
   GetBootstrapPath_t* get_bootstrap_path;
+
+  SetRestoreJob_t* set_restore_job;
+  SetCatalog_t* set_catalog;
+  EnumerateOptions_t* enumerate_options;
 };
 
 #ifdef __cplusplus

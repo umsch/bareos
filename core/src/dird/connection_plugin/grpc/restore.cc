@@ -19,7 +19,8 @@
    02110-1301, USA.
 */
 
-#include "restore.h"
+#include "grpc.h"
+#include "lib/thread_util.h"
 
 using grpc::ServerContext;
 using grpc::Status;
@@ -56,9 +57,17 @@ class RestoreImpl : public Restore::Service {
   {
     ignore(context, request);
 
-    std::string key = std::to_string(sessions.size());
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
 
-    auto [iter, inserted] = sessions.try_emplace(std::move(key));
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    std::string key = std::to_string(sessmap.size());
+
+    auto [iter, inserted] = sessmap.try_emplace(std::move(key));
 
     if (!inserted) {
       return Status(grpc::StatusCode::UNKNOWN, "Duplicate session keys.");
@@ -67,21 +76,21 @@ class RestoreImpl : public Restore::Service {
     auto* session = cap.create_restore_session();
 
     if (!session) {
-      sessions.erase(iter);
+      sessmap.erase(iter);
       return Status(grpc::StatusCode::UNKNOWN, "Session could not be created.");
     }
 
     if (!cap.start_from_jobids(session, request->jobids().size(),
                                request->jobids().data(),
                                request->select_parents())) {
-      sessions.erase(iter);
+      sessmap.erase(iter);
       const char* error = cap.error_string(session);
       return Status(grpc::StatusCode::UNKNOWN,
                     error ? error : "Internal error.");
       cap.abort_restore_session(session);
     }
 
-    iter->second.handle = session;
+    iter->second.lock()->handle = session;
 
     response->set_token(iter->first);
     return Status::OK;
@@ -92,14 +101,26 @@ class RestoreImpl : public Restore::Service {
   {
     ignore(context, response);
     auto& key = request->token();
-    auto found = sessions.find(key);
-    if (found == sessions.end()) {
+
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    auto found = sessmap.find(key);
+    if (found == sessmap.end()) {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
                     "No session with that key.");
     }
 
-    auto& session = found->second;
-    auto* handle = session.handle;
+    std::optional session = found->second.try_lock();
+    if (!session) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "session already in use.");
+    }
+    auto* handle = session.value()->handle;
 
     job_started_info info;
     if (!cap.commit_restore_session(handle, &info)) {
@@ -120,9 +141,25 @@ class RestoreImpl : public Restore::Service {
 
     auto& key = request->token();
 
-    if (auto found = sessions.find(key); found != sessions.end()) {
-      cap.abort_restore_session(found->second.handle);
-      sessions.erase(found);
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    if (auto found = sessmap.find(key); found != sessmap.end()) {
+      {
+        std::optional session = found->second.try_lock();
+        if (!session) {
+          return Status(grpc::StatusCode::UNAVAILABLE,
+                        "session already in use.");
+        }
+        auto* handle = session.value()->handle;
+        cap.abort_restore_session(handle);
+      }
+      sessmap.erase(found);
       return Status::OK;
     } else {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
@@ -138,14 +175,25 @@ class RestoreImpl : public Restore::Service {
 
     auto& key = request->token();
 
-    auto found = sessions.find(key);
-    if (found == sessions.end()) {
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    auto found = sessmap.find(key);
+    if (found == sessmap.end()) {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
                     "No session with that key.");
     }
 
-    auto& session = found->second;
-    auto* handle = session.handle;
+    std::optional session = found->second.try_lock();
+    if (!session) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "session already in use.");
+    }
+    auto* handle = session.value()->handle;
 
     if (!cap.finish_selection(handle, request->has_bootstrappath()
                                           ? request->bootstrappath().c_str()
@@ -174,14 +222,25 @@ class RestoreImpl : public Restore::Service {
 
     auto& key = request->token();
 
-    auto found = sessions.find(key);
-    if (found == sessions.end()) {
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    auto found = sessmap.find(key);
+    if (found == sessmap.end()) {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
                     "No session with that key.");
     }
 
-    auto& session = found->second;
-    auto* handle = session.handle;
+    std::optional session = found->second.try_lock();
+    if (!session) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "session already in use.");
+    }
+    auto* handle = session.value()->handle;
 
     if (!cap.change_directory(handle, request->directory().c_str())) {
       const char* error = cap.error_string(handle);
@@ -209,14 +268,25 @@ class RestoreImpl : public Restore::Service {
 
     auto& key = request->token();
 
-    auto found = sessions.find(key);
-    if (found == sessions.end()) {
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    auto found = sessmap.find(key);
+    if (found == sessmap.end()) {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
                     "No session with that key.");
     }
 
-    auto& session = found->second;
-    auto* handle = session.handle;
+    std::optional session = found->second.try_lock();
+    if (!session) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "session already in use.");
+    }
+    auto* handle = session.value()->handle;
 
     auto lambda = [response](file_status status) -> bool {
       File f;
@@ -244,14 +314,25 @@ class RestoreImpl : public Restore::Service {
 
     auto& key = request->token();
 
-    auto found = sessions.find(key);
-    if (found == sessions.end()) {
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    auto found = sessmap.find(key);
+    if (found == sessmap.end()) {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
                     "No session with that key.");
     }
 
-    auto& session = found->second;
-    auto* handle = session.handle;
+    std::optional session = found->second.try_lock();
+    if (!session) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "session already in use.");
+    }
+    auto* handle = session.value()->handle;
 
     bool mark = request->mark();
     auto& regex = request->regex();
@@ -281,7 +362,16 @@ class RestoreImpl : public Restore::Service {
     ignore(context, request);
 
     auto* array = response->mutable_tokens();
-    for (auto& [key, _] : sessions) {
+
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    for (auto& [key, _] : sessmap) {
       auto* str = array->Add();
       if (!str) { return Status(grpc::StatusCode::UNKNOWN, "Internal error."); }
       *str = key;
@@ -298,14 +388,25 @@ class RestoreImpl : public Restore::Service {
 
     auto& session_key = request->token();
 
-    auto found = sessions.find(session_key);
-    if (found == sessions.end()) {
+    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+
+    if (!optsessmap) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
+    }
+
+    auto& sessmap = optsessmap.value().get();
+
+    auto found = sessmap.find(session_key);
+    if (found == sessmap.end()) {
       return Status(grpc::StatusCode::INVALID_ARGUMENT,
                     "No session with that key.");
     }
 
-    auto& session = found->second;
-    auto* handle = session.handle;
+    std::optional session = found->second.try_lock();
+    if (!session) {
+      return Status(grpc::StatusCode::UNAVAILABLE, "session already in use.");
+    }
+    auto* handle = session.value()->handle;
 
     if (request->has_job()) {
       if (!cap.set_restore_job(handle, request->job().c_str())) {
@@ -344,7 +445,10 @@ class RestoreImpl : public Restore::Service {
     return Status::OK;
   }
 
-  std::unordered_map<std::string, restore_session> sessions;
+  // TODO: sessions also needs to be (rw-)synchronized
+  synchronized<std::unordered_map<std::string, synchronized<restore_session>>,
+               std::timed_mutex>
+      sessions;
 
   restore_capability cap;
 };

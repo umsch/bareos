@@ -42,7 +42,7 @@ typedef void (*Log_t)(enum log_severity, const char*);
 
 enum bareos_capability
 {
-  CAP_ListClients = 0,
+  CAP_Client = 0,
   CAP_Restore = 1,
 };
 

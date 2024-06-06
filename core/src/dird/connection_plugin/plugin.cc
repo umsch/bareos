@@ -120,7 +120,7 @@ bool PluginListClient(const char* name, list_client_callback* cb, void* user)
 bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
 {
   switch (Cap) {
-    case CAP_ListClients: {
+    case CAP_Client: {
       if (bufsize == sizeof(struct list_client_capability)
           && std::align(alignof(struct list_client_capability), bufsize, buffer,
                         bufsize)) {

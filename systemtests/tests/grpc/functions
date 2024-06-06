@@ -29,3 +29,11 @@ check_preconditions ()
 	   exit 6
 	fi
 }
+
+ADDRESS=0.0.0.0:13343
+
+grpc()
+{
+    echo "$1 <- $2" >&2
+    grpcurl -plaintext -format json -d "$2" "$ADDRESS" "$1"
+}

@@ -42,8 +42,64 @@ template <typename... Ts> void ignore(Ts&&...) {}
 
 
 #include "dird/connection_plugin/plugin.h"
-#include "dird/connection_plugin/list_clients.h"
-#include "restore.h"
+#include "grpc.h"
+
+namespace {
+
+constexpr time_t default_timeout = 500;
+
+class AuthImpl final : public Authentication::Service {
+  Status Login(ServerContext*,
+               const LoginRequest* request,
+               LoginResponse* response) override
+  {
+    if (request->username() != "admin" || request->password() != "admin") {
+      return Status(grpc::StatusCode::PERMISSION_DENIED, "No");
+    }
+
+    std::string sesskey;
+
+    auto* session
+        = MakeSession(request->username(), request->password(), sesskey);
+
+    if (!session) { return Status(grpc::StatusCode::UNKNOWN, "No"); }
+
+    if (request->has_timeout()) {
+      session->timeout = request->timeout();
+    } else {
+      session->timeout = default_timeout;
+    }
+
+    session->last_action = time(NULL);
+
+    response->set_auth(sesskey);
+    response->set_timeout(session->timeout);
+
+    return Status::OK;
+  }
+  Status Logout(ServerContext*, const LogoutRequest*, LogoutResponse*) override
+  {
+    return Status::OK;
+  }
+
+  struct auth_session {
+    time_t timeout;
+    time_t last_action;
+  };
+
+  std::unordered_map<std::string, auth_session> sessions;
+
+  auth_session* MakeSession(std::string_view user,
+                            std::string_view pw,
+                            std::string& key)
+  {
+    (void)user;
+    (void)pw;
+    (void)key;
+    return nullptr;
+  }
+};
+
 
 const bareos_api* bareos;
 std::unique_ptr<Server> server;
@@ -53,27 +109,6 @@ auto QueryCapability(bareos_capability cap, size_t bufsize, void* buffer)
 {
   return bareos->query(cap, bufsize, buffer);
 }
-
-bool loadPlugin(const bareos_api* bareos_)
-{
-  if (bareos_->size != sizeof(*bareos_)) { return false; }
-  bareos = bareos_;
-
-  return true;
-}
-
-class SqlImpl final : public Sql::Service {
- public:
-  SqlImpl(list_client_capability lcc) : cap{lcc} { Dmsg1(5, "Impl Created"); }
-
- private:
-  Status ListClients(ServerContext* context,
-                     const ListClientsRequest* request,
-                     ServerWriter<SqlResponse>* writer) override;
-
-  list_client_capability cap;
-};
-
 
 bool Start(int port)
 {
@@ -91,11 +126,10 @@ bool Start(int port)
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
 
-    if (list_client_capability lcc;
-        QueryCapability(CAP_ListClients, sizeof(lcc), &lcc)) {
-      auto sql = std::make_unique<SqlImpl>(lcc);
-      builder.RegisterService(sql.get());
-      services.emplace_back(std::move(sql));
+    if (client_capability cc; QueryCapability(CAP_Client, sizeof(cc), &cc)) {
+      auto client = MakeClientService(cc);
+      builder.RegisterService(client.get());
+      services.emplace_back(std::move(client));
     }
 
     if (restore_capability rc; QueryCapability(CAP_Restore, sizeof(rc), &rc)) {
@@ -104,6 +138,8 @@ bool Start(int port)
       services.emplace_back(std::move(restore));
     }
 
+    services.emplace_back(new AuthImpl{});
+
     // Finally assemble the server.
     server = builder.BuildAndStart();
 
@@ -111,6 +147,14 @@ bool Start(int port)
   } catch (...) {
     return false;
   }
+}
+
+bool loadPlugin(const bareos_api* bareos_)
+{
+  if (bareos_->size != sizeof(*bareos_)) { return false; }
+  bareos = bareos_;
+
+  return true;
 }
 
 bool unloadPlugin()
@@ -126,6 +170,7 @@ bool unloadPlugin()
 }
 
 const char* agplv3 = "...";
+}  // namespace
 
 plugin_api CONN_PLUGIN_API_SYMBOL_NAME = {
     .size = sizeof(plugin_api),
@@ -134,59 +179,3 @@ plugin_api CONN_PLUGIN_API_SYMBOL_NAME = {
     .unload = &unloadPlugin,
     .start = &Start,
 };
-
-template <typename Callback>
-bool sql_callback_helper(size_t num_fields,
-                         const char* const fields[],
-                         const char* const rows[],
-                         void* user)
-{
-  auto* cb = reinterpret_cast<Callback*>(user);
-  return (*cb)(num_fields, fields, rows);
-}
-
-template <typename Callback>
-bool ListClients(list_client_capability& lcc, Callback&& callback)
-{
-  return lcc.list_clients(sql_callback_helper<Callback>, &callback);
-}
-
-template <typename Callback>
-bool ListClient(list_client_capability& lcc,
-                const char* name,
-                Callback&& callback)
-{
-  return lcc.list_client(name, sql_callback_helper<Callback>, &callback);
-}
-
-
-Status SqlImpl::ListClients(ServerContext* context,
-                            const ListClientsRequest* request,
-                            ServerWriter<SqlResponse>* writer)
-{
-  ignore(context);
-
-  auto cb = [writer](size_t num_fields, const char* const fields[],
-                     const char* const rows[]) -> bool {
-    SqlResponse response;
-    for (size_t i = 0; i < num_fields; ++i) {
-      auto [_, inserted] = response.mutable_row()->insert({fields[i], rows[i]});
-      if (!inserted) { return false; }
-    }
-    writer->Write(response);
-    return true;
-  };
-  if (request->has_clientname()) {
-    if (!::ListClient(cap, request->clientname().c_str(), std::move(cb))) {
-      return Status(grpc::StatusCode::UNKNOWN, "Internal error");
-    }
-  } else {
-    if (!::ListClients(cap, std::move(cb))) {
-      return Status(grpc::StatusCode::UNKNOWN, "Internal error");
-    }
-  }
-
-  std::this_thread::sleep_for(std::chrono::seconds(5));
-
-  return grpc::Status::OK;
-}

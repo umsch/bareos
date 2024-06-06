@@ -19,30 +19,15 @@
    02110-1301, USA.
 */
 
-#ifndef BAREOS_DIRD_CONNECTION_PLUGIN_LIST_CLIENTS_H_
-#define BAREOS_DIRD_CONNECTION_PLUGIN_LIST_CLIENTS_H_
+#ifndef BAREOS_DIRD_CONNECTION_PLUGIN_GRPC_GRPC_H_
+#define BAREOS_DIRD_CONNECTION_PLUGIN_GRPC_GRPC_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <memory>
+#include "dird/connection_plugin/restore.h"
+#include "dird/connection_plugin/client.h"
+#include "service.grpc.pb.h"
 
-typedef bool(sql_callback)(size_t num_fields,
-                           char const* const fields[],
-                           char const* const row[],
-                           void* user);
+std::unique_ptr<Restore::Service> MakeRestoreService(restore_capability cap);
+std::unique_ptr<Client::Service> MakeClientService(client_capability cap);
 
-typedef bool(ListClients_t)(sql_callback* cb, void* user);
-typedef bool(ListClient_t)(const char* client_name,
-                           sql_callback* cb,
-                           void* user);
-
-struct list_client_capability {
-  ListClients_t* list_clients;
-  ListClient_t* list_client;
-};
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // BAREOS_DIRD_CONNECTION_PLUGIN_LIST_CLIENTS_H_
+#endif  // BAREOS_DIRD_CONNECTION_PLUGIN_GRPC_GRPC_H_

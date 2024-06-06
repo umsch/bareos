@@ -38,7 +38,7 @@
 
 #include "lib/fnmatch.h"
 #include "lib/parse_conf.h"
-#include "connection_plugin/list_clients.h"
+#include "connection_plugin/client.h"
 #include "connection_plugin/restore.h"
 #include "lib/tree.h"
 
@@ -150,7 +150,10 @@ static BareosDb* OpenDb(JobControlRecord* jcr)
       /* private */ true);
 }
 
-bool PluginListClientsImpl(const char* name, sql_callback* cb, void* user)
+bool PluginListClientsImpl(const char* name,
+                           bool expanded,
+                           sql_callback* cb,
+                           void* user)
 {
   auto* jcr = NewDirectorJcr(DirdFreeJcr);
 
@@ -160,7 +163,7 @@ bool PluginListClientsImpl(const char* name, sql_callback* cb, void* user)
 
   plugin_sql_result_handler handler(cb, user);
 
-  db->ListClientRecords(jcr, name, false, &handler);
+  db->ListClientRecords(jcr, name, expanded, &handler);
 
   DbSqlClosePooledConnection(jcr, db);
 
@@ -169,12 +172,12 @@ bool PluginListClientsImpl(const char* name, sql_callback* cb, void* user)
 
 bool PluginListClients(sql_callback* cb, void* user)
 {
-  return PluginListClientsImpl(NULL, cb, user);
+  return PluginListClientsImpl(NULL, false, cb, user);
 }
 
 bool PluginListClient(const char* name, sql_callback* cb, void* user)
 {
-  return PluginListClientsImpl(name, cb, user);
+  return PluginListClientsImpl(name, true, cb, user);
 }
 
 restore_session_handle* PluginCreateRestoreSession()
@@ -575,11 +578,11 @@ template <typename T> bool check_buffer(size_t bufsize, void* buffer)
 bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
 {
   switch (Cap) {
-    case CAP_ListClients: {
-      if (check_buffer<list_client_capability>(bufsize, buffer)) {
-        list_client_capability cap = {
+    case CAP_Client: {
+      if (check_buffer<client_capability>(bufsize, buffer)) {
+        client_capability cap = {
             .list_clients = &PluginListClients,
-            .list_client = &PluginListClient,
+            .client_info = &PluginListClient,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

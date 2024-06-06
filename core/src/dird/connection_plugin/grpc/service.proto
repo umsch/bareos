@@ -1,16 +1,39 @@
 syntax = "proto3";
 
-service Sql {
-  rpc ListClients (ListClientsRequest) returns (stream SqlResponse) {}
+service Client {
+  rpc List (ListClientsRequest) returns (stream SqlResponse) {}
+  rpc Info (ClientInfoRequest) returns (SqlResponse) {}
 }
 
 message ListClientsRequest {
-  optional string clientname = 1;
+}
+
+message ClientInfoRequest {
+  string clientname = 1;
 }
 
 message SqlResponse {
   map<string, string> row = 1;
 }
+
+service Authentication {
+  rpc Login (LoginRequest) returns (LoginResponse);
+  rpc Logout (LogoutRequest) returns (LogoutResponse);
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+  optional int64 timeout = 3;
+}
+
+message LoginResponse {
+  string auth = 1;
+  int64 timeout = 2;
+}
+
+message LogoutRequest {}
+message LogoutResponse {}
 
 service Restore {
   rpc Begin (BeginRequest) returns (BeginResponse);
@@ -26,48 +49,48 @@ service Restore {
 
 message SetOptionsResponse {
   map<string, string> current_options = 1;
-};
+}
 
 message ListSessionsRequest {
 
-};
+}
 
 message ListSessionsResponse {
   repeated string tokens = 1;
-};
+}
 
 message BeginResponse {
   string token = 1;
-};
+}
 message AbortRequest {
   string token = 1;
-};
+}
 
 message SetOptionsRequest {
   string token = 1;
   optional string client= 2;
   optional string job= 3;
   optional string catalog= 4;
-};
+}
 
 message FinishSelectionRequest {
   string token = 1;
   optional string bootstrappath = 2;
-};
+}
 
 message FinishSelectionResponse {
   string bootstrappath = 1;
-};
+}
 
 message ChangeMarkedRequest {
   string token = 1;
   bool mark = 2;
   string regex = 3;
-};
+}
 
 message ChangeMarkedResponse {
   int64 affected_count = 1;
-};
+}
 
 message BeginRequest {
   repeated int64 jobids = 1;

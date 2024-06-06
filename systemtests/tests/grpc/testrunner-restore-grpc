@@ -2,7 +2,7 @@
 
 #   BAREOS® - Backup Archiving REcovery Open Sourced
 #
-#   Copyright (C) 2023-2024 Bareos GmbH & Co. KG
+#   Copyright (C) 2024-2024 Bareos GmbH & Co. KG
 #
 #   This program is Free Software; you can redistribute it and/or
 #   modify it under the terms of version three of the GNU Affero General Public
@@ -20,7 +20,7 @@
 #   02110-1301, USA.
 
 #
-# Run a simple backup
+#  Restore a job using grpc
 #
 
 set -e
@@ -39,14 +39,6 @@ JobName=backup-bareos-fd
 . "${rscripts}"/functions
 #shellcheck source=functions
 . functions
-
-ADDRESS=0.0.0.0:13343
-
-grpc()
-{
-    echo "$1 <- $2" >&2
-    grpcurl -plaintext -format json -d "$2" "$ADDRESS" "$1"
-}
 
 start_test
 

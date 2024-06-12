@@ -349,7 +349,7 @@ class RestoreImpl : public Restore::Service {
     bool mark = request->mark();
     auto& regex = request->regex();
 
-    size_t num_affected;
+    size_t num_affected = 0;
 
     auto lambda = [&num_affected](file_status) -> bool {
       num_affected += 1;

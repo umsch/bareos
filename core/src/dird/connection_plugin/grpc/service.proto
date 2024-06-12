@@ -3,10 +3,10 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 
 service Client {
-  rpc ListBackedUp (ListClientsRequest) returns (stream SqlResponse);
+  rpc List (ListClientsRequest) returns (stream SqlResponse);
   rpc Info (ClientInfoRequest) returns (SqlResponse);
 
-  rpc ListActive (ListActiveClientsRequest) returns (stream ClientId);
+  rpc ListConfigured (ListConfiguredClientsRequest) returns (stream ClientId);
 }
 
 message ClientId {
@@ -17,7 +17,7 @@ message ClientId {
 message ListClientsRequest {
 }
 
-message ListActiveClientsRequest {
+message ListConfiguredClientsRequest {
 }
 
 message ClientInfoRequest {

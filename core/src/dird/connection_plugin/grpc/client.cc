@@ -40,9 +40,9 @@ class ClientImpl : public Client::Service {
   ClientImpl(client_capability rc) : cap{rc} {}
 
  private:
-  Status ListBackedUp(ServerContext*,
-                      const ListClientsRequest*,
-                      ServerWriter<SqlResponse>* writer) override
+  Status List(ServerContext*,
+              const ListClientsRequest*,
+              ServerWriter<SqlResponse>* writer) override
   {
     auto cb = [writer](size_t num_fields, const char* const fields[],
                        const char* const rows[]) -> bool {

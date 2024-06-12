@@ -673,8 +673,27 @@ bool LoadConnectionPlugins(const char* directory,
       .query = &QueryCabability,
   };
 
+  ResLocker _{my_config};
 
-  int port = 13343;  // todo: get from config
+
+  auto* p = dynamic_cast<GrpcResource*>(my_config->GetNextRes(R_GRPC, nullptr));
+
+  if (!p) { return false; }
+
+  if (p->addrs->size() == 0) {
+    Emsg0(M_ERROR, 0, "No address specified for connection plugins.\n");
+    return false;
+  } else if (p->addrs->size() > 1) {
+    Emsg0(M_WARNING, 0,
+          "More than one address specified for connection plugins; all but the "
+          "first are ignored.\n");
+  }
+
+  auto* addr = p->addrs->first();
+
+  // TODO: use full address instead
+  auto port = addr->GetPortHostOrder();
+
   for (auto& plugin : plugins) {
     if (!plugin.api.load(&api)) { return false; }
     if (!plugin.api.start(port)) { return false; }

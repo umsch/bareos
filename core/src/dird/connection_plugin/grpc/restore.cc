@@ -22,28 +22,29 @@
 #include "grpc.h"
 #include "lib/thread_util.h"
 
+#include <thread>
+
 using grpc::ServerContext;
 using grpc::Status;
 
 template <typename... Ts> void ignore(Ts&&...) {}
 
-struct restore_session {
-  restore_session_handle* handle{nullptr};
+struct restore_message {
+  message_severity severity;
+  std::string text;
+  time_t timestamp;
 };
 
+struct restore_session {
+  restore_session_handle* handle{nullptr};
+  std::shared_ptr<synchronized<std::vector<restore_message>>> messages;
+};
 
-template <typename Callback>
-bool kv_cb_helper(void* user, const char* key, const char* value)
+template <typename Callback, typename... Args>
+auto c_callback(void* user, Args... args)
 {
   auto* cb = reinterpret_cast<Callback*>(user);
-  return (*cb)(key, value);
-}
-
-template <typename Callback>
-bool file_callback_helper(void* user, file_status status)
-{
-  auto* cb = reinterpret_cast<Callback*>(user);
-  return (*cb)(status);
+  return (*cb)(args...);
 }
 
 class RestoreImpl : public Restore::Service {
@@ -73,7 +74,19 @@ class RestoreImpl : public Restore::Service {
       return Status(grpc::StatusCode::UNKNOWN, "Duplicate session keys.");
     }
 
-    auto* session = cap.create_restore_session();
+    auto lambda = [&locked = iter->second](message_severity severity,
+                                           time_t time, const char* text) {
+      auto session = locked.lock();
+
+      session->messages->lock()->push_back(restore_message{
+          .severity = severity,
+          .text = text,
+          .timestamp = time,
+      });
+    };
+
+    auto* session
+        = cap.create_restore_session(c_callback<decltype(lambda)>, &lambda);
 
     if (!session) {
       sessmap.erase(iter);
@@ -296,8 +309,7 @@ class RestoreImpl : public Restore::Service {
       return true;
     };
 
-    if (!cap.list_files(handle, file_callback_helper<decltype(lambda)>,
-                        &lambda)) {
+    if (!cap.list_files(handle, c_callback<decltype(lambda)>, &lambda)) {
       const char* error = cap.error_string(handle);
       return Status(grpc::StatusCode::UNKNOWN,
                     error ? error : "Internal error.");
@@ -345,7 +357,7 @@ class RestoreImpl : public Restore::Service {
     };
 
     if (!cap.mark_unmark(handle, regex.c_str(), mark,
-                         file_callback_helper<decltype(lambda)>, &lambda)) {
+                         c_callback<decltype(lambda)>, &lambda)) {
       const char* error = cap.error_string(handle);
       return Status(grpc::StatusCode::UNKNOWN,
                     error ? error : "Internal error.");
@@ -435,8 +447,7 @@ class RestoreImpl : public Restore::Service {
       auto [_, inserted] = map->insert({key, val});
       return inserted;
     };
-    if (!cap.enumerate_options(handle, kv_cb_helper<decltype(lambda)>,
-                               &lambda)) {
+    if (!cap.enumerate_options(handle, c_callback<decltype(lambda)>, &lambda)) {
       const char* error = cap.error_string(handle);
       return Status(grpc::StatusCode::UNKNOWN,
                     error ? error : "Internal error.");

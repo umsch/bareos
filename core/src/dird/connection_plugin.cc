@@ -180,7 +180,7 @@ bool PluginListClient(const char* name, sql_callback* cb, void* user)
   return PluginListClientsImpl(name, true, cb, user);
 }
 
-restore_session_handle* PluginCreateRestoreSession()
+restore_session_handle* PluginCreateRestoreSession(HandleMessage*, void*)
 {
   auto* jcr = NewDirectorJcr(DirdFreeJcr);
   if (!jcr) { return nullptr; }

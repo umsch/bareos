@@ -41,11 +41,25 @@ struct file_status {
 };
 
 
+enum message_severity
+{
+  MSG_INFO,
+  MSG_WARNING,
+  MSG_ERROR,
+  MSG_FATAL,
+};
+
 // ALWAYS
 typedef void(AbortRestoreSession_t)(struct restore_session_handle*);
 typedef const char*(ErrorString_t)(struct restore_session_handle*);
+
 // START
-typedef struct restore_session_handle*(CreateRestoreSession_t)(void);
+typedef void(
+    HandleMessage(void* user, message_severity, time_t time, const char* text));
+
+
+typedef struct restore_session_handle*(
+    CreateRestoreSession_t)(HandleMessage* handler, void* user);
 typedef bool(StartFromJobIds_t)(struct restore_session_handle*,
                                 size_t count,
                                 const int64_t jobids[],

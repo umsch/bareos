@@ -1,11 +1,23 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 service Client {
-  rpc List (ListClientsRequest) returns (stream SqlResponse) {}
-  rpc Info (ClientInfoRequest) returns (SqlResponse) {}
+  rpc ListBackedUp (ListClientsRequest) returns (stream SqlResponse);
+  rpc Info (ClientInfoRequest) returns (SqlResponse);
+
+  rpc ListActive (ListActiveClientsRequest) returns (stream ClientId);
+}
+
+message ClientId {
+  string name = 1;
+  int64  id   = 2;
 }
 
 message ListClientsRequest {
+}
+
+message ListActiveClientsRequest {
 }
 
 message ClientInfoRequest {
@@ -36,16 +48,37 @@ message LogoutRequest {}
 message LogoutResponse {}
 
 service Restore {
+  rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
   rpc Begin (BeginRequest) returns (BeginResponse);
+  rpc Abort (AbortRequest) returns (AbortResponse);
   rpc ListFiles (ListFilesRequest) returns (stream File);
   rpc ChangeDirectory (ChangeDirectoryRequest) returns (ChangeDirectoryResponse);
-  rpc Commit (CommitRequest) returns (CommitResponse);
-  rpc Abort (AbortRequest) returns (AbortResponse);
   rpc ChangeMarkedStatus (ChangeMarkedRequest) returns (ChangeMarkedResponse);
   rpc FinishSelection (FinishSelectionRequest) returns (FinishSelectionResponse);
   rpc SetOptions (SetOptionsRequest) returns (SetOptionsResponse);
-  rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
+  rpc GetMessages (GetMessagesRequest) returns (stream RestoreMessage);
+  rpc Commit (CommitRequest) returns (CommitResponse);
 }
+
+message GetMessagesRequest {
+  string token = 1;
+  uint64 start = 2;
+  uint64 count = 3;
+};
+
+enum RestoreMessageSeverity {
+  Info = 0;
+  Warning = 1;
+  Error = 2;
+  Fatal = 3;
+};
+
+message RestoreMessage {
+  uint64 id = 1;
+  google.protobuf.Timestamp ts = 2;
+  RestoreMessageSeverity severity = 3;
+  string text = 4;
+};
 
 message SetOptionsResponse {
   map<string, string> current_options = 1;

@@ -30,10 +30,12 @@
 #include "include/baconfig.h"
 #include "dird/restore.h"
 
+#include <future>
 #include <memory>
 #include <optional>
 #include <fstream>
 #include <string_view>
+#include <thread>
 #include <dlfcn.h>
 
 #include "lib/fnmatch.h"
@@ -59,6 +61,52 @@ struct select_tree_state {
   ~select_tree_state() { FreeTree(root); }
 };
 
+struct build_stats {
+  std::atomic<std::size_t> file_count;
+  std::string error;
+
+  std::size_t progress() { return file_count.load(); }
+};
+
+static directordaemon::InsertTreeContext build_tree(
+    BareosDb* db,
+    directordaemon::TreeArgs args,
+    std::shared_ptr<build_stats>)
+{
+  auto ctx = directordaemon::BuildDirectoryTree(db, std::move(args));
+  return ctx;
+}
+
+struct build_restore_tree_state {
+  std::size_t expected_count;
+  std::future<directordaemon::InsertTreeContext> ctx;
+  std::shared_ptr<build_stats> stats;
+
+  build_restore_tree_state(std::size_t count,
+                           BareosDb* db,
+                           directordaemon::TreeArgs args)
+      : expected_count(count), stats{std::make_shared<build_stats>()}
+  {
+    ctx = std::async(std::launch::async, build_tree, db, std::move(args),
+                     stats);
+  }
+
+  template <typename Duration> bool wait(Duration waittime)
+  {
+    ASSERT(ctx.valid());  // check the value was not yet collected
+
+    return ctx.wait_for(waittime) == std::future_status::ready;
+  }
+
+  bool finished() { return wait(std::chrono::milliseconds(5)); }
+
+  directordaemon::InsertTreeContext wait_and_get()
+  {
+    ASSERT(ctx.valid());
+    return ctx.get();
+  }
+};
+
 struct select_restore_option_state {
   directordaemon::JobResource* job{nullptr};
   directordaemon::ClientResource* restore_client{nullptr};
@@ -82,8 +130,10 @@ struct restore_session_handle {
   std::string error;
   JobControlRecord* jcr;
   BareosDb* db;
+  directordaemon::RestoreOptions opts;
 
   std::variant<select_start_state,
+               build_restore_tree_state,
                select_tree_state,
                select_restore_option_state,
                job_started_state>
@@ -220,14 +270,20 @@ bool PluginStartFromJobIds(restore_session_handle* handle,
   for (size_t i = 0; i < count; ++i) { args.jobids.insert(jobids[i]); }
   args.estimated_size = 500;  // TODO: fix this
 
-  auto ctx = BuildDirectoryTree(handle->db, std::move(args));
+  auto& build_state = handle->state.emplace<build_restore_tree_state>(
+      build_restore_tree_state(static_cast<std::size_t>(args.estimated_size),
+                               handle->db, std::move(args)));
 
+  auto ctx = build_state.wait_and_get();
   if (ctx.error) {
     handle->error = "Tree creation error: ERR=" + ctx.error.value();
     return false;
   }
 
-  handle->state.emplace<select_tree_state>(ctx.root, ctx.TotalCount);
+  auto* root = ctx.root;
+  auto size = ctx.TotalCount;
+  handle->state.emplace<select_tree_state>(root, size);
+  ctx.release();
 
   return true;
 }

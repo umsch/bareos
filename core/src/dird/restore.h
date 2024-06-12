@@ -31,6 +31,7 @@
 #include "include/baconfig.h"
 #include "dird_conf.h"
 #include "bsr.h"
+#include "lib/tree.h"
 
 namespace directordaemon {
 
@@ -111,11 +112,32 @@ struct TreeArgs {
 };
 
 struct InsertTreeContext {
-  std::size_t TotalCount;
-  TREE_ROOT* root;
+  std::size_t TotalCount{0};
+  TREE_ROOT* root{nullptr};
 
-  std::optional<std::string> error;
-  bool mark_on_create;
+  std::optional<std::string> error{};
+  bool mark_on_create{false};
+
+  void release() { root = nullptr; }
+
+  InsertTreeContext() = default;
+  InsertTreeContext(const InsertTreeContext& other) = delete;
+  InsertTreeContext(InsertTreeContext&& other) { *this = std::move(other); }
+
+  InsertTreeContext& operator=(const InsertTreeContext& other) = delete;
+  InsertTreeContext& operator=(InsertTreeContext&& other)
+  {
+    std::swap(TotalCount, other.TotalCount);
+    std::swap(root, other.root);
+    std::swap(error, other.error);
+    std::swap(mark_on_create, other.mark_on_create);
+    return *this;
+  }
+
+  ~InsertTreeContext()
+  {
+    if (root) { FreeTree(root); }
+  }
 };
 
 InsertTreeContext BuildDirectoryTree(BareosDb* db, TreeArgs args);

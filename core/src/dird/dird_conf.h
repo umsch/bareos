@@ -65,6 +65,7 @@ enum
   R_CONSOLE,
   R_DEVICE,
   R_USER,
+  R_GRPC,
   R_NUM /* Number of entries */
 };
 
@@ -683,6 +684,10 @@ const char* GetUsageStringForConsoleConfigureCommand();
 void DestroyConfigureUsageString();
 bool PopulateDefs();
 std::vector<JobResource*> GetAllJobResourcesByClientName(std::string name);
+
+struct GrpcResource : public BareosResource {
+  dlist<IPADDR>* addrs = nullptr;
+};
 
 } /* namespace directordaemon */
 #endif  // BAREOS_DIRD_DIRD_CONF_H_

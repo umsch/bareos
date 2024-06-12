@@ -112,11 +112,13 @@ static MessagesResource* res_msgs;
 static CounterResource* res_counter;
 static DeviceResource* res_dev;
 static UserResource* res_user;
+static GrpcResource* res_grpc;
 
 
 /* clang-format off */
 
 static ResourceItem dir_items[] = {
+
   { "Name", CFG_TYPE_NAME, ITEM(res_dir,  resource_name_), 0, CFG_ITEM_REQUIRED, NULL, NULL, "The name of the resource." },
   { "Description", CFG_TYPE_STR, ITEM(res_dir,  description_), 0, 0, NULL, NULL, NULL },
   { "Messages", CFG_TYPE_RES, ITEM(res_dir,  messages), R_MSGS, 0, NULL, NULL, NULL },
@@ -153,6 +155,13 @@ static ResourceItem dir_items[] = {
   { "LogTimestampFormat", CFG_TYPE_STR, ITEM(res_dir, log_timestamp_format), 0, CFG_ITEM_DEFAULT, "%d-%b %H:%M", "15.2.3-", NULL },
    TLS_COMMON_CONFIG(res_dir),
    TLS_CERT_CONFIG(res_dir),
+  {nullptr, 0, 0, nullptr, 0, 0, nullptr, nullptr, nullptr}
+};
+
+static ResourceItem grpc_items[] = {
+  { "Name", CFG_TYPE_NAME, ITEM(res_grpc, resource_name_), 0, CFG_ITEM_REQUIRED, NULL, NULL, "The name of the resource." },
+  { "Port", CFG_TYPE_ADDRESSES_PORT, ITEM(res_grpc, addrs), 0, CFG_ITEM_DEFAULT, DIR_DEFAULT_PORT, NULL, NULL },
+  { "Address", CFG_TYPE_ADDRESSES_ADDRESS, ITEM(res_grpc, addrs), 0, CFG_ITEM_DEFAULT, DIR_DEFAULT_PORT, NULL, NULL },
   {nullptr, 0, 0, nullptr, 0, 0, nullptr, nullptr, nullptr}
 };
 
@@ -539,6 +548,8 @@ static ResourceTable dird_resource_tables[] = {
       [] (){ res_dev = new DeviceResource(); }, reinterpret_cast<BareosResource**>(&res_dev) },
   { "User", "Users", user_items, R_USER, sizeof(UserResource),
       [] (){ res_user = new UserResource(); }, reinterpret_cast<BareosResource**>(&res_user) },
+  { "Grpc", "Grpcs", grpc_items, R_GRPC, sizeof(GrpcResource),
+    [] (){ res_grpc = new GrpcResource(); }, reinterpret_cast<BareosResource**>(&res_grpc) },
   { nullptr, nullptr, nullptr, 0, 0, nullptr, nullptr }
 };
 
@@ -2173,6 +2184,7 @@ static void FreeIncludeExcludeItem(IncludeExcludeItem* incexe)
 static bool UpdateResourcePointer(int type, ResourceItem* items)
 {
   switch (type) {
+    case R_GRPC:
     case R_PROFILE:
     case R_CATALOG:
     case R_MSGS:
@@ -3633,6 +3645,10 @@ static bool AddResourceCopyToEndOfChain(int type,
         new_resource = res_dev;
         res_dev = nullptr;
         break;
+      case R_GRPC: {
+        new_resource = res_grpc;
+        res_grpc = nullptr;
+      } break;
       default:
         Dmsg3(100, "Unhandled resource type: %d\n", type);
         return false;
@@ -3949,6 +3965,12 @@ static void FreeResource(BareosResource* res, int type)
       delete p;
       break;
     }
+    case R_GRPC: {
+      GrpcResource* p = dynamic_cast<GrpcResource*>(res);
+      assert(p);
+      FreeAddresses(p->addrs);
+      delete p;
+    } break;
     default:
       printf(T_("Unknown resource type %d in FreeResource.\n"), type);
       break;

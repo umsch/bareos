@@ -37,69 +37,12 @@ using grpc::Status;
 
 template <typename... Ts> void ignore(Ts&&...) {}
 
-// grpcurl -plaintext -format json -d '{ "username": "admin", "password": "123"
-// }' 0.0.0.0:34343 Greeter/Authenticate
-
-
 #include "dird/connection_plugin/plugin.h"
 #include "grpc.h"
 
 namespace {
 
 constexpr time_t default_timeout = 500;
-
-class AuthImpl final : public Authentication::Service {
-  Status Login(ServerContext*,
-               const LoginRequest* request,
-               LoginResponse* response) override
-  {
-    if (request->username() != "admin" || request->password() != "admin") {
-      return Status(grpc::StatusCode::PERMISSION_DENIED, "No");
-    }
-
-    std::string sesskey;
-
-    auto* session
-        = MakeSession(request->username(), request->password(), sesskey);
-
-    if (!session) { return Status(grpc::StatusCode::UNKNOWN, "No"); }
-
-    if (request->has_timeout()) {
-      session->timeout = request->timeout();
-    } else {
-      session->timeout = default_timeout;
-    }
-
-    session->last_action = time(NULL);
-
-    response->set_auth(sesskey);
-    response->set_timeout(session->timeout);
-
-    return Status::OK;
-  }
-  Status Logout(ServerContext*, const LogoutRequest*, LogoutResponse*) override
-  {
-    return Status::OK;
-  }
-
-  struct auth_session {
-    time_t timeout;
-    time_t last_action;
-  };
-
-  std::unordered_map<std::string, auth_session> sessions;
-
-  auth_session* MakeSession(std::string_view user,
-                            std::string_view pw,
-                            std::string& key)
-  {
-    (void)user;
-    (void)pw;
-    (void)key;
-    return nullptr;
-  }
-};
-
 
 const bareos_api* bareos;
 std::unique_ptr<Server> server;
@@ -137,8 +80,6 @@ bool Start(int port)
       builder.RegisterService(restore.get());
       services.emplace_back(std::move(restore));
     }
-
-    services.emplace_back(new AuthImpl{});
 
     // Finally assemble the server.
     server = builder.BuildAndStart();

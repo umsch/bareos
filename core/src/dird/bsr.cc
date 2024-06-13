@@ -227,7 +227,7 @@ std::optional<std::string> AddVolumeInformationToBsr(
     JobDbRecord jr;
     jr.JobId = bsr->JobId;
     if (!db->GetJobRecord(jcr, &jr)) {
-      return std::string{"Unable to get Job record. ERR=%s"} + db->strerror();
+      return std::string{"Unable to get Job record. ERR="} + db->strerror();
     }
     bsr->VolSessionId = jr.VolSessionId;
     bsr->VolSessionTime = jr.VolSessionTime;
@@ -483,14 +483,19 @@ std::unique_ptr<RestoreBootstrapRecord> BsrFromTree(TREE_ROOT* root)
 {
   auto bsr = std::make_unique<RestoreBootstrapRecord>();
 
+  bool found = false;
+
   for (TREE_NODE* node = FirstTreeNode(root); node; node = NextTreeNode(node)) {
     if (node->extract || node->extract_dir) {
       // TODO: handle delta_list
       AddFindex(bsr.get(), node->JobId, node->FileIndex);
+      found = true;
     }
   }
 
-  return bsr;
+  if (found) return bsr;
+
+  return nullptr;
 }
 
 serialized_bsr SerializeBsr(RestoreBootstrapRecord* bsr)

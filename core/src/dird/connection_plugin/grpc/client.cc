@@ -88,6 +88,32 @@ class ClientImpl : public Client::Service {
     return Status::OK;
   }
 
+  Status ListConfigured(ServerContext*,
+                        const ListConfiguredClientsRequest*,
+                        ListConfiguredClientsResponse* response) override
+  {
+    auto* clients = response->mutable_clients();
+    auto cb = [clients](size_t num_fields, const char* const fields[],
+                        const char* const rows[]) {
+      SqlResponse sql;
+
+      for (size_t i = 0; i < num_fields; ++i) {
+        auto [_, inserted] = sql.mutable_row()->insert({fields[i], rows[i]});
+        if (!inserted) { return false; }
+      }
+
+      clients->Add(std::move(sql));
+
+      return true;
+    };
+
+    if (!cap.list_configured_clients(sql_callback_helper<decltype(cb)>, &cb)) {
+      return Status(grpc::StatusCode::UNKNOWN, "Internal error");
+    }
+
+    return Status::OK;
+  }
+
   client_capability cap;
 };
 

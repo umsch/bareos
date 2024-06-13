@@ -42,6 +42,20 @@ JobName=backup-bareos-fd
 
 start_test
 
+grpc Client/List "{}" | tee "$log_home/client.list"
+grpc Client/ListConfigured "{}" | tee "$log_home/client.configured"
+
+BACKUPCLIENT=$(jq -s '.[0].row.name' "$log_home/client.list")
+RESTORECLIENT=$(jq '.clients[0].row.name' "$log_home/client.configured")
+
+echo "------"
+echo "BackupClient: $BACKUPCLIENT"
+echo "RestoreClient: $RESTORECLIENT"
+echo "------"
+
+grpc Client/Info "{ \"clientname\" : $BACKUPCLIENT }" | tee "$log_home/client.info"
+
+
 grpc Restore/ListSessions "{}" | tee "$log_home/sessions.txt"
 grpc Restore/Begin '{ "jobids" : [1], "select_parents" : "false"  }' | tee "$log_home/begin.txt"
 grpc Restore/ListSessions "{}" | tee "$log_home/sessions.txt"

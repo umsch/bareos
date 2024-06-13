@@ -230,6 +230,71 @@ bool PluginListClient(const char* name, sql_callback* cb, void* user)
   return PluginListClientsImpl(name, true, cb, user);
 }
 
+bool PluginListConfiguredClients(sql_callback* cb, void* user)
+{
+  ResLocker _{my_config};
+
+  ClientResource* client;
+  foreach_res (client, R_CLIENT) {
+    const char* fields[] = {
+        "name",
+        "enabled",
+    };
+    const char* values[]
+        = {client->resource_name_, client->enabled ? "Yes" : "No"};
+
+    if (!cb(2, fields, values, user)) { return false; }
+  }
+  return true;
+}
+
+std::optional<JobTypes> JobTypeFromString(const char* name)
+{
+  struct job_type_pair {
+    JobTypes type;
+    const char* name;
+  };
+
+  static constexpr job_type_pair types[] = {
+      {JT_BACKUP, "backup"},
+      {JT_ADMIN, "admin"},
+      {JT_ARCHIVE, "archive"},
+      {JT_VERIFY, "verify"},
+      {JT_RESTORE, "restore"},
+      {JT_MIGRATE, "migrate"},
+      {JT_COPY, "copy"},
+      {JT_CONSOLIDATE, "consolidate"},
+      {},
+  };
+
+  for (auto* current = &types[0]; current->name; ++current) {
+    if (Bstrcasecmp(name, current->name)) { return current->type; }
+  }
+
+  return std::nullopt;
+}
+
+bool PluginListJobsOfType(const char* type, sql_callback* cb, void* user)
+{
+  ResLocker _{my_config};
+
+  JobResource* job;
+
+  std::optional jobtype = JobTypeFromString(type);
+
+  if (!jobtype) { return false; }
+
+
+  foreach_res (job, R_JOB) {
+    if (job->JobType == static_cast<uint32_t>(jobtype.value())) {
+      const char* fields[] = {"name"};
+      const char* values[] = {job->resource_name_};
+      cb(1, fields, values, user);
+    }
+  }
+  return false;
+}
+
 restore_session_handle* PluginCreateRestoreSession(HandleMessage*, void*)
 {
   auto* jcr = NewDirectorJcr(DirdFreeJcr);
@@ -312,6 +377,11 @@ bool PluginFinishSelection(restore_session_handle* handle,
   TREE_ROOT* root = state->root;
 
   std::unique_ptr bsr = BsrFromTree(root);
+
+  if (!bsr) {
+    handle->error = "No files selected to be restored.";
+    return false;
+  }
 
   std::optional error
       = AddVolumeInformationToBsr(handle->db, handle->jcr, bsr.get());
@@ -639,6 +709,7 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
         client_capability cap = {
             .list_clients = &PluginListClients,
             .client_info = &PluginListClient,
+            .list_configured_clients = &PluginListConfiguredClients,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

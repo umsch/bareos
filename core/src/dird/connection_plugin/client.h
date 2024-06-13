@@ -38,10 +38,12 @@ typedef bool(ListClients_t)(sql_callback* cb, void* user);
 typedef bool(ClientInfo_t)(const char* client_name,
                            sql_callback* cb,
                            void* user);
+typedef bool(ListConfiguredClients_t)(sql_callback* cb, void* user);
 
 struct client_capability {
   ListClients_t* list_clients;
   ClientInfo_t* client_info;
+  ListConfiguredClients_t* list_configured_clients;
 };
 
 #ifdef __cplusplus

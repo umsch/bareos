@@ -42,6 +42,7 @@
 #include "lib/parse_conf.h"
 #include "connection_plugin/client.h"
 #include "connection_plugin/restore.h"
+#include "connection_plugin/config.h"
 #include "lib/tree.h"
 
 struct select_start_state {};
@@ -228,24 +229,6 @@ bool PluginListClients(sql_callback* cb, void* user)
 bool PluginListClient(const char* name, sql_callback* cb, void* user)
 {
   return PluginListClientsImpl(name, true, cb, user);
-}
-
-bool PluginListConfiguredClients(sql_callback* cb, void* user)
-{
-  ResLocker _{my_config};
-
-  ClientResource* client;
-  foreach_res (client, R_CLIENT) {
-    const char* fields[] = {
-        "name",
-        "enabled",
-    };
-    const char* values[]
-        = {client->resource_name_, client->enabled ? "Yes" : "No"};
-
-    if (!cb(2, fields, values, user)) { return false; }
-  }
-  return true;
 }
 
 std::optional<JobTypes> JobTypeFromString(const char* name)
@@ -693,6 +676,48 @@ bool PluginMarkUnmark(restore_session_handle* handle,
   return true;
 }
 
+bool PluginConfigListClients(config_name_callback* cb, void* user)
+{
+  ResLocker _{my_config};
+
+  ClientResource* client;
+  foreach_res (client, R_CLIENT) {
+    // making a defensive copy here to ensure that a bad plugin does not
+    // corrupt the configuration
+    std::string name{client->resource_name_};
+    if (!cb(user, name.c_str())) { return false; }
+  }
+  return true;
+}
+
+bool PluginConfigListJobs(config_name_callback* cb, void* user)
+{
+  ResLocker _{my_config};
+
+  JobResource* job;
+  foreach_res (job, R_JOB) {
+    // making a defensive copy here to ensure that a bad plugin does not
+    // corrupt the configuration
+    std::string name{job->resource_name_};
+    if (!cb(user, name.c_str())) { return false; }
+  }
+  return true;
+}
+
+bool PluginConfigListCatalogs(config_name_callback* cb, void* user)
+{
+  ResLocker _{my_config};
+
+  CatalogResource* catalog;
+  foreach_res (catalog, R_CATALOG) {
+    // making a defensive copy here to ensure that a bad plugin does not
+    // corrupt the configuration
+    std::string name{catalog->resource_name_};
+    if (!cb(user, name.c_str())) { return false; }
+  }
+  return true;
+}
+
 
 template <typename T> bool check_buffer(size_t bufsize, void* buffer)
 {
@@ -709,7 +734,7 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
         client_capability cap = {
             .list_clients = &PluginListClients,
             .client_info = &PluginListClient,
-            .list_configured_clients = &PluginListConfiguredClients,
+            .list_configured_clients = nullptr,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;
@@ -733,6 +758,17 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .set_restore_job = &PluginSetRestoreJob,
             .set_catalog = &PluginSetCatalog,
             .enumerate_options = &PluginEnumerateOptions,
+        };
+        memcpy(buffer, &cap, sizeof(cap));
+        return true;
+      }
+    } break;
+    case CAP_Config: {
+      if (check_buffer<config_capability>(bufsize, buffer)) {
+        config_capability cap = {
+            .list_clients = &PluginConfigListClients,
+            .list_jobs = &PluginConfigListJobs,
+            .list_catalogs = &PluginConfigListCatalogs,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

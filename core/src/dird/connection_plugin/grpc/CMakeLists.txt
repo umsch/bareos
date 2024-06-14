@@ -41,8 +41,8 @@ else()
 endif()
 
 # Proto file
-macro(addgrpcprotofiles protosrcs protohdrs grpcsrcs grpchdrs files)
-  foreach(file ${files})
+macro(addgrpcprotofiles protosrcs protohdrs grpcsrcs grpchdrs)
+  foreach(file ${ARGN})
     get_filename_component(absolute "${file}" ABSOLUTE)
     get_filename_component(path "${absolute}" PATH)
     get_filename_component(stem "${file}" NAME_WE)
@@ -68,7 +68,17 @@ macro(addgrpcprotofiles protosrcs protohdrs grpcsrcs grpchdrs files)
   endforeach()
 endmacro()
 
-addgrpcprotofiles(protosrcs protohdrs grpcsrcs grpchdrs "service.proto")
+addgrpcprotofiles(
+  protosrcs
+  protohdrs
+  grpcsrcs
+  grpchdrs
+  "service.proto"
+  "restore.proto"
+  "database.proto"
+  "common.proto"
+  "config.proto"
+)
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -77,7 +87,7 @@ add_library(grpc-proto ${protosrcs} ${protohdrs} ${grpcsrcs} ${grpchdrs})
 target_link_libraries(
   grpc-proto ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF}
 )
-add_library(grpc-plugin SHARED grpc.cc restore.cc client.cc)
+add_library(grpc-plugin SHARED grpc.cc restore.cc client.cc config.cc)
 # Include generated *.pb.h files
 target_link_libraries(
   grpc-plugin ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF}

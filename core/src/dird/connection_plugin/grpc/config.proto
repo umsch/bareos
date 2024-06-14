@@ -1,0 +1,57 @@
+/*
+ * LICENSE HERE
+ */
+
+syntax = "proto3";
+
+package bareos.config;
+
+service Config {
+  rpc ListClients (ListClientsRequest) returns (ListClientsResponse);
+  rpc ListJobs (ListJobsRequest) returns (ListJobsResponse);
+  rpc ListCatalogs (ListCatalogsRequest) returns (ListCatalogsResponse);
+};
+
+message ListClientsRequest {
+};
+
+message Client {
+  string name = 1;
+};
+
+message ListClientsResponse {
+  repeated Client clients = 1;
+};
+
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  RESTORE = 1;
+  BACKUP = 2;
+};
+
+message Job {
+  string name = 1;
+};
+
+message JobTypeFilter {
+  JobType type = 1;
+};
+
+message ListJobsRequest {
+  repeated JobTypeFilter jtf = 1;
+};
+
+message ListJobsResponse {
+  repeated Job jobs = 1;
+};
+
+message Catalog {
+  string name = 1;
+};
+
+message ListCatalogsRequest {
+};
+
+message ListCatalogsResponse {
+  repeated Catalog catalogs = 1;
+};

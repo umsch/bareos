@@ -1,0 +1,34 @@
+/*
+ * LICENSE HERE
+ */
+
+syntax = "proto3";
+
+package bareos.database;
+
+import "common.proto";
+
+service Database {
+  rpc ListClients (ListClientsRequest) returns (stream ListClientResponse);
+  rpc ListJobs (ListJobsRequest) returns (stream ListJobsResponse);
+};
+
+message ListClientsRequest {
+};
+
+message ListClientResponse {
+  bareos.common.Client client = 1;
+};
+
+message ClientFilter {
+  // select only jobs that were created on _one_ of these clients.
+  repeated bareos.common.Client client = 1;
+};
+
+message ListJobsRequest {
+  optional ClientFilter client_filter = 1;
+};
+
+message ListJobsResponse {
+  bareos.common.Job job = 1;
+};

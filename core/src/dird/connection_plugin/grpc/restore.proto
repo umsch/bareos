@@ -1,0 +1,127 @@
+/*
+ * LICENSE HERE
+ */
+
+syntax = "proto3";
+
+package bareos.restore;
+
+import "config.proto";
+import "common.proto";
+
+service Restore {
+  rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
+  rpc Begin (BeginRequest) returns (BeginResponse);
+
+  // these functions will only work once the tree is created
+  rpc ListFiles (ListFilesRequest) returns (stream File);
+  rpc ChangeDirectory (ChangeDirectoryRequest) returns (ChangeDirectoryResponse);
+  rpc ChangeMarkedStatus (ChangeMarkedRequest) returns (ChangeMarkedResponse);
+
+  rpc Run (RunRequest) returns (RunResponse);
+  rpc Cancel (CancelRequest) returns (CancelResponse);
+}
+
+message ListSessionsRequest {
+};
+
+message ListSessionsResponse {
+  repeated RestoreSession sessions = 1;
+};
+
+message BeginRequest {
+  bareos.common.Job backup_job = 1;
+  bool find_job_chain = 2;
+};
+
+message RestoreSession {
+  string token = 1;
+};
+
+message BeginResponse {
+  RestoreSession session = 1;
+};
+
+enum ReplaceType {
+  REPLACE_TYPE_UNSPECIFIED = 0;
+  ALWAYS = 1;
+  NEVER = 2;
+  IF_NEWER = 3;
+  IF_OLDER = 4;
+};
+
+message RestoreOptions {
+  optional ReplaceType replace = 1;
+  optional bareos.config.Job restore_job = 3;
+  optional string restore_location = 4;
+  optional bareos.common.Client restore_client = 5;
+};
+
+message RunRequest {
+  RestoreSession session = 1;
+  RestoreOptions restore_options = 2;
+};
+
+message RunResponse {
+  bareos.common.Job jobid = 1;
+}
+
+message CancelRequest {
+  RestoreSession session = 1;
+};
+
+message CancelResponse {}
+
+message Path {
+  string path = 1;
+};
+
+message ChangeDirectoryRequest {
+  RestoreSession session = 1;
+  // this path can be relative
+  Path directory = 2;
+}
+
+message ChangeDirectoryResponse {
+  Path current_directory = 1;
+}
+
+enum MarkAction {
+  MARK_ACTION_UNSPECIFIED = 0;
+  MARK = 1;
+  UNMARK = 2;
+};
+
+message Regex {
+  string regex = 1;
+};
+
+message ChangeMarkedRequest {
+  RestoreSession session = 1;
+  MarkAction action = 2;
+
+  // mark/unmark everything under the current directory that matches the regex
+  Regex filter = 3;
+}
+
+message ChangeMarkedResponse {
+  // returns how many states were changed
+  int64 affected_count = 1;
+}
+
+message ListFilesRequest {
+  RestoreSession session = 1;
+}
+
+enum FileType {
+  FILE_TYPE_UNSPECIFIED = 0;
+  DIRECTORY = 1;
+  FILE = 2;
+  LINK = 3;
+};
+
+message File {
+  string name = 1;
+  bool marked = 2;
+  FileType file = 3;
+}

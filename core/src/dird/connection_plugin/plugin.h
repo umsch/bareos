@@ -44,6 +44,7 @@ enum bareos_capability
 {
   CAP_Client = 0,
   CAP_Restore = 1,
+  CAP_Config = 2,
 };
 
 typedef bool (*QueryCapability_t)(enum bareos_capability,

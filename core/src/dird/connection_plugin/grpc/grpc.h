@@ -25,9 +25,58 @@
 #include <memory>
 #include "dird/connection_plugin/restore.h"
 #include "dird/connection_plugin/client.h"
+#include "dird/connection_plugin/config.h"
 #include "service.grpc.pb.h"
+#include "restore.grpc.pb.h"
+#include "config.grpc.pb.h"
 
-std::unique_ptr<Restore::Service> MakeRestoreService(restore_capability cap);
+std::unique_ptr<bareos::restore::Restore::Service> MakeRestoreService(
+    restore_capability cap);
+std::unique_ptr<bareos::config::Config::Service> MakeConfigService(
+    config_capability cap);
 std::unique_ptr<Client::Service> MakeClientService(client_capability cap);
+
+template <typename... Ts> void ignore(Ts&&...) {}
+
+template <typename Callback, typename... Args>
+auto c_callback(void* user, Args... args)
+{
+  auto* cb = reinterpret_cast<Callback*>(user);
+  return (*cb)(args...);
+}
+
+
+struct source_location {
+  const char* file;
+  const char* function;
+  int line;
+
+  constexpr source_location(const char* f = __builtin_FILE(),
+                            const char* fun = __builtin_FUNCTION(),
+                            int l = __builtin_LINE()) noexcept
+      : file{f}, function{fun}, line{l}
+  {
+  }
+};
+
+struct grpc_error : public std::exception {
+  grpc::Status status;
+
+  grpc_error(grpc::StatusCode code,
+             const std::string& message,
+             const std::string& desc)
+      : status(code, message, desc)
+  {
+  }
+  grpc_error(grpc::StatusCode code,
+             const std::string& message,
+             source_location loc = source_location{})
+      : grpc_error(code,
+                   message,
+                   "at " + std::string(loc.file) + ":"
+                       + std::to_string(loc.line) + "(" + loc.function + ")")
+  {
+  }
+};
 
 #endif  // BAREOS_DIRD_CONNECTION_PLUGIN_GRPC_GRPC_H_

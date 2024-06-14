@@ -35,8 +35,6 @@ using grpc::ServerContext;
 using grpc::ServerWriter;
 using grpc::Status;
 
-template <typename... Ts> void ignore(Ts&&...) {}
-
 #include "dird/connection_plugin/plugin.h"
 #include "grpc.h"
 
@@ -69,16 +67,23 @@ bool Start(int port)
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
 
-    if (client_capability cc; QueryCapability(CAP_Client, sizeof(cc), &cc)) {
-      auto client = MakeClientService(cc);
-      builder.RegisterService(client.get());
-      services.emplace_back(std::move(client));
-    }
+    // if (client_capability cc; QueryCapability(CAP_Client, sizeof(cc), &cc)) {
+    //   auto client = MakeClientService(cc);
+    //   builder.RegisterService(client.get());
+    //   services.emplace_back(std::move(client));
+    // }
 
-    if (restore_capability rc; QueryCapability(CAP_Restore, sizeof(rc), &rc)) {
-      auto restore = MakeRestoreService(rc);
-      builder.RegisterService(restore.get());
-      services.emplace_back(std::move(restore));
+    // if (restore_capability rc; QueryCapability(CAP_Restore, sizeof(rc), &rc))
+    // {
+    //   auto restore = MakeRestoreService(rc);
+    //   builder.RegisterService(restore.get());
+    //   services.emplace_back(std::move(restore));
+    // }
+
+    if (config_capability cc; QueryCapability(CAP_Config, sizeof(cc), &cc)) {
+      auto config = MakeConfigService(cc);
+      builder.RegisterService(config.get());
+      services.emplace_back(std::move(config));
     }
 
     // Finally assemble the server.

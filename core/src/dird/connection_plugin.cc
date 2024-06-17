@@ -43,6 +43,7 @@
 #include "connection_plugin/client.h"
 #include "connection_plugin/restore.h"
 #include "connection_plugin/config.h"
+#include "connection_plugin/database.h"
 #include "lib/tree.h"
 
 struct select_start_state {};
@@ -145,6 +146,16 @@ struct restore_session_handle {
   {
     if (db) { DbSqlClosePooledConnection(jcr, db); }
     if (jcr) { FreeJcr(jcr); }
+  }
+};
+
+struct database_session {
+  std::optional<std::string> error;
+  BareosDb* ptr{nullptr};
+
+  ~database_session()
+  {
+    if (ptr) { DbSqlClosePooledConnection(nullptr, ptr); }
   }
 };
 
@@ -278,7 +289,7 @@ bool PluginListJobsOfType(const char* type, sql_callback* cb, void* user)
   return false;
 }
 
-restore_session_handle* PluginCreateRestoreSession(HandleMessage*, void*)
+restore_session_handle* PluginCreateRestoreSession(void)
 {
   auto* jcr = NewDirectorJcr(DirdFreeJcr);
   if (!jcr) { return nullptr; }
@@ -410,6 +421,65 @@ const char* PluginGetBootstrapPath(restore_session_handle* handle)
 bool PluginCommitRestoreSession(restore_session_handle* handle,
                                 job_started_info* info)
 {
+  auto* state = std::get_if<select_restore_option_state>(&handle->state);
+  if (!state) {
+    handle->error = "Wrong state";
+    return false;
+  }
+
+  if (!state->job) {
+    handle->error = "No job selected";
+    return false;
+  }
+  if (!state->restore_client) {
+    handle->error = "No restore client selected";
+    return false;
+  }
+  if (!state->catalog) {
+    handle->error = "No catalog selected";
+    return false;
+  }
+
+  RestoreOptions opts;
+
+  opts.data = RestoreOptions::native_data{
+      .BootStrapPath = state->bsr,
+      .expected_file_count = static_cast<uint32_t>(state->count),
+      .unlink_bsr = state->unlink_bsr,
+  };
+  opts.job = state->job;
+  opts.restore_client = state->restore_client;
+  opts.catalog = state->catalog;
+
+
+  auto* jcr = CreateJob(std::move(opts));
+
+  if (!jcr) {
+    handle->error = "Could not create jcr";
+    return false;
+  }
+
+  auto jobid = RunJob(jcr);
+
+  if (jobid <= 0) {
+    handle->error = "Could not create jcr";
+    return false;
+  }
+
+  info->jobid = jobid;
+
+  state->bsr.clear();
+
+  handle->state = job_started_state{jobid};
+
+  return true;
+}
+
+bool PluginCreateRestoreJob(restore_session_handle* handle,
+                            restore_options Options,
+                            job_started_info* info)
+{
+  (void)Options;
   auto* state = std::get_if<select_restore_option_state>(&handle->state);
   if (!state) {
     handle->error = "Wrong state";
@@ -623,6 +693,11 @@ void PluginAbortRestoreSession(restore_session_handle* handle)
   delete handle;
 }
 
+void PluginFinishRestoreSession(restore_session_handle* handle)
+{
+  delete handle;
+}
+
 static std::pair<std::string, std::string> split_path_into_dir_file(
     std::string_view path)
 {
@@ -718,6 +793,102 @@ bool PluginConfigListCatalogs(config_name_callback* cb, void* user)
   return true;
 }
 
+namespace database {
+
+BareosDb* DB_Open(CatalogResource* res)
+{
+  return DbSqlGetPooledConnection(
+      nullptr, res->db_driver, res->db_name, res->db_user,
+      res->db_password.value, res->db_address, res->db_port, res->db_socket,
+      res->mult_db_connections, res->disable_batch_insert, res->try_reconnect,
+      res->exit_on_fatal, true);
+}
+
+database_session* OpenDatabase(const char* catalog_name)
+{
+  ResLocker _{my_config};
+
+  auto* session = new database_session{};
+
+  CatalogResource* catalog;
+  foreach_res (catalog, R_CATALOG) {
+    // making a defensive copy here to ensure that a bad plugin does not
+    // corrupt the configuration
+    if (strcmp(catalog->resource_name_, catalog_name) == 0) {
+      session->ptr = DB_Open(catalog);
+      if (!session->ptr) {
+        session->error.emplace("Could not open db of catalog ");
+        session->error.value() += catalog_name;
+      }
+      return session;
+    }
+  }
+  session->error.emplace("No catalog found with name ");
+  session->error.value() += catalog_name;
+
+  return session;
+}
+
+void CloseDatabase(database_session* sess) { delete sess; }
+
+struct sql_result_handler : public list_result_handler {
+  sql_result_handler(DB_result_callback* cb_, void* user_)
+      : cb(cb_), user(user_)
+  {
+  }
+
+  void begin(const char* name_) override { name = name_; }
+  void add_field(SQL_FIELD* field, field_flags) override
+  {
+    fields.emplace_back(strdup(field->name));
+  }
+
+  bool handle(SQL_ROW row) override
+  {
+    return cb(user, fields.size(), fields.data(), row);
+  }
+
+  void end() override {}
+
+
+  ~sql_result_handler()
+  {
+    for (auto* field : fields) { free(field); }
+  }
+
+  std::string name;
+  DB_result_callback* cb;
+  void* user;
+
+  std::vector<char*> fields;
+};
+
+bool ListClients(database_session* sess, DB_result_callback* cb, void* user)
+{
+  if (!sess) { return false; }
+
+  sess->error.reset();
+
+  sql_result_handler handler(cb, user);
+
+  sess->ptr->ListClientRecords(nullptr, nullptr, false, &handler);
+  return false;
+}
+
+bool ListJobs(database_session* sess, DB_result_callback* cb, void* user)
+{
+  (void)sess;
+  (void)cb;
+  (void)user;
+  return false;
+}
+
+const char* ErrorString(database_session* sess)
+{
+  if (sess->error) { return sess->error->c_str(); }
+  return nullptr;
+}
+};  // namespace database
 
 template <typename T> bool check_buffer(size_t bufsize, void* buffer)
 {
@@ -729,26 +900,13 @@ template <typename T> bool check_buffer(size_t bufsize, void* buffer)
 bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
 {
   switch (Cap) {
-    case CAP_Client: {
-      if (check_buffer<client_capability>(bufsize, buffer)) {
-        client_capability cap = {
-            .list_clients = &PluginListClients,
-            .client_info = &PluginListClient,
-            .list_configured_clients = nullptr,
-        };
-        memcpy(buffer, &cap, sizeof(cap));
-        return true;
-      }
-    } break;
     case CAP_Restore: {
       if (check_buffer<restore_capability>(bufsize, buffer)) {
         restore_capability cap = {
-            .create_restore_session = &PluginCreateRestoreSession,
             .list_files = &PluginListFiles,
             .change_directory = &PluginChangeDirectory,
             .mark_unmark = &PluginMarkUnmark,
             .error_string = &PluginErrorString,
-            .start_from_jobids = &PluginStartFromJobIds,
             .set_restore_client = &PluginSetRestoreClient,
             .abort_restore_session = &PluginAbortRestoreSession,
             .current_directory = &PluginCurrentDirectory,
@@ -758,6 +916,11 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .set_restore_job = &PluginSetRestoreJob,
             .set_catalog = &PluginSetCatalog,
             .enumerate_options = &PluginEnumerateOptions,
+
+            .create_restore_session = &PluginCreateRestoreSession,
+            .start_from_jobids = &PluginStartFromJobIds,
+            .finish_restore_session = &PluginFinishRestoreSession,
+            .create_restore_job = &PluginCreateRestoreJob,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;
@@ -769,6 +932,19 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .list_clients = &PluginConfigListClients,
             .list_jobs = &PluginConfigListJobs,
             .list_catalogs = &PluginConfigListCatalogs,
+        };
+        memcpy(buffer, &cap, sizeof(cap));
+        return true;
+      }
+    } break;
+    case CAP_Database: {
+      if (check_buffer<database_capability>(bufsize, buffer)) {
+        database_capability cap = {
+            .open_database = &database::OpenDatabase,
+            .close_database = &database::CloseDatabase,
+            .list_clients = &database::ListClients,
+            .list_jobs = &database::ListJobs,
+            .error_string = &database::ErrorString,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

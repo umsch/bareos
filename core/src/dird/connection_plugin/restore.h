@@ -53,14 +53,17 @@ enum message_severity
 typedef void(AbortRestoreSession_t)(struct restore_session_handle*);
 typedef const char*(ErrorString_t)(struct restore_session_handle*);
 
+typedef void(FinishRestoreSession_t)(struct restore_session_handle*);
+
 // START
-typedef void(
-    HandleMessage(void* user, message_severity, time_t time, const char* text));
+typedef void(HandleMessage(void* user,
+                           enum message_severity,
+                           time_t time,
+                           const char* text));
 
 
-typedef struct restore_session_handle*(
-    CreateRestoreSession_t)(HandleMessage* handler, void* user);
-typedef bool(StartFromJobIds_t)(struct restore_session_handle*,
+typedef struct restore_session_handle*(CreateRestoreSession_t)(void);
+typedef bool(StartFromJobIds_t)(struct restore_session_handle* handle,
                                 size_t count,
                                 const int64_t jobids[],
                                 bool select_parents);
@@ -98,13 +101,31 @@ typedef bool(EnumerateOptions_t)(struct restore_session_handle*,
 typedef bool(CommitRestoreSession_t)(struct restore_session_handle*,
                                      struct job_started_info*);
 
+enum file_replace_option
+{
+  REPLACE_FILE_DEFAULT = 0,
+  REPLACE_FILE_ALWAYS,
+  REPLACE_FILE_IFNEWER,
+  REPLACE_FILE_IFOLDER,
+  REPLACE_FILE_NEVER,
+};
+
+struct restore_options {
+  enum file_replace_option replace;
+  const char* restore_job;
+  const char* restore_location;
+  const char* restore_client;
+};
+
+typedef bool(CreateRestoreJob_t)(struct restore_session_handle*,
+                                 struct restore_options,
+                                 job_started_info* info);
+
 struct restore_capability {
-  CreateRestoreSession_t* create_restore_session;
   ListFiles_t* list_files;
   ChangeDirectory_t* change_directory;
   MarkUnmark_t* mark_unmark;
   ErrorString_t* error_string;
-  StartFromJobIds_t* start_from_jobids;
   SetRestoreClient_t* set_restore_client;
   AbortRestoreSession_t* abort_restore_session;
   CurrentDirectory_t* current_directory;
@@ -115,6 +136,11 @@ struct restore_capability {
   SetRestoreJob_t* set_restore_job;
   SetCatalog_t* set_catalog;
   EnumerateOptions_t* enumerate_options;
+
+  CreateRestoreSession_t* create_restore_session;
+  StartFromJobIds_t* start_from_jobids;
+  FinishRestoreSession_t* finish_restore_session;
+  CreateRestoreJob_t* create_restore_job;
 };
 
 #ifdef __cplusplus

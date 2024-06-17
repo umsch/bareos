@@ -24,17 +24,18 @@
 
 #include <memory>
 #include "dird/connection_plugin/restore.h"
-#include "dird/connection_plugin/client.h"
+#include "dird/connection_plugin/database.h"
 #include "dird/connection_plugin/config.h"
-#include "service.grpc.pb.h"
 #include "restore.grpc.pb.h"
 #include "config.grpc.pb.h"
+#include "database.grpc.pb.h"
 
 std::unique_ptr<bareos::restore::Restore::Service> MakeRestoreService(
     restore_capability cap);
 std::unique_ptr<bareos::config::Config::Service> MakeConfigService(
     config_capability cap);
-std::unique_ptr<Client::Service> MakeClientService(client_capability cap);
+std::unique_ptr<bareos::database::Database::Service> MakeDatabaseService(
+    database_capability cap);
 
 template <typename... Ts> void ignore(Ts&&...) {}
 

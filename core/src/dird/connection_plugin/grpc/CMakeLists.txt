@@ -69,15 +69,8 @@ macro(addgrpcprotofiles protosrcs protohdrs grpcsrcs grpchdrs)
 endmacro()
 
 addgrpcprotofiles(
-  protosrcs
-  protohdrs
-  grpcsrcs
-  grpchdrs
-  "service.proto"
-  "restore.proto"
-  "database.proto"
-  "common.proto"
-  "config.proto"
+  protosrcs protohdrs grpcsrcs grpchdrs "restore.proto" "database.proto"
+  "common.proto" "config.proto"
 )
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
@@ -87,7 +80,7 @@ add_library(grpc-proto ${protosrcs} ${protohdrs} ${grpcsrcs} ${grpchdrs})
 target_link_libraries(
   grpc-proto ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF}
 )
-add_library(grpc-plugin SHARED grpc.cc restore.cc client.cc config.cc)
+add_library(grpc-plugin SHARED grpc.cc restore.cc config.cc database.cc)
 # Include generated *.pb.h files
 target_link_libraries(
   grpc-plugin ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF}

@@ -19,12 +19,13 @@
    02110-1301, USA.
 */
 
-#include "service.grpc.pb.h"
-#include "include/baconfig.h"
 
+#include "grpc.h"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+
+#include "include/baconfig.h"
 
 #include <string>
 #include <thread>
@@ -36,7 +37,6 @@ using grpc::ServerWriter;
 using grpc::Status;
 
 #include "dird/connection_plugin/plugin.h"
-#include "grpc.h"
 
 namespace {
 
@@ -73,17 +73,23 @@ bool Start(int port)
     //   services.emplace_back(std::move(client));
     // }
 
-    // if (restore_capability rc; QueryCapability(CAP_Restore, sizeof(rc), &rc))
-    // {
-    //   auto restore = MakeRestoreService(rc);
-    //   builder.RegisterService(restore.get());
-    //   services.emplace_back(std::move(restore));
-    // }
+    if (restore_capability rc; QueryCapability(CAP_Restore, sizeof(rc), &rc)) {
+      auto restore = MakeRestoreService(rc);
+      builder.RegisterService(restore.get());
+      services.emplace_back(std::move(restore));
+    }
 
     if (config_capability cc; QueryCapability(CAP_Config, sizeof(cc), &cc)) {
       auto config = MakeConfigService(cc);
       builder.RegisterService(config.get());
       services.emplace_back(std::move(config));
+    }
+
+    if (database_capability dc;
+        QueryCapability(CAP_Database, sizeof(dc), &dc)) {
+      auto database = MakeDatabaseService(dc);
+      builder.RegisterService(database.get());
+      services.emplace_back(std::move(database));
     }
 
     // Finally assemble the server.

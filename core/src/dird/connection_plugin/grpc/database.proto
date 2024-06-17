@@ -7,16 +7,19 @@ syntax = "proto3";
 package bareos.database;
 
 import "common.proto";
+import "config.proto";
 
 service Database {
-  rpc ListClients (ListClientsRequest) returns (stream ListClientResponse);
+  rpc ListClients (ListClientsRequest) returns (stream ListClientsResponse);
   rpc ListJobs (ListJobsRequest) returns (stream ListJobsResponse);
+
 };
 
 message ListClientsRequest {
+  bareos.config.Catalog catalog = 1;
 };
 
-message ListClientResponse {
+message ListClientsResponse {
   bareos.common.Client client = 1;
 };
 
@@ -26,7 +29,8 @@ message ClientFilter {
 };
 
 message ListJobsRequest {
-  optional ClientFilter client_filter = 1;
+  bareos.config.Catalog catalog = 1;
+  optional ClientFilter client_filter = 2;
 };
 
 message ListJobsResponse {

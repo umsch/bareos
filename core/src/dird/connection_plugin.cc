@@ -40,7 +40,6 @@
 
 #include "lib/fnmatch.h"
 #include "lib/parse_conf.h"
-#include "connection_plugin/client.h"
 #include "connection_plugin/restore.h"
 #include "connection_plugin/config.h"
 #include "connection_plugin/database.h"
@@ -165,38 +164,6 @@ void Log(log_severity severity, const char* str)
   Dmsg2(500, "%d: %s\n", severity, str);
 }
 
-struct plugin_sql_result_handler : public list_result_handler {
-  plugin_sql_result_handler(sql_callback* cb_, void* user_)
-      : cb(cb_), user(user_)
-  {
-  }
-
-  void begin(const char* name_) override { name = name_; }
-  void add_field(SQL_FIELD* field, field_flags) override
-  {
-    fields.emplace_back(strdup(field->name));
-  }
-
-  bool handle(SQL_ROW row) override
-  {
-    return cb(fields.size(), fields.data(), row, user);
-  }
-
-  void end() override {}
-
-
-  ~plugin_sql_result_handler()
-  {
-    for (auto* field : fields) { free(field); }
-  }
-
-  std::string name;
-  sql_callback* cb;
-  void* user;
-
-  std::vector<char*> fields;
-};
-
 static BareosDb* OpenDb(JobControlRecord* jcr)
 {
   ResLocker _{my_config};
@@ -212,82 +179,6 @@ static BareosDb* OpenDb(JobControlRecord* jcr)
       /* private */ true);
 }
 
-bool PluginListClientsImpl(const char* name,
-                           bool expanded,
-                           sql_callback* cb,
-                           void* user)
-{
-  auto* jcr = NewDirectorJcr(DirdFreeJcr);
-
-  auto* db = OpenDb(jcr);
-
-  if (!db) { return false; }
-
-  plugin_sql_result_handler handler(cb, user);
-
-  db->ListClientRecords(jcr, name, expanded, &handler);
-
-  DbSqlClosePooledConnection(jcr, db);
-
-  return true;
-}
-
-bool PluginListClients(sql_callback* cb, void* user)
-{
-  return PluginListClientsImpl(NULL, false, cb, user);
-}
-
-bool PluginListClient(const char* name, sql_callback* cb, void* user)
-{
-  return PluginListClientsImpl(name, true, cb, user);
-}
-
-std::optional<JobTypes> JobTypeFromString(const char* name)
-{
-  struct job_type_pair {
-    JobTypes type;
-    const char* name;
-  };
-
-  static constexpr job_type_pair types[] = {
-      {JT_BACKUP, "backup"},
-      {JT_ADMIN, "admin"},
-      {JT_ARCHIVE, "archive"},
-      {JT_VERIFY, "verify"},
-      {JT_RESTORE, "restore"},
-      {JT_MIGRATE, "migrate"},
-      {JT_COPY, "copy"},
-      {JT_CONSOLIDATE, "consolidate"},
-      {},
-  };
-
-  for (auto* current = &types[0]; current->name; ++current) {
-    if (Bstrcasecmp(name, current->name)) { return current->type; }
-  }
-
-  return std::nullopt;
-}
-
-bool PluginListJobsOfType(const char* type, sql_callback* cb, void* user)
-{
-  ResLocker _{my_config};
-
-  JobResource* job;
-
-  std::optional jobtype = JobTypeFromString(type);
-
-  if (!jobtype) { return false; }
-
-
-  foreach_res (job, R_JOB) {
-    if (job->JobType == static_cast<uint32_t>(jobtype.value())) {
-      const char* fields[] = {"name"};
-      const char* values[] = {job->resource_name_};
-      cb(1, fields, values, user);
-    }
-  }
-  return false;
-}
 
 restore_session_handle* PluginCreateRestoreSession(void)
 {
@@ -907,16 +798,7 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .change_directory = &PluginChangeDirectory,
             .mark_unmark = &PluginMarkUnmark,
             .error_string = &PluginErrorString,
-            .set_restore_client = &PluginSetRestoreClient,
-            .abort_restore_session = &PluginAbortRestoreSession,
             .current_directory = &PluginCurrentDirectory,
-            .commit_restore_session = &PluginCommitRestoreSession,
-            .finish_selection = &PluginFinishSelection,
-            .get_bootstrap_path = &PluginGetBootstrapPath,
-            .set_restore_job = &PluginSetRestoreJob,
-            .set_catalog = &PluginSetCatalog,
-            .enumerate_options = &PluginEnumerateOptions,
-
             .create_restore_session = &PluginCreateRestoreSession,
             .start_from_jobids = &PluginStartFromJobIds,
             .finish_restore_session = &PluginFinishRestoreSession,

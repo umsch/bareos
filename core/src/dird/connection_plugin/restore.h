@@ -40,67 +40,6 @@ struct file_status {
   bool marked;
 };
 
-
-enum message_severity
-{
-  MSG_INFO,
-  MSG_WARNING,
-  MSG_ERROR,
-  MSG_FATAL,
-};
-
-// ALWAYS
-typedef void(AbortRestoreSession_t)(struct restore_session_handle*);
-typedef const char*(ErrorString_t)(struct restore_session_handle*);
-
-typedef void(FinishRestoreSession_t)(struct restore_session_handle*);
-
-// START
-typedef void(HandleMessage(void* user,
-                           enum message_severity,
-                           time_t time,
-                           const char* text));
-
-
-typedef struct restore_session_handle*(CreateRestoreSession_t)(void);
-typedef bool(StartFromJobIds_t)(struct restore_session_handle* handle,
-                                size_t count,
-                                const int64_t jobids[],
-                                bool select_parents);
-// SELECT FILES
-typedef bool(file_callback)(void* user, struct file_status status);
-typedef bool(ListFiles_t)(struct restore_session_handle*,
-                          file_callback* cb,
-                          void* user);
-typedef bool(ChangeDirectory_t)(struct restore_session_handle*,
-                                const char* dir);
-typedef bool(MarkUnmark_t)(struct restore_session_handle*,
-                           const char* regex,
-                           bool mark,
-                           file_callback* cb,
-                           void* user);
-typedef const char*(CurrentDirectory_t)(struct restore_session_handle*);
-typedef bool(FinishSelection_t)(struct restore_session_handle*,
-                                const char* bootstrap_path);
-
-
-// DO RESTORE
-
-typedef bool(key_value_handler)(void* user, const char* key, const char* value);
-
-typedef const char*(GetBootstrapPath_t)(struct restore_session_handle*);
-typedef bool(SetRestoreClient_t)(struct restore_session_handle*,
-                                 const char* clientname);
-typedef bool(SetRestoreJob_t)(struct restore_session_handle*,
-                              const char* restorejob);
-typedef bool(SetCatalog_t)(struct restore_session_handle*, const char* catalog);
-typedef bool(EnumerateOptions_t)(struct restore_session_handle*,
-                                 key_value_handler* handler,
-                                 void* user);
-
-typedef bool(CommitRestoreSession_t)(struct restore_session_handle*,
-                                     struct job_started_info*);
-
 enum file_replace_option
 {
   REPLACE_FILE_DEFAULT = 0,
@@ -117,6 +56,28 @@ struct restore_options {
   const char* restore_client;
 };
 
+typedef const char*(ErrorString_t)(struct restore_session_handle*);
+typedef void(FinishRestoreSession_t)(struct restore_session_handle*);
+typedef struct restore_session_handle*(CreateRestoreSession_t)(void);
+typedef bool(StartFromJobIds_t)(struct restore_session_handle* handle,
+                                size_t count,
+                                const int64_t jobids[],
+                                bool select_parents);
+typedef bool(file_callback)(void* user, struct file_status status);
+typedef bool(ListFiles_t)(struct restore_session_handle*,
+                          file_callback* cb,
+                          void* user);
+typedef bool(ChangeDirectory_t)(struct restore_session_handle*,
+                                const char* dir);
+typedef bool(MarkUnmark_t)(struct restore_session_handle*,
+                           const char* regex,
+                           bool mark,
+                           file_callback* cb,
+                           void* user);
+typedef const char*(CurrentDirectory_t)(struct restore_session_handle*);
+
+typedef bool(key_value_handler)(void* user, const char* key, const char* value);
+
 typedef bool(CreateRestoreJob_t)(struct restore_session_handle*,
                                  struct restore_options,
                                  job_started_info* info);
@@ -126,16 +87,7 @@ struct restore_capability {
   ChangeDirectory_t* change_directory;
   MarkUnmark_t* mark_unmark;
   ErrorString_t* error_string;
-  SetRestoreClient_t* set_restore_client;
-  AbortRestoreSession_t* abort_restore_session;
   CurrentDirectory_t* current_directory;
-  CommitRestoreSession_t* commit_restore_session;
-  FinishSelection_t* finish_selection;
-  GetBootstrapPath_t* get_bootstrap_path;
-
-  SetRestoreJob_t* set_restore_job;
-  SetCatalog_t* set_catalog;
-  EnumerateOptions_t* enumerate_options;
 
   CreateRestoreSession_t* create_restore_session;
   StartFromJobIds_t* start_from_jobids;

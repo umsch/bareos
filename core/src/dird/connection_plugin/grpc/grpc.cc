@@ -67,12 +67,6 @@ bool Start(int port)
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
 
-    // if (client_capability cc; QueryCapability(CAP_Client, sizeof(cc), &cc)) {
-    //   auto client = MakeClientService(cc);
-    //   builder.RegisterService(client.get());
-    //   services.emplace_back(std::move(client));
-    // }
-
     if (restore_capability rc; QueryCapability(CAP_Restore, sizeof(rc), &rc)) {
       auto restore = MakeRestoreService(rc);
       builder.RegisterService(restore.get());

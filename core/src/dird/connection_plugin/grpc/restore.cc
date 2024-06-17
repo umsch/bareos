@@ -30,16 +30,8 @@ using grpc::Status;
 
 using namespace bareos::restore;
 
-
-struct restore_message {
-  message_severity severity;
-  std::string text;
-  time_t timestamp;
-};
-
 struct restore_session {
   restore_session_handle* handle;
-  std::shared_ptr<synchronized<std::vector<restore_message>>> messages;
 };
 
 class RestoreImpl : public Restore::Service {

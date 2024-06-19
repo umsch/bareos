@@ -762,16 +762,22 @@ bool ListClients(database_session* sess, DB_result_callback* cb, void* user)
 
   sql_result_handler handler(cb, user);
 
-  sess->ptr->ListClientRecords(nullptr, nullptr, false, &handler);
-  return false;
+  return sess->ptr->ListClientRecords(nullptr, nullptr, false, &handler);
 }
 
 bool ListJobs(database_session* sess, DB_result_callback* cb, void* user)
 {
-  (void)sess;
+  if (!sess) { return false; }
+
+  sess->error.reset();
+
+  sql_result_handler handler(cb, user);
+
   (void)cb;
   (void)user;
+
   return false;
+  // return sess->ptr->ListJobRecords(nullptr, nullptr, false, &handler);
 }
 
 const char* ErrorString(database_session* sess)

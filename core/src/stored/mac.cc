@@ -692,7 +692,9 @@ bail_out:
         jcr->setJobStatusWithPriorityCheck(currentJobStatus);
       }
       // Flush out final partial block of this session
-      if (!jcr->sd_impl->dcr->WriteBlockToDevice()) {
+      // FIXME: currently WriteBlockToDevice will always fail if the job
+      //        is cancelled (i.e. ok = false).  This was probably not intended.
+      if (!jcr->sd_impl->dcr->WriteBlockToDevice() && !jcr->IsJobCanceled()) {
         Jmsg2(jcr, M_FATAL, 0, T_("Fatal append error on device %s: ERR=%s\n"),
               dev->print_name(), dev->bstrerror());
         Dmsg0(100, T_("Set ok=FALSE after WriteBlockToDevice.\n"));

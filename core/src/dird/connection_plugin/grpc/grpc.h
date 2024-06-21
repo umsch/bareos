@@ -72,11 +72,13 @@ struct grpc_error : public std::exception {
   grpc_error(grpc::StatusCode code,
              const std::string& message,
              source_location loc = source_location{})
-      : grpc_error(code,
-                   message,
-                   "at " + std::string(loc.file) + ":"
-                       + std::to_string(loc.line) + "(" + loc.function + ")")
+      // : grpc_error(code,
+      //              message,
+      //              "at " + std::string(loc.file) + ":"
+      //                  + std::to_string(loc.line) + "(" + loc.function + ")")
+      : status(code, message)
   {
+    static_cast<void>(loc);
   }
 };
 

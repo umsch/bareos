@@ -44,6 +44,16 @@ start_test
 
 grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/catalog.list"
 grpc bareos.config.Config/ListJobs "{}" | tee "$log_home/job.list"
+
+jobtypes=$(jq -c '.jobs | map(.type) | unique | .[]' "$log_home/job.list")
+
+echo "$jobtypes"
+
+for type in $jobtypes;
+do
+    grpc bareos.config.Config/ListJobs "{ \"jtf\" : [ { \"type\" : $type } ]}" | tee "$log_home/job-$type.list"
+done
+
 grpc bareos.config.Config/ListClients "{}" | tee "$log_home/client.list"
 
 end_test

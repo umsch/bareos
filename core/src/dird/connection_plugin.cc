@@ -642,7 +642,7 @@ bool PluginMarkUnmark(restore_session_handle* handle,
   return true;
 }
 
-bool PluginConfigListClients(config_name_callback* cb, void* user)
+bool PluginConfigListClients(config_client_callback* cb, void* user)
 {
   ResLocker _{my_config};
 
@@ -651,12 +651,18 @@ bool PluginConfigListClients(config_name_callback* cb, void* user)
     // making a defensive copy here to ensure that a bad plugin does not
     // corrupt the configuration
     std::string name{client->resource_name_};
-    if (!cb(user, name.c_str())) { return false; }
+    std::string address{client->address};
+    bareos_config_client data = {
+        .name = name.c_str(),
+        .address = address.c_str(),
+    };
+
+    if (!cb(user, &data)) { return false; }
   }
   return true;
 }
 
-bool PluginConfigListJobs(config_name_callback* cb, void* user)
+bool PluginConfigListJobs(config_job_callback* cb, void* user)
 {
   ResLocker _{my_config};
 
@@ -665,12 +671,18 @@ bool PluginConfigListJobs(config_name_callback* cb, void* user)
     // making a defensive copy here to ensure that a bad plugin does not
     // corrupt the configuration
     std::string name{job->resource_name_};
-    if (!cb(user, name.c_str())) { return false; }
+
+    bareos_config_job data = {
+        .name = name.c_str(),
+        .type = static_cast<bareos_job_type>(job->JobType),
+        .level = static_cast<bareos_job_level>(job->JobLevel),
+    };
+    if (!cb(user, &data)) { return false; }
   }
   return true;
 }
 
-bool PluginConfigListCatalogs(config_name_callback* cb, void* user)
+bool PluginConfigListCatalogs(config_catalog_callback* cb, void* user)
 {
   ResLocker _{my_config};
 
@@ -678,8 +690,15 @@ bool PluginConfigListCatalogs(config_name_callback* cb, void* user)
   foreach_res (catalog, R_CATALOG) {
     // making a defensive copy here to ensure that a bad plugin does not
     // corrupt the configuration
-    std::string name{catalog->resource_name_};
-    if (!cb(user, name.c_str())) { return false; }
+    std::string name{catalog->resource_name_ ? catalog->resource_name_
+                                             : "<UNSET>"};
+    std::string db_name{catalog->db_name ? catalog->db_name : "<UNSET>"};
+
+    bareos_config_catalog data = {
+        .name = name.c_str(),
+        .db_name = db_name.c_str(),
+    };
+    if (!cb(user, &data)) { return false; }
   }
   return true;
 }

@@ -28,12 +28,48 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-typedef bool(config_name_callback)(void* user, const char* name);
+enum bareos_job_type : uint32_t
+{
+  BJT_BACKUP = 'B',  /* Backup Job */
+  BJT_RESTORE = 'R', /* Restore Job */
+};
 
-typedef bool(ConfigListClients_t)(config_name_callback* cb, void* user);
-typedef bool(ConfigListJobs_t)(config_name_callback* cb, void* user);
-typedef bool(ConfigListCatalogs_t)(config_name_callback* cb, void* user);
+
+enum bareos_job_level : uint32_t
+{
+  BJL_NONE = 0,
+  BJL_FULL = 'F',         /* Full backup */
+  BJL_INCREMENTAL = 'I',  /* since last backup */
+  BJL_DIFFERENTIAL = 'D', /* since last full backup */
+};
+
+struct bareos_config_catalog {
+  const char* name;
+  const char* db_name;
+};
+
+struct bareos_config_job {
+  const char* name;
+  enum bareos_job_type type;
+  enum bareos_job_level level;
+};
+
+struct bareos_config_client {
+  const char* name;
+  const char* address;
+};
+
+typedef bool(config_client_callback)(void* user,
+                                     const bareos_config_client* data);
+typedef bool(config_catalog_callback)(void* user,
+                                      const bareos_config_catalog* data);
+typedef bool(config_job_callback)(void* user, const bareos_config_job* data);
+
+typedef bool(ConfigListClients_t)(config_client_callback* cb, void* user);
+typedef bool(ConfigListJobs_t)(config_job_callback* cb, void* user);
+typedef bool(ConfigListCatalogs_t)(config_catalog_callback* cb, void* user);
 
 struct config_capability {
   ConfigListClients_t* list_clients;

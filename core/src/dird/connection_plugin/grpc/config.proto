@@ -17,6 +17,7 @@ message ListClientsRequest {
 
 message Client {
   string name = 1;
+  string address = 2;
 };
 
 message ListClientsResponse {
@@ -29,8 +30,17 @@ enum JobType {
   BACKUP = 2;
 };
 
+enum JobLevel {
+  JOB_LEVEL_UNSPECIFIED = 0;
+  FULL = 1;
+  DIFFERENTIAL = 2;
+  INCREMENTAL = 3;
+};
+
 message Job {
   string name = 1;
+  JobType type = 2;
+  optional JobLevel default_level = 3;
 };
 
 message JobTypeFilter {
@@ -47,6 +57,7 @@ message ListJobsResponse {
 
 message Catalog {
   string name = 1;
+  string dbname = 2;
 };
 
 message ListCatalogsRequest {

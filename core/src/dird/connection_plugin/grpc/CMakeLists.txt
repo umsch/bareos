@@ -86,3 +86,6 @@ target_link_libraries(
   grpc-plugin ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF}
   grpc-proto
 )
+
+add_executable(grpc-client gclient.cc)
+target_link_libraries(grpc-client grpc-proto)

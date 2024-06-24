@@ -32,8 +32,19 @@ extern "C" {
 
 enum bareos_job_type : uint32_t
 {
-  BJT_BACKUP = 'B',  /* Backup Job */
-  BJT_RESTORE = 'R', /* Restore Job */
+  BJT_BACKUP = 'B',       /**< Backup Job */
+  BJT_MIGRATED_JOB = 'M', /**< A previous backup job that was migrated */
+  BJT_VERIFY = 'V',       /**< Verify Job */
+  BJT_RESTORE = 'R',      /**< Restore Job */
+  BJT_CONSOLE = 'U',      /**< console program */
+  BJT_SYSTEM = 'I',       /**< internal system "job" */
+  BJT_ADMIN = 'D',        /**< admin job */
+  BJT_ARCHIVE = 'A',      /**< Archive Job */
+  BJT_JOB_COPY = 'C',     /**< Copy of a Job */
+  BJT_COPY = 'c',         /**< Copy Job */
+  BJT_MIGRATE = 'g',      /**< Migration Job */
+  BJT_SCAN = 'S',         /**< Scan Job */
+  BJT_CONSOLIDATE = 'O'   /**< Always Incremental Consolidate Job */
 };
 
 

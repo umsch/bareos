@@ -42,43 +42,48 @@ JobName=backup-bareos-fd
 
 start_test
 
-grpc Client/List "{}" | tee "$log_home/client.list"
-grpc Client/ListConfigured "{}" | tee "$log_home/client.configured"
+CATALOG=$(grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/restore.list" | jq -c '.catalogs | .[0] | .id')
+grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list"
+grpc bareos.config.Config/ListJobs "{ \"filters\" : [ { \"type\" : { \"select\" : \"RESTORE\" }}]}" | tee "$log_home/restore_jobs.list"
+grpc bareos.config.Config/ListClients "{}" | tee "$log_home/restore_clients.list"
 
-BACKUPCLIENT=$(jq -s '.[0].row.name' "$log_home/client.list")
-RESTORECLIENT=$(jq '.clients[0].row.name' "$log_home/client.configured")
-
-echo "------"
-echo "BackupClient: $BACKUPCLIENT"
-echo "RestoreClient: $RESTORECLIENT"
-echo "------"
-
-grpc Client/Info "{ \"clientname\" : $BACKUPCLIENT }" | tee "$log_home/client.info"
+RESTORECLIENT=$(jq -c ".clients | .[0] | .id" "$log_home/restore_clients.list")
+RESTOREJOB=$(jq -c ".jobs | .[0] | .id" "$log_home/restore_jobs.list")
+JOB=$(jq -sc ".[0] | .job" "$log_home/jobs.list")
 
 
-grpc Restore/ListSessions "{}" | tee "$log_home/sessions.txt"
-grpc Restore/Begin '{ "jobids" : [1], "select_parents" : "false"  }' | tee "$log_home/begin.txt"
-grpc Restore/ListSessions "{}" | tee "$log_home/sessions.txt"
+echo "client = $RESTORECLIENT"
+echo "restorejob = $RESTOREJOB"
+echo "job = $JOB"
 
-TOKEN=$(jq ".token" "$log_home/begin.txt")
+grpc bareos.restore.Restore/ListSessions "{}" | tee "$log_home/old_sessions.list"
 
-grpc Restore/ListFiles "{ \"token\" : $TOKEN }" | tee "$log_home/list.txt"
-grpc Restore/ChangeDirectory "{ \"token\" : $TOKEN, \"directory\" : \"${BackupDirectory}/weird-files\" }" | tee "$log_home/cd.txt"
-grpc Restore/ChangeMarkedStatus "{ \"token\" : $TOKEN, \"regex\" : \".*\", \"mark\": \"true\" }" | tee "$log_home/mark.txt"
-grpc Restore/ListFiles "{ \"token\" : $TOKEN }" | tee "$log_home/list2.txt"
-grpc Restore/ChangeDirectory "{ \"token\" : $TOKEN, \"directory\" : \"..\" }" | tee "$log_home/cd.txt"
-grpc Restore/FinishSelection "{ \"token\" : $TOKEN }" | tee "$log_home/finish.txt"
+for session in $(jq -c ".sessions[]" "$log_home/old_sessions.list");
+do
+    grpc bareos.restore.Restore/Cancel "{ \"session\" : $session }"
+done
 
-BSR=$(jq --raw-output ".bootstrappath" "$log_home/finish.txt")
+grpc bareos.restore.Restore/Begin "{ \"backup_job\" : $JOB, \"find_job_chain\" : false }" | tee "$log_home/restore.begin"
 
-echo "--- BSR BEGIN ---"
-cat "${BSR}"
-echo "--- BSR END ---"
+SESSION=$(jq -c ".session" "$log_home/restore.begin")
 
-grpc Restore/ChangeDirectory "{ \"token\" : $TOKEN, \"directory\" : \"..\" }" | tee "$log_home/cd.txt" ||:
-grpc Restore/SetOptions  "{ \"token\" : $TOKEN, \"client\" : \"bareos-fd\", \"catalog\" : \"MyCatalog\", \"job\" : \"RestoreFiles\" }"
-grpc Restore/Commit "{ \"token\": $TOKEN }"
 
-grpc Restore/Abort "{ \"token\" : $TOKEN }" | tee "$log_home/abort.txt"
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \".\" } }" | tee "$log_home/restore.cd.relative"
+#grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"/home/ssura/Projekte/bareos/build/systemtests/tests/grpc/tmp/data/build/src/tests/Makefile\" } }" | tee "$log_home/restore.cd.bad" || :
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"/home/ssura/Projekte/bareos/build/systemtests/tests/grpc/tmp/data/build/src/tests\" } }" | tee "$log_home/restore.cd.absolute"
+grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"filter\" : { \"regex\" : \"*.c\" }, \"action\" : \"MARK\" }" | tee "$log_home/restore.cd.absolute"
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
+
+
+RESTOREOPTIONS="{
+        \"restore_location\" : \"tmp/bareos\",
+        \"restore_job\" : $RESTOREJOB,
+        \"restore_client\" : $RESTORECLIENT,
+        \"replace\" : \"NEVER\"
+}"
+
+grpc bareos.restore.Restore/Run "{\"session\" : $SESSION, \"restore_options\" : $RESTOREOPTIONS }" | tee "$log_home/restore.ls.1"
+grpc bareos.restore.Restore/Cancel "{ \"session\" : $SESSION }" | tee "$log_home/restore.cancel"
 
 end_test

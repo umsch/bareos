@@ -52,7 +52,7 @@ enum ReplaceType {
 
 message RestoreOptions {
   optional ReplaceType replace = 1;
-  optional bareos.config.Job restore_job = 3;
+  optional bareos.config.JobId restore_job = 3;
   optional string restore_location = 4;
   optional bareos.common.Client restore_client = 5;
 };
@@ -117,11 +117,11 @@ enum FileType {
   FILE_TYPE_UNSPECIFIED = 0;
   DIRECTORY = 1;
   FILE = 2;
-  LINK = 3;
+  DIRECTORY_NOT_BACKED_UP = 3;
 };
 
 message File {
   string name = 1;
   bool marked = 2;
-  FileType file = 3;
+  FileType type = 3;
 }

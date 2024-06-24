@@ -34,6 +34,20 @@ struct restore_session {
   restore_session_handle* handle;
 };
 
+FileType bareos_to_grpc_ft(bareos_file_type bft)
+{
+  switch (bft) {
+    case BFT_FILE:
+      return FileType::FILE;
+    case BFT_DIR_NOT_BACKED_UP:
+      return FileType::DIRECTORY_NOT_BACKED_UP;
+    case BFT_DIR:
+      return FileType::DIRECTORY;
+  }
+
+  throw grpc_error(grpc::StatusCode::UNKNOWN, "Unknown bareos file type.");
+}
+
 class RestoreImpl : public Restore::Service {
  public:
   RestoreImpl(restore_capability rc) : cap{rc} {}
@@ -305,6 +319,7 @@ class RestoreImpl : public Restore::Service {
         File f;
         f.set_name(status.name);
         f.set_marked(status.marked);
+        f.set_type(bareos_to_grpc_ft(status.type));
         response->Write(std::move(f));
         return true;
       };

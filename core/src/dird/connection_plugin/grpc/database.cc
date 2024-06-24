@@ -76,7 +76,7 @@ class DatabaseImpl final : public Database::Service {
     }
   };
 
-  database OpenDb(const bareos::config::Catalog& ctlg)
+  database OpenDb(const bareos::config::CatalogId& ctlg)
   {
     auto* ptr = cap.open_database(ctlg.name().c_str());
     if (!ptr) {
@@ -99,6 +99,10 @@ class DatabaseImpl final : public Database::Service {
                      ServerWriter<ListClientsResponse>* response) override
   {
     try {
+      if (!request->has_catalog()) {
+        throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+                         "catalog is missing.");
+      }
       auto db = OpenDb(request->catalog());
 
       db.list_clients([writer = response](size_t field_count,
@@ -126,6 +130,11 @@ class DatabaseImpl final : public Database::Service {
                   ServerWriter<ListJobsResponse>* response) override
   {
     try {
+      if (!request->has_catalog()) {
+        throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+                         "catalog is missing.");
+      }
+
       auto db = OpenDb(request->catalog());
 
       db.list_jobs([writer = response](size_t field_count,
@@ -142,10 +151,7 @@ class DatabaseImpl final : public Database::Service {
         return false;
       });
     } catch (const grpc_error& err) {
-      return grpc::Status(grpc::StatusCode::UNKNOWN,
-                          "HalloHalloHalloHalloHalloHalloHalloHalloHalloHalloHa"
-                          "lloHalloHalloHalloHalloHalloHalloHalloHalloHallo",
-                          "Test");
+      return err.status;
     }
 
     return Status::OK;

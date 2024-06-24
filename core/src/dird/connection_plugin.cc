@@ -25,6 +25,7 @@
 #include "dird/create.h"
 #include "dird_conf.h"
 #include "dird_globals.h"
+#include "include/filetypes.h"
 #include "job.h"
 #include "jcr_util.h"
 #include "include/baconfig.h"
@@ -425,6 +426,22 @@ bool PluginCreateRestoreJob(restore_session_handle* handle,
   return true;
 }
 
+bareos_file_type file_type(unsigned int node_type)
+{
+  switch (node_type) {
+    case TN_ROOT:
+    case TN_NEWDIR:
+      return BFT_DIR_NOT_BACKED_UP;
+    case TN_DIR:
+    case TN_DIR_NLS:
+      return BFT_DIR;
+    case TN_FILE:
+      return BFT_FILE;
+  }
+
+  ASSERT(!"Unknown node type");
+}
+
 bool PluginListFiles(restore_session_handle* handle,
                      file_callback* cb,
                      void* user)
@@ -440,6 +457,7 @@ bool PluginListFiles(restore_session_handle* handle,
   while ((child = (TREE_NODE*)state->current->child.next(child))) {
     file_status status = {
         .name = child->fname,
+        .type = file_type(static_cast<FILETYPES>(child->type)),
         .marked = child->extract || child->extract_dir,
     };
     if (!(*cb)(user, status)) {
@@ -630,6 +648,7 @@ bool PluginMarkUnmark(restore_session_handle* handle,
       child->extract = mark;
       file_status status = {
           .name = child->fname,
+          .type = file_type(static_cast<FILETYPES>(child->type)),
           .marked = mark,
       };
       if (!(*cb)(user, status)) {
@@ -781,7 +800,11 @@ bool ListClients(database_session* sess, DB_result_callback* cb, void* user)
 
   sql_result_handler handler(cb, user);
 
-  return sess->ptr->ListClientRecords(nullptr, nullptr, false, &handler);
+  if (!sess->ptr->ListClientRecords(nullptr, nullptr, false, &handler)) {
+    sess->error = sess->ptr->strerror();
+    return false;
+  }
+  return true;
 }
 
 bool ListJobs(database_session* sess, DB_result_callback* cb, void* user)
@@ -792,11 +815,16 @@ bool ListJobs(database_session* sess, DB_result_callback* cb, void* user)
 
   sql_result_handler handler(cb, user);
 
-  (void)cb;
-  (void)user;
+  std::vector<char> v;
+  JobDbRecord jr{};
 
-  return false;
-  // return sess->ptr->ListJobRecords(nullptr, nullptr, false, &handler);
+  if (!sess->ptr->ListJobRecords(nullptr, &jr, nullptr, nullptr, v, v, v,
+                                 nullptr, nullptr, 0, false, false, false,
+                                 &handler)) {
+    sess->error = sess->ptr->strerror();
+    return false;
+  }
+  return true;
 }
 
 const char* ErrorString(database_session* sess)

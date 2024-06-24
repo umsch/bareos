@@ -15,9 +15,13 @@ service Config {
 message ListClientsRequest {
 };
 
-message Client {
+message ClientId {
   string name = 1;
-  string address = 2;
+};
+message Client {
+  ClientId id = 1;
+  string name = 2;
+  string address = 3;
 };
 
 message ListClientsResponse {
@@ -28,6 +32,12 @@ enum JobType {
   JOB_TYPE_UNSPECIFIED = 0;
   RESTORE = 1;
   BACKUP = 2;
+  COPY = 3;
+  VERIFY = 4;
+  ADMIN = 5;
+  ARCHIVE = 6;
+  MIGRATE = 7;
+  CONSOLIDATE = 8;
 };
 
 enum JobLevel {
@@ -37,27 +47,45 @@ enum JobLevel {
   INCREMENTAL = 3;
 };
 
-message Job {
+message JobId {
   string name = 1;
-  JobType type = 2;
-  optional JobLevel default_level = 3;
+};
+
+message Job {
+  JobId id = 1;
+  string name = 2;
+  JobType type = 3;
+  optional JobLevel default_level = 4;
 };
 
 message JobTypeFilter {
-  JobType type = 1;
+  JobType select = 1;
+};
+
+message JobFilter {
+  oneof filter_type {
+    JobTypeFilter type = 1;
+  }
 };
 
 message ListJobsRequest {
-  repeated JobTypeFilter jtf = 1;
+  // if no filter is set, then all jobs are accepted,
+  // otherwise only jobs are accepted that match all
+  // of the supplied filters
+  repeated JobFilter filters = 1;
 };
 
 message ListJobsResponse {
   repeated Job jobs = 1;
 };
 
-message Catalog {
+message CatalogId {
   string name = 1;
-  string dbname = 2;
+};
+message Catalog {
+  CatalogId id = 1;
+  string name = 2;
+  string dbname = 3;
 };
 
 message ListCatalogsRequest {

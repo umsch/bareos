@@ -537,7 +537,110 @@ void BareosDb::ListJobstatisticsRecords(JobControlRecord* jcr,
   SqlFreeResult();
 }
 
-void BareosDb::ListJobRecords(JobControlRecord* jcr,
+bool BareosDb::ListJobRecords(JobControlRecord* jcr,
+                              JobDbRecord* jr,
+                              const char* range,
+                              const char* clientname,
+                              const std::vector<char>& jobstatuslist,
+                              const std::vector<char>& joblevels,
+                              const std::vector<char>& jobtypes,
+                              const char* volumename,
+                              const char* poolname,
+                              utime_t since_time,
+                              bool last,
+                              bool count,
+                              bool extended,
+                              list_result_handler* handler)
+{
+  char ed1[50];
+  char dt[MAX_TIME_LENGTH];
+  char esc[MAX_ESCAPE_NAME_LENGTH];
+  PoolMem temp(PM_MESSAGE), selection(PM_MESSAGE), criteria(PM_MESSAGE);
+
+  if (!range) { range = ""; }
+  if (jr->JobId > 0) {
+    temp.bsprintf("AND Job.JobId=%s ", edit_int64(jr->JobId, ed1));
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (jr->Name[0] != 0) {
+    EscapeString(jcr, esc, jr->Name, strlen(jr->Name));
+    temp.bsprintf("AND Job.Name = '%s' ", esc);
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (clientname) {
+    temp.bsprintf("AND Client.Name = '%s' ", clientname);
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (!jobstatuslist.empty()) {
+    std::string jobStatuses
+        = CreateDelimitedStringForSqlQueries(jobstatuslist, ',');
+    temp.bsprintf("AND Job.JobStatus in (%s) ", jobStatuses.c_str());
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (!joblevels.empty()) {
+    std::string levels = CreateDelimitedStringForSqlQueries(joblevels, ',');
+    temp.bsprintf("AND Job.Level in (%s) ", levels.c_str());
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (!jobtypes.empty()) {
+    std::string types = CreateDelimitedStringForSqlQueries(jobtypes, ',');
+    temp.bsprintf("AND Job.Type in (%s) ", types.c_str());
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (volumename) {
+    temp.bsprintf("AND Media.Volumename = '%s' ", volumename);
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (poolname) {
+    temp.bsprintf(
+        "AND Job.poolid = (SELECT poolid FROM pool WHERE name = '%s' LIMIT 1) ",
+        poolname);
+    PmStrcat(selection, temp.c_str());
+  }
+
+  if (since_time) {
+    bstrutime(dt, sizeof(dt), since_time);
+    temp.bsprintf("AND Job.SchedTime > '%s' ", dt);
+    PmStrcat(selection, temp.c_str());
+  }
+
+  DbLocker _{this};
+
+  if (count) {
+    FillQuery(SQL_QUERY::list_jobs_count, selection.c_str(), range);
+  } else if (last) {
+    if (extended) {
+      FillQuery(SQL_QUERY::list_jobs_long_last, selection.c_str(), range);
+    } else {
+      FillQuery(SQL_QUERY::list_jobs_last, selection.c_str(), range);
+    }
+  } else {
+    if (extended) {
+      FillQuery(SQL_QUERY::list_jobs_long, selection.c_str(), range);
+    } else {
+      FillQuery(SQL_QUERY::list_jobs, selection.c_str(), range);
+    }
+  }
+
+  if (!QUERY_DB(jcr, cmd)) { return false; }
+
+  handler->begin("jobs");
+  auto res = ListResult(handler);
+  handler->end();
+
+  SqlFreeResult();
+
+  return res >= 0;
+}
+
+bool BareosDb::ListJobRecords(JobControlRecord* jcr,
                               JobDbRecord* jr,
                               const char* range,
                               const char* clientname,
@@ -552,6 +655,11 @@ void BareosDb::ListJobRecords(JobControlRecord* jcr,
                               OutputFormatter* sendit,
                               e_list_type type)
 {
+  output_handler handler(jcr->gui, sendit, type);
+  return ListJobRecords(jcr, jr, range, clientname, jobstatuslist, joblevels,
+                        jobtypes, volumename, poolname, since_time, last, count,
+                        type == VERT_LIST, &handler);
+#  if 0
   char ed1[50];
   char dt[MAX_TIME_LENGTH];
   char esc[MAX_ESCAPE_NAME_LENGTH];
@@ -631,10 +739,13 @@ void BareosDb::ListJobRecords(JobControlRecord* jcr,
   if (!QUERY_DB(jcr, cmd)) { return; }
 
   sendit->ArrayStart("jobs");
-  ListResult(jcr, sendit, type);
+  auto res = ListResult(jcr, sendit, type);
   sendit->ArrayEnd("jobs");
 
   SqlFreeResult();
+
+  return res >= 0;
+#  endif
 }
 
 void BareosDb::ListJobTotals(JobControlRecord* jcr,

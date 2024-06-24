@@ -35,8 +35,16 @@ struct job_started_info {
   int64_t jobid;
 };
 
+enum bareos_file_type
+{
+  BFT_FILE = 0,
+  BFT_DIR = 1,
+  BFT_DIR_NOT_BACKED_UP = 2,
+};
+
 struct file_status {
   const char* name;
+  bareos_file_type type;
   bool marked;
 };
 

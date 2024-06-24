@@ -51,7 +51,10 @@ echo "$jobtypes"
 
 for type in $jobtypes;
 do
-    grpc bareos.config.Config/ListJobs "{ \"jtf\" : [ { \"type\" : $type } ]}" | tee "$log_home/job-$type.list"
+    grpc bareos.config.Config/ListJobs "{ \"filters\" : [ { \"type\" : { \"select\" : $type } } ]}" | tee "$log_home/job-$type.list"
+
+
+    diff <(jq -c ".jobs[] | select(.type == $type) | .name" "$log_home/job.list") <(jq -c ".jobs[] | select(.type == $type) | .name" "$log_home/job-$type.list")
 done
 
 grpc bareos.config.Config/ListClients "{}" | tee "$log_home/client.list"

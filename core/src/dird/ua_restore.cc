@@ -374,6 +374,7 @@ bool RestoreCmd(UaContext* ua, const char*)
   PoolMem buf;
   JobResource* job;
   int i;
+  bool skip_check = false;
   JobControlRecord* jcr = ua->jcr;
   char* escaped_bsr_name = NULL;
   char* escaped_where_name = NULL;
@@ -618,6 +619,7 @@ bool RestoreCmd(UaContext* ua, const char*)
 
   if (FindArg(ua, NT_("yes")) > 0) {
     PmStrcat(ua->cmd, " yes"); /* pass it on to the run command */
+    skip_check = true;
   }
 
   Dmsg1(200, "Submitting: %s\n", ua->cmd);
@@ -662,7 +664,9 @@ bool RestoreCmd(UaContext* ua, const char*)
     if (rx.plugin_options) { opt.plugin_options = rx.plugin_options; }
     if (rx.comment) { opt.comment = rx.comment; }
 
-    if (!CheckAndModifyParameters(ua, opt)) { goto bail_out; }
+    if (!skip_check) {
+      if (!CheckAndModifyParameters(ua, opt)) { goto bail_out; }
+    }
 
     JobControlRecord* new_jcr = CreateJob(std::move(opt));
     if (!new_jcr) {

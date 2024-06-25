@@ -30,10 +30,6 @@ using grpc::Status;
 
 using namespace bareos::restore;
 
-struct restore_session {
-  restore_session_handle* handle;
-};
-
 FileType bareos_to_grpc_ft(bareos_file_type bft)
 {
   switch (bft) {
@@ -48,13 +44,201 @@ FileType bareos_to_grpc_ft(bareos_file_type bft)
   throw grpc_error(grpc::StatusCode::UNKNOWN, "Unknown bareos file type.");
 }
 
+class session_manager {
+ public:
+  session_manager(restore_capability* restore) : cap{restore} {}
+
+  class handle {
+   public:
+    handle() = default;
+    handle(session_manager& man,
+           restore_session_handle* session,
+           std::atomic<restore_session_handle*>* place,
+           const std::string* tk)
+        : manager{&man}, sess{session}, origin{place}, token{tk}
+    {
+    }
+    handle(const handle&) = delete;
+    handle& operator=(const handle& other) = delete;
+
+    handle(handle&& other) { *this = std::move(other); }
+    handle& operator=(handle&& other)
+    {
+      manager = std::exchange(other.manager, nullptr);
+      sess = std::exchange(other.sess, nullptr);
+      origin = std::exchange(other.origin, nullptr);
+      token = std::exchange(other.token, {});
+      return *this;
+    }
+
+    restore_session_handle* operator*() { return sess; }
+    restore_session_handle* operator->() { return sess; }
+
+    void Remove()
+    {
+      manager->Remove(*token, sess, origin);
+      sess = nullptr;
+      origin = nullptr;
+      token = nullptr;
+      manager = nullptr;
+    }
+
+    restore_session_handle* Bareos() { return sess; }
+    const std::string& Token() { return *token; }
+
+    operator bool() { return sess != nullptr; }
+
+    ~handle() noexcept(false)
+    {
+      if (sess) {
+        if (origin->exchange(sess) != nullptr) {
+          throw grpc_error(grpc::StatusCode::UNKNOWN,
+                           "Somehow unavailable session was available.");
+        }
+      }
+    }
+
+   private:
+    session_manager* manager{nullptr};
+    restore_session_handle* sess{nullptr};
+    std::atomic<restore_session_handle*>* origin{nullptr};
+    const std::string* token{};
+  };
+
+  std::vector<std::string> Tokens()
+  {
+    std::optional locked = sessions.try_lock(lock_interval);
+
+    if (!locked) {
+      throw grpc_error(grpc::StatusCode::UNAVAILABLE,
+                       "Could not acquire sessions lock.");
+    }
+
+    auto& map = locked.value();
+
+    std::vector<std::string> v;
+    v.reserve(map->size());
+
+    for (auto& [str, _] : *map) { v.push_back(str); }
+
+    return v;
+  }
+
+  handle Make()
+  {
+    std::optional locked = sessions.try_lock(lock_interval);
+
+    if (!locked) {
+      throw grpc_error(grpc::StatusCode::UNAVAILABLE,
+                       "Could not acquire sessions lock.");
+    }
+
+    auto& map = locked.value();
+    auto id = id_counter.fetch_add(1);
+    auto str = std::to_string(id);
+
+    // session is available immediately, so we simply create this
+    // with nullptr immediately
+    auto [iter, inserted] = map->try_emplace(std::move(str));
+
+    if (!inserted) {
+      throw grpc_error(grpc::StatusCode::UNKNOWN,
+                       "Could not create session (bad id).");
+    }
+
+    auto* bareos_handle = cap->create_restore_session();
+
+    if (!bareos_handle) {
+      map->erase(iter);
+      throw grpc_error(grpc::StatusCode::UNKNOWN, "Could not create session.");
+    }
+
+    return make_handle(iter->first, bareos_handle, &iter->second.sess);
+  }
+
+  // throws exception on error!
+  handle Take(const std::string& key)
+  {
+    std::optional avail = sessions.try_lock(lock_interval);
+
+    if (!avail) {
+      throw grpc_error(grpc::StatusCode::UNAVAILABLE,
+                       "Could not acquire sessions lock.");
+    }
+
+    auto& map = avail.value();
+
+    auto found = map->find(key);
+    if (found == map->end()) {
+      throw grpc_error(grpc::StatusCode::UNAVAILABLE,
+                       "Session does not exist.");
+    }
+
+    auto* ptr = found->second.sess.exchange(nullptr);
+    if (!ptr) {
+      throw grpc_error(grpc::StatusCode::UNAVAILABLE,
+                       "Session is not available.");
+    }
+
+    return make_handle(key, ptr, &found->second.sess);
+  }
+
+ private:
+  struct session_entry {
+    std::atomic<restore_session_handle*> sess;
+
+    session_entry() = default;
+    session_entry(restore_session_handle* h) : sess{h} {}
+  };
+
+  void Remove(const std::string& token,
+              restore_session_handle* hndl,
+              std::atomic<restore_session_handle*>* origin)
+  {
+    // the precondition is that session is currently _NOT_ available,
+    // so we do not need to remove it from the available map
+
+    auto s = sessions.lock();
+    auto& map = s.get();
+
+    auto found = map.find(token);
+    if (found == map.end()) {
+      throw grpc_error(grpc::StatusCode::UNKNOWN,
+                       "Trying to delete non existing session.");
+    }
+
+    if (&found->second.sess != origin) {
+      throw grpc_error(grpc::StatusCode::UNKNOWN,
+                       "key-value mismatch while trying to delete session.");
+    }
+
+    cap->finish_restore_session(hndl);
+
+    map.erase(found);
+  }
+
+  handle make_handle(const std::string& token,
+                     restore_session_handle* sess,
+                     std::atomic<restore_session_handle*>* origin)
+  {
+    return handle{*this, sess, origin, &token};
+  }
+  constexpr static auto lock_interval = std::chrono::milliseconds(30);
+
+  template <typename T> using timed_sync = synchronized<T, std::timed_mutex>;
+
+  std::atomic<size_t> id_counter;
+  timed_sync<std::unordered_map<std::string, session_entry>> sessions;
+  restore_capability* cap;
+};
+
 class RestoreImpl : public Restore::Service {
  public:
-  RestoreImpl(restore_capability rc) : cap{rc} {}
+  RestoreImpl(restore_capability rc) : cap{rc}, sessions{&cap} {}
 
  private:
   template <typename F, typename Handle, typename... Args>
-  auto plugin_call(F* fun, Handle& handle, Args&&... args)
+  auto plugin_call(F* fun, Handle&& handle, Args&&... args)
   {
     auto res = fun(handle, std::forward<Args>(args)...);
     if (!res) {
@@ -66,38 +250,71 @@ class RestoreImpl : public Restore::Service {
     return res;
   }
 
-  bool push_session(const RestoreSession& sess, restore_session&& restore)
+  session_manager::handle new_session() { return sessions.Make(); }
+
+  session_manager::handle get_session(const RestoreSession& sess)
   {
-    auto sessmap = sessions.lock();
-
-    auto [_, inserted] = sessmap->try_emplace(sess.token(), restore);
-
-    return inserted;
+    return sessions.Take(sess.token());
   }
 
-  auto pop_session(const RestoreSession& sess)
-  {
-    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+  // bool push_session(const RestoreSession& sess, restore_session&& restore)
+  // {
+  //   auto sessmap = sessions.lock();
 
-    if (!optsessmap) {
-      throw grpc_error(grpc::StatusCode::UNAVAILABLE,
-                       "Too much concurrent use.");
-    }
+  //   auto [_, inserted] = sessmap->try_emplace(sess.token(), restore);
 
-    auto& sessmap = optsessmap.value().get();
+  //   return inserted;
+  // }
 
-    auto found = sessmap.find(sess.token());
-    if (found == sessmap.end()) {
-      throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
-                       "No session with that key or session already in use.");
-    }
+  // auto pop_session(const RestoreSession& sess)
+  // {
+  //   std::optional optsessmap =
+  //   sessions.try_lock(std::chrono::milliseconds(5));
 
-    auto session = std::move(found->second);
+  //   if (!optsessmap) {
+  //     throw grpc_error(grpc::StatusCode::UNAVAILABLE,
+  //                      "Too much concurrent use.");
+  //   }
 
-    sessmap.erase(found);
+  //   auto& sessmap = optsessmap.value().get();
 
-    return session;
-  }
+  //   auto found = sessmap.find(sess.token());
+  //   if (found == sessmap.end()) {
+  //     throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+  //                      "No session with that key or session already in
+  //                      use.");
+  //   }
+
+  //   auto session = std::move(found->second);
+
+  //   sessmap.erase(found);
+
+  //   return session;
+  // }
+
+  // RestoreSession new_id()
+  // {
+  //   std::optional all_sess
+  //       = all_sessions.try_lock(std::chrono::milliseconds(5));
+
+  //   if (!all_sess) {
+  //     throw grpc_error(grpc::StatusCode::UNAVAILABLE, "Please try again.");
+  //   }
+  //   RestoreSession id;
+  //   id.set_token("0");  // todo: make this random
+  //   return id;
+  // }
+
+  // void delete_id(const RestoreSession& id)
+  // {
+  //   (void)id;
+  //   std::optional all_sess
+  //       = all_sessions.try_lock(std::chrono::milliseconds(5));
+
+  //   if (!all_sess) {
+  //     throw grpc_error(grpc::StatusCode::UNAVAILABLE, "Please try again.");
+  //   }
+  // }
 
   Status ListSessions(ServerContext*,
                       const ListSessionsRequest*,
@@ -105,45 +322,15 @@ class RestoreImpl : public Restore::Service {
   {
     auto* array = response->mutable_sessions();
 
-    std::optional optsessmap = sessions.try_lock(std::chrono::milliseconds(5));
+    std::vector session_tokens = sessions.Tokens();
 
-    if (!optsessmap) {
-      return Status(grpc::StatusCode::UNAVAILABLE, "Too much concurrent use.");
-    }
-
-    auto& sessmap = optsessmap.value().get();
-
-    for (auto& [key, _] : sessmap) {
+    for (auto& token : session_tokens) {
       RestoreSession sess;
-      sess.set_token(key);
+      sess.set_token(token);
       array->Add(std::move(sess));
     }
 
     return Status::OK;
-  }
-
-  RestoreSession new_id()
-  {
-    std::optional all_sess
-        = all_sessions.try_lock(std::chrono::milliseconds(5));
-
-    if (!all_sess) {
-      throw grpc_error(grpc::StatusCode::UNAVAILABLE, "Please try again.");
-    }
-    RestoreSession id;
-    id.set_token("0");  // todo: make this random
-    return id;
-  }
-
-  void delete_id(const RestoreSession& id)
-  {
-    (void)id;
-    std::optional all_sess
-        = all_sessions.try_lock(std::chrono::milliseconds(5));
-
-    if (!all_sess) {
-      throw grpc_error(grpc::StatusCode::UNAVAILABLE, "Please try again.");
-    }
   }
 
   Status Begin(ServerContext*,
@@ -156,35 +343,24 @@ class RestoreImpl : public Restore::Service {
                          "This option is currently not implemented.");
       }
 
-      restore_session session;
-
       auto jobid = request->backup_job().jobid();
 
-      session.handle = cap.create_restore_session();
+      auto handle = new_session();
 
-      if (!session.handle) {
+      if (!handle) {
         throw grpc_error(grpc::StatusCode::INTERNAL,
                          "Could not create restore session.");
       }
 
-      if (!cap.start_from_jobids(session.handle, 1, &jobid,
+      if (!cap.start_from_jobids(handle.Bareos(), 1, &jobid,
                                  request->find_job_chain())) {
-        const char* error = cap.error_string(session.handle);
+        const char* error = cap.error_string(handle.Bareos());
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          error ? error : "Internal error.");
       }
 
-      // TODO: make random + some retries
-      RestoreSession id = new_id();
-
-      if (!push_session(id, std::move(session))) {
-        cap.finish_restore_session(session.handle);
-        delete_id(id);
-        throw grpc_error(grpc::StatusCode::RESOURCE_EXHAUSTED,
-                         "Could not create restore session. Please try again.");
-      }
-
-
+      RestoreSession id;
+      id.mutable_token()->assign(handle.Token());
       *response->mutable_session() = std::move(id);
 
     } catch (const grpc_error& err) {
@@ -198,9 +374,7 @@ class RestoreImpl : public Restore::Service {
              RunResponse* response) override
   {
     try {
-      auto session = pop_session(request->session());
-
-      auto* handle = session.handle;
+      auto handle = get_session(request->session());
 
       restore_options options = {};
 
@@ -241,13 +415,12 @@ class RestoreImpl : public Restore::Service {
 
       job_started_info info;
 
-      if (!cap.create_restore_job(handle, options, &info)) {
+      if (!cap.create_restore_job(handle.Bareos(), options, &info)) {
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          "Could not start restore job.");
       }
 
-      cap.finish_restore_session(handle);
-      delete_id(request->session());
+      handle.Remove();
 
       bareos::common::Job job;
       job.set_jobid(info.jobid);
@@ -264,13 +437,10 @@ class RestoreImpl : public Restore::Service {
                 CancelResponse*) override
   {
     try {
-      auto session = pop_session(request->session());
+      auto handle = get_session(request->session());
 
-      auto* handle = session.handle;
+      handle.Remove();
 
-      cap.finish_restore_session(handle);
-
-      delete_id(request->session());
     } catch (const grpc_error& err) {
       return err.status;
     }
@@ -282,23 +452,16 @@ class RestoreImpl : public Restore::Service {
                          ChangeDirectoryResponse* response) override
   {
     try {
-      auto session = pop_session(request->session());
-      auto* handle = session.handle;
+      auto handle = get_session(request->session());
 
-      plugin_call(cap.change_directory, handle,
+      plugin_call(cap.change_directory, handle.Bareos(),
                   request->directory().path().c_str());
 
-      auto* current_dir = plugin_call(cap.current_directory, handle);
+      auto* current_dir = plugin_call(cap.current_directory, handle.Bareos());
 
       Path curdir;
       *curdir.mutable_path() = std::move(current_dir);
       *response->mutable_current_directory() = std::move(curdir);
-
-      if (!push_session(request->session(), std::move(session))) {
-        cap.finish_restore_session(handle);
-        throw grpc_error(grpc::StatusCode::ABORTED,
-                         "Aborted the current session.");
-      }
 
       return Status::OK;
     } catch (const grpc_error& err) {
@@ -311,9 +474,7 @@ class RestoreImpl : public Restore::Service {
                    grpc::ServerWriter<File>* response) override
   {
     try {
-      auto session = pop_session(request->session());
-
-      auto* handle = session.handle;
+      auto handle = get_session(request->session());
 
       auto lambda = [response](file_status status) -> bool {
         File f;
@@ -324,16 +485,11 @@ class RestoreImpl : public Restore::Service {
         return true;
       };
 
-      if (!cap.list_files(handle, c_callback<decltype(lambda)>, &lambda)) {
-        const char* error = cap.error_string(handle);
+      if (!cap.list_files(handle.Bareos(), c_callback<decltype(lambda)>,
+                          &lambda)) {
+        const char* error = cap.error_string(handle.Bareos());
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          error ? error : "Internal error.");
-      }
-
-      if (!push_session(request->session(), std::move(session))) {
-        cap.finish_restore_session(handle);
-        throw grpc_error(grpc::StatusCode::ABORTED,
-                         "Aborted the current session.");
       }
 
       return Status::OK;
@@ -347,8 +503,7 @@ class RestoreImpl : public Restore::Service {
                             ChangeMarkedResponse* response) override
   {
     try {
-      auto session = pop_session(request->session());
-      auto* handle = session.handle;
+      auto handle = get_session(request->session());
 
       auto action = request->action();
       auto& regex = request->filter();
@@ -372,17 +527,11 @@ class RestoreImpl : public Restore::Service {
         }
       }();
 
-      if (!cap.mark_unmark(handle, regex.regex().c_str(), mark,
+      if (!cap.mark_unmark(handle.Bareos(), regex.regex().c_str(), mark,
                            c_callback<decltype(lambda)>, &lambda)) {
-        const char* error = cap.error_string(handle);
+        const char* error = cap.error_string(handle.Bareos());
         return Status(grpc::StatusCode::UNKNOWN,
                       error ? error : "Internal error.");
-      }
-
-      if (!push_session(request->session(), std::move(session))) {
-        cap.finish_restore_session(handle);
-        throw grpc_error(grpc::StatusCode::ABORTED,
-                         "Aborted the current session.");
       }
 
       response->set_affected_count(num_affected);
@@ -392,15 +541,8 @@ class RestoreImpl : public Restore::Service {
     }
   }
 
-  synchronized<std::vector<std::string>, std::timed_mutex> all_sessions;
-
-
-  // TODO: sessions also needs to be (rw-)synchronized
-  synchronized<std::unordered_map<std::string, restore_session>,
-               std::timed_mutex>
-      sessions;
-
   restore_capability cap;
+  session_manager sessions;
 };
 
 std::unique_ptr<Restore::Service> MakeRestoreService(restore_capability cap)

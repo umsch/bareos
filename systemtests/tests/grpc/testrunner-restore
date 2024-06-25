@@ -77,13 +77,17 @@ grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_ho
 
 
 RESTOREOPTIONS="{
-        \"restore_location\" : \"tmp/bareos\",
+        \"restore_location\" : \"tmp/bareos-restores\",
         \"restore_job\" : $RESTOREJOB,
         \"restore_client\" : $RESTORECLIENT,
         \"replace\" : \"NEVER\"
 }"
 
 grpc bareos.restore.Restore/Run "{\"session\" : $SESSION, \"restore_options\" : $RESTOREOPTIONS }" | tee "$log_home/restore.ls.1"
-grpc bareos.restore.Restore/Cancel "{ \"session\" : $SESSION }" | tee "$log_home/restore.cancel"
+
+# check that the job actually exists in the database
+JOBID=$(jq ".jobid | .jobid" "$log_home/restore.ls.1")
+grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list.after"
+jq -s "map(.job.jobid) | any(. == $JOBID)" "$log_home/jobs.list.after"
 
 end_test

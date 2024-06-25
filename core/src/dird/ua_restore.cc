@@ -627,7 +627,7 @@ bool RestoreCmd(UaContext* ua, const char*)
   rx.JobIds = NULL;
 
   {
-    RestoreOptions opt;
+    RestoreOptions opt{};
 
     opt.job = job;
     // TODO: think about acl

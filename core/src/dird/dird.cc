@@ -313,8 +313,7 @@ int main(int argc, char* argv[])
   LoadDirPlugins(me->plugin_directory, me->plugin_names);
   std::vector<std::string> conn_plugin_names{"grpc-plugin"};
   if (!LoadConnectionPlugins(me->plugin_directory, conn_plugin_names)) {
-    // Emsg(M_FATAL, "No plugins loaded\n");
-    exit(1);
+    Dmsg0(100, "No connection plugins loaded.\n");
   }
 
 

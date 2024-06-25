@@ -26,6 +26,7 @@
 #include "dird_conf.h"
 #include "dird_globals.h"
 #include "include/filetypes.h"
+#include "include/protocol_types.h"
 #include "job.h"
 #include "jcr_util.h"
 #include "include/baconfig.h"
@@ -367,48 +368,137 @@ bool PluginCommitRestoreSession(restore_session_handle* handle,
   return true;
 }
 
+std::optional<std::pair<std::string, std::size_t>>
+MakeBsr(restore_session_handle* handle, TREE_ROOT* root, const char* bootstrap)
+{
+  std::unique_ptr bsr = BsrFromTree(root);
+
+  if (!bsr) {
+    handle->error = "No files selected to be restored.";
+    return std::nullopt;
+  }
+
+  std::optional error
+      = AddVolumeInformationToBsr(handle->db, handle->jcr, bsr.get());
+  if (error) {
+    handle->error = "Could not finalize bsr: ERR=" + error.value();
+    return std::nullopt;
+  }
+
+  auto serialized = SerializeBsr(bsr.get());
+
+  std::string bsr_path{};
+  if (bootstrap) {
+    bsr_path = bootstrap;
+  } else {
+    bsr_path = MakeUniqueBootstrapPath();
+    bootstrap = bsr_path.c_str();
+  }
+
+  if (!WriteFile(bsr_path.c_str(), serialized.serialized)) {
+    handle->error = "Could not write bootstrap to file: " + bsr_path;
+    return std::nullopt;
+  }
+
+  return std::make_pair(bsr_path, serialized.expected_count);
+}
+
 bool PluginCreateRestoreJob(restore_session_handle* handle,
                             restore_options Options,
                             job_started_info* info)
 {
-  (void)Options;
-  auto* state = std::get_if<select_restore_option_state>(&handle->state);
+  auto* state = std::get_if<select_tree_state>(&handle->state);
   if (!state) {
     handle->error = "Wrong state";
     return false;
   }
 
-  if (!state->job) {
-    handle->error = "No job selected";
+  RestoreOptions opts{};
+
+  ResLocker _{my_config};
+
+  JobResource* restore_job = nullptr;
+  if (Options.restore_job) {
+    restore_job = (JobResource*)my_config->GetResWithName(
+        R_JOB, Options.restore_job, false);
+    if (!restore_job) {
+      handle->error = std::string{"Job not found: "} + Options.restore_job;
+      return false;
+    }
+  } else {
+    handle->error = std::string{"No restore job set."};
     return false;
   }
-  if (!state->restore_client) {
-    handle->error = "No restore client selected";
-    return false;
-  }
-  if (!state->catalog) {
-    handle->error = "No catalog selected";
+  opts.job = restore_job;
+
+  ClientResource* restore_client{nullptr};
+  if (Options.restore_client) {
+    restore_client = (ClientResource*)my_config->GetResWithName(
+        R_CLIENT, Options.restore_client, false);
+    if (!restore_client) {
+      handle->error
+          = std::string{"Client not found: "} + Options.restore_client;
+      return false;
+    }
+  } else {
+    handle->error = std::string{"No restore client set."};
     return false;
   }
 
-  RestoreOptions opts;
+  opts.restore_client = restore_client;
 
-  opts.data = RestoreOptions::native_data{
-      .BootStrapPath = state->bsr,
-      .expected_file_count = static_cast<uint32_t>(state->count),
-      .unlink_bsr = state->unlink_bsr,
-  };
-  opts.job = state->job;
-  opts.restore_client = state->restore_client;
-  opts.catalog = state->catalog;
+  switch (Options.replace) {
+    case REPLACE_FILE_ALWAYS: {
+      opts.replace = replace_option::Always;
+    } break;
 
+    case REPLACE_FILE_IFNEWER: {
+      opts.replace = replace_option::IfNewer;
+    } break;
+    case REPLACE_FILE_IFOLDER: {
+      opts.replace = replace_option::IfOlder;
+    } break;
+    case REPLACE_FILE_NEVER: {
+      opts.replace = replace_option::Never;
+    } break;
+    case REPLACE_FILE_DEFAULT: {
+      opts.replace = std::nullopt;
+    } break;
+  }
+
+  auto* catalog = restore_job->catalog;
+  if (!catalog) { catalog = restore_client->catalog; }
+  if (!catalog) {
+    catalog = static_cast<CatalogResource*>(
+        my_config->GetNextRes(R_CATALOG, nullptr));
+  }
+  if (!catalog) {
+    handle->error = "Could not select a catalog.";
+    return false;
+  }
+
+  opts.catalog = catalog;
+
+  if (Options.restore_location) {
+    opts.location = RestoreOptions::where{Options.restore_location};
+  }
+
+
+  if (restore_job->Protocol != PT_NATIVE) {
+    handle->error = "ndmp support not yet available.";
+    return false;
+  } else {
+    std::optional bsr_data = MakeBsr(handle, state->root, nullptr);
+    if (!bsr_data) { return false; }
+
+    opts.data = RestoreOptions::native_data{
+        .BootStrapPath = bsr_data->first,
+        .expected_file_count = static_cast<uint32_t>(bsr_data->second),
+        .unlink_bsr = true,
+    };
+  }
 
   auto* jcr = CreateJob(std::move(opts));
-
-  if (!jcr) {
-    handle->error = "Could not create jcr";
-    return false;
-  }
 
   auto jobid = RunJob(jcr);
 
@@ -418,8 +508,6 @@ bool PluginCreateRestoreJob(restore_session_handle* handle,
   }
 
   info->jobid = jobid;
-
-  state->bsr.clear();
 
   handle->state = job_started_state{jobid};
 
@@ -930,6 +1018,11 @@ bool LoadConnectionPlugins(const char* directory,
                            const std::vector<std::string>& names)
 {
   ASSERT(!loaded);
+
+  if (!directory) {
+    Dmsg0(100, "No plugin directory set. Skipping.\n");
+    return false;
+  }
 
   std::vector<conn_plugin> plugins;
 

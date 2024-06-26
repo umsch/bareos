@@ -186,9 +186,7 @@ bool BareosDb::ListClientRecords(JobControlRecord* jcr,
 
   if (!QUERY_DB(jcr, cmd)) { return false; }
 
-  handler->begin("clients");
   auto res = ListResult(handler);
-  handler->end();
 
   SqlFreeResult();
 
@@ -631,9 +629,7 @@ bool BareosDb::ListJobRecords(JobControlRecord* jcr,
 
   if (!QUERY_DB(jcr, cmd)) { return false; }
 
-  handler->begin("jobs");
   auto res = ListResult(handler);
-  handler->end();
 
   SqlFreeResult();
 

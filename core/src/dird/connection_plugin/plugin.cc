@@ -102,7 +102,9 @@ bool PluginListClients(sql_callback* cb, void* user)
 
   plugin_sql_result_handler handler(cb, user);
 
+  handler.begin("clients");
   db->ListClientRecords(jcr, NULL, false, &handler);
+  handler.end();
 
   DbSqlClosePooledConnection(jcr, db);
 

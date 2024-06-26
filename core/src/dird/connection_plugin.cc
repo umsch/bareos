@@ -854,7 +854,6 @@ struct sql_result_handler : public list_result_handler {
   {
   }
 
-  void begin(const char* name_) override { name = name_; }
   void add_field(SQL_FIELD* field, field_flags) override
   {
     fields.emplace_back(strdup(field->name));
@@ -865,15 +864,11 @@ struct sql_result_handler : public list_result_handler {
     return cb(user, fields.size(), fields.data(), row);
   }
 
-  void end() override {}
-
-
   ~sql_result_handler()
   {
     for (auto* field : fields) { free(field); }
   }
 
-  std::string name;
   DB_result_callback* cb;
   void* user;
 

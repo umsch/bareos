@@ -494,19 +494,16 @@ struct list_result_handler {
   };
 
   virtual ~list_result_handler() = default;
-  virtual void begin(const char* name) = 0;
   virtual void add_field(SQL_FIELD* field, field_flags flags) = 0;
   virtual bool handle(SQL_ROW row) = 0;
-  virtual void end() = 0;
 };
 
 struct output_handler : public list_result_handler {
   output_handler(bool gui_, OutputFormatter* send_, e_list_type type_);
 
-  void begin(const char* name_) override;
   void add_field(SQL_FIELD* field, field_flags flags) override;
   bool handle(SQL_ROW row) override;
-  void end() override;
+  ~output_handler();
 
  private:
   void ListDashes();
@@ -528,7 +525,6 @@ struct output_handler : public list_result_handler {
   size_t num_fields{0};
   std::vector<db_field> fields;
   size_t max_len{0};
-  std::optional<std::string> name;
 
   static constexpr size_t max_width = 100;
 

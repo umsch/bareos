@@ -45,23 +45,18 @@ output_handler::output_handler(bool gui_,
 {
 }
 
-void output_handler::begin(const char* name_)
-{
-  send->ArrayStart(name_);
-  name.emplace(name_);
-}
-
 void output_handler::add_field(SQL_FIELD* field, field_flags flags)
 {
   auto i = num_fields++;
+  if (send->IsHiddenColumn(i)) { return; }
+
+  auto& new_field = fields.emplace_back();
+  new_field.name = field->name;
+  new_field.index = i;
+  new_field.numeric = flags.numeric;
+  new_field.maxlen = field->max_length > 0 ? field->max_length : 2;
+
   if (type == HORZ_LIST) {
-    if (send->IsHiddenColumn(i)) { return; }
-
-    auto& new_field = fields.emplace_back();
-    new_field.name = field->name;
-    new_field.index = i;
-    new_field.numeric = flags.numeric;
-
     auto col_len = field->max_length;
 
     if (col_len < (int)new_field.name.size()) {
@@ -82,14 +77,6 @@ void output_handler::add_field(SQL_FIELD* field, field_flags flags)
 
     new_field.maxlen = col_len; /* reset column info */
   } else if (type == VERT_LIST) {
-    if (send->IsHiddenColumn(i)) { return; }
-
-    auto& new_field = fields.emplace_back();
-    new_field.name = field->name;
-    new_field.index = i;
-    new_field.numeric = flags.numeric;
-    new_field.maxlen = field->max_length > 0 ? field->max_length : 2;
-
     size_t col_len = cstrlen(field->name);
     if (col_len > max_len) { max_len = col_len; }
   }
@@ -107,6 +94,7 @@ bool output_handler::handle(SQL_ROW row)
       // See if we should allow this under the current filtering.
       if (has_filters && !send->FilterData(row)) { return true; }
 
+      send->ObjectStart();
       for (auto& field : fields) {
         value.bsprintf("%s", row[field.index] ? row[field.index] : "NULL");
         send->ObjectKeyValue(field.name.c_str(), value.c_str(), " %s");
@@ -201,15 +189,13 @@ bool output_handler::handle(SQL_ROW row)
 
   return true;
 }
-void output_handler::end()
+output_handler::~output_handler()
 {
   if (num_rows == 0) {
     send->Decoration(T_("No results to list.\n"));
   } else if (type == HORZ_LIST) {
     ListDashes();
   }
-  ASSERT(name.has_value());
-  send->ArrayEnd(name->c_str());
 }
 
 void output_handler::ListDashes()

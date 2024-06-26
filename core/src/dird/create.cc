@@ -108,6 +108,8 @@ JobControlRecord* CreateJob(RestoreOptions&& opts)
   jcr->dir_impl->res.messages = opts.job->messages;
   jcr->dir_impl->res.pool = opts.job->pool;
 
+  SetRwstorage(jcr, rc.store);
+
   if (opts.backup_format) {
     jcr->dir_impl->backup_format = strdup(opts.backup_format->c_str());
   }

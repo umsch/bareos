@@ -18,6 +18,7 @@
 #   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #   02110-1301, USA.
 
+set -x
 set -e
 set -o pipefail
 set -u
@@ -51,7 +52,7 @@ wait
 update volume=O1V1 volstatus=Used
 messages
 @$out ${tmp}/restore-O1V1.out
-restore jobid=9 client=bareos-fd where=$restore_dir all done yes
+restore bootstrap=o1v1-bsr jobid=9 client=bareos-fd where=$restore_dir all done yes
 wait
 setdebug level=0 storage=O11
 setdebug level=0 storage=O12

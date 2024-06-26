@@ -311,96 +311,24 @@ const char* PluginGetBootstrapPath(restore_session_handle* handle)
   return state->bsr.c_str();
 }
 
-bool PluginCommitRestoreSession(restore_session_handle* handle,
-                                job_started_info* info)
-{
-  auto* state = std::get_if<select_restore_option_state>(&handle->state);
-  if (!state) {
-    handle->error = "Wrong state";
-    return false;
-  }
-
-  if (!state->job) {
-    handle->error = "No job selected";
-    return false;
-  }
-  if (!state->restore_client) {
-    handle->error = "No restore client selected";
-    return false;
-  }
-  if (!state->catalog) {
-    handle->error = "No catalog selected";
-    return false;
-  }
-
-  RestoreOptions opts;
-
-  opts.data = RestoreOptions::native_data{
-      .BootStrapPath = state->bsr,
-      .expected_file_count = static_cast<uint32_t>(state->count),
-      .unlink_bsr = state->unlink_bsr,
-  };
-  opts.job = state->job;
-  opts.restore_client = state->restore_client;
-  opts.catalog = state->catalog;
-
-
-  auto* jcr = CreateJob(std::move(opts));
-
-  if (!jcr) {
-    handle->error = "Could not create jcr";
-    return false;
-  }
-
-  auto jobid = RunJob(jcr);
-
-  if (jobid <= 0) {
-    handle->error = "Could not create jcr";
-    return false;
-  }
-
-  info->jobid = jobid;
-
-  state->bsr.clear();
-
-  handle->state = job_started_state{jobid};
-
-  return true;
-}
-
-std::optional<std::pair<std::string, std::size_t>>
-MakeBsr(restore_session_handle* handle, TREE_ROOT* root, const char* bootstrap)
+std::unique_ptr<RestoreBootstrapRecord> MakeBsr(restore_session_handle* handle,
+                                                TREE_ROOT* root)
 {
   std::unique_ptr bsr = BsrFromTree(root);
 
   if (!bsr) {
     handle->error = "No files selected to be restored.";
-    return std::nullopt;
+    return nullptr;
   }
 
   std::optional error
       = AddVolumeInformationToBsr(handle->db, handle->jcr, bsr.get());
   if (error) {
     handle->error = "Could not finalize bsr: ERR=" + error.value();
-    return std::nullopt;
+    return nullptr;
   }
 
-  auto serialized = SerializeBsr(bsr.get());
-
-  std::string bsr_path{};
-  if (bootstrap) {
-    bsr_path = bootstrap;
-  } else {
-    bsr_path = MakeUniqueBootstrapPath();
-    bootstrap = bsr_path.c_str();
-  }
-
-  if (!WriteFile(bsr_path.c_str(), serialized.serialized)) {
-    handle->error = "Could not write bootstrap to file: " + bsr_path;
-    return std::nullopt;
-  }
-
-  return std::make_pair(bsr_path, serialized.expected_count);
+  return bsr;
 }
 
 bool PluginCreateRestoreJob(restore_session_handle* handle,
@@ -488,13 +416,12 @@ bool PluginCreateRestoreJob(restore_session_handle* handle,
     handle->error = "ndmp support not yet available.";
     return false;
   } else {
-    std::optional bsr_data = MakeBsr(handle, state->root, nullptr);
-    if (!bsr_data) { return false; }
+    std::unique_ptr bsr = MakeBsr(handle, state->root);
+    if (!bsr) { return false; }
 
     opts.data = RestoreOptions::native_data{
-        .BootStrapPath = bsr_data->first,
-        .expected_file_count = static_cast<uint32_t>(bsr_data->second),
-        .unlink_bsr = true,
+        .bsr = std::move(bsr),
+        .bsr_path = std::nullopt,
     };
   }
 

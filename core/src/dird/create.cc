@@ -21,14 +21,61 @@
 
 #include "create.h"
 #include <utility>
+#include <fstream>
 
+#include "dird/dird_conf.h"
+#include "dird/dird_globals.h"
+#include "dird/storage.h"
 #include "job.h"
 #include "jcr_util.h"
 #include "include/protocol_types.h"
+#include "lib/parse_conf.h"
 
 
 namespace directordaemon {
 namespace {
+struct found_storage_resource {
+  enum
+  {
+    None,
+    ByName,
+    ByMediaType,
+  } type;
+
+  static found_storage_resource by_name(StorageResource* res)
+  {
+    return {ByName, res};
+  }
+
+  static found_storage_resource by_media_type(StorageResource* res)
+  {
+    return {ByMediaType, res};
+  }
+
+  static found_storage_resource none() { return {None, nullptr}; }
+
+  StorageResource* res;
+};
+
+found_storage_resource FindFirstStorage(RestoreBootstrapRecord* bsr)
+{
+  for (int i = 0; i < bsr->VolCount; i++) {
+    StorageResource* store;
+    foreach_res (store, R_STORAGE) {
+      if (bstrcmp(bsr->VolParams[i].Storage, store->resource_name_)) {
+        return found_storage_resource::by_name(store);
+      }
+    }
+
+    foreach_res (store, R_STORAGE) {
+      if (bstrcmp(bsr->VolParams[i].MediaType, store->media_type)) {
+        return found_storage_resource::by_media_type(store);
+      }
+    }
+  }
+
+  return found_storage_resource::none();
+}
 bool SetDataFromJob(JobControlRecord* jcr, JobResource* job)
 {
   ASSERT(job);
@@ -62,6 +109,19 @@ bool SetDataFromJob(JobControlRecord* jcr, JobResource* job)
 
   return true;
 }
+
+bool WriteFile(const char* path, std::string_view content)
+{
+  try {
+    std::ofstream file(path);
+
+    file << content;
+
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
 };  // namespace
 
 JobControlRecord* CreateJob(RestoreOptions&& opts)
@@ -92,9 +152,53 @@ JobControlRecord* CreateJob(RestoreOptions&& opts)
       return nullptr;
     }
 
-    jcr->RestoreBootstrap = strdup(native->BootStrapPath.c_str());
-    jcr->dir_impl->ExpectedFiles = native->expected_file_count;
-    jcr->dir_impl->unlink_bsr = native->unlink_bsr;
+    if (!native->bsr) {
+      // error: missing bsr
+      return nullptr;
+    }
+
+    std::string bsr_path;
+    bool unlink_bsr = !native->bsr_path;
+    if (unlink_bsr) {
+      bsr_path = MakeUniqueBootstrapPath();
+    } else {
+      bsr_path = std::move(native->bsr_path).value();
+    }
+
+    auto serialized = SerializeBsr(native->bsr.get());
+
+    auto storage = FindFirstStorage(native->bsr.get());
+
+    if (!storage.res) {
+      // error: could not find appropriate storage
+      return nullptr;
+    }
+
+    if (!WriteFile(bsr_path.c_str(), serialized.serialized.c_str())) {
+      // error: could not write bsr
+      return nullptr;
+    }
+
+    jcr->RestoreBootstrap = strdup(bsr_path.c_str());
+    jcr->dir_impl->ExpectedFiles = serialized.expected_count;
+    jcr->dir_impl->unlink_bsr = unlink_bsr;
+
+    UnifiedStorageResource unified;
+    unified.store = storage.res;
+    switch (storage.type) {
+      case found_storage_resource::None: {
+        PmStrcpy(unified.store_source, "Unknown source");
+      } break;
+      case found_storage_resource::ByName: {
+        PmStrcpy(unified.store_source, "Configuration (name)");
+      } break;
+      case found_storage_resource::ByMediaType: {
+        PmStrcpy(unified.store_source, "Configuration (media type)");
+      } break;
+    }
+    SetRwstorage(jcr.get(), &unified);
+
+    native->bsr.reset();
   } else {
     ASSERT(0);
   }
@@ -107,8 +211,6 @@ JobControlRecord* CreateJob(RestoreOptions&& opts)
   jcr->dir_impl->res.catalog_source = nullptr;  // TODO + allocate
   jcr->dir_impl->res.messages = opts.job->messages;
   jcr->dir_impl->res.pool = opts.job->pool;
-
-  SetRwstorage(jcr, rc.store);
 
   if (opts.backup_format) {
     jcr->dir_impl->backup_format = strdup(opts.backup_format->c_str());
@@ -130,8 +232,7 @@ JobControlRecord* CreateJob(RestoreOptions&& opts)
   }
 
   if (opts.plugin_options) {
-    // poolstr
-    PmStrcpy(jcr->dir_impl->plugin_options, opts.plugin_options->c_str());
+    jcr->dir_impl->plugin_options = strdup(opts.plugin_options->c_str());
   }
 
   jcr->dir_impl->replace

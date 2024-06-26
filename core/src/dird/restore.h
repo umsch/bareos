@@ -76,9 +76,8 @@ struct RestoreOptions {
   };
 
   struct native_data {
-    required<std::string> BootStrapPath;
-    required<std::uint32_t> expected_file_count;
-    required<bool> unlink_bsr;
+    required<std::unique_ptr<RestoreBootstrapRecord>> bsr;
+    std::optional<std::string> bsr_path;
   };
 
   struct regex_where : std::string {};

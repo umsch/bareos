@@ -122,7 +122,9 @@ static void PrintRestoreOptions(UaContext* ua, const RestoreOptions& res)
           s << std::setw(17) << "Type:" << std::setw(0) << "Native"
             << "\n";
           s << std::setw(17) << "  BootStrap:" << std::setw(0)
-            << arg.BootStrapPath << "\n";
+            << (arg.bsr_path.has_value() ? arg.bsr_path.value().c_str()
+                                         : "<not set>")
+            << "\n";
         } else if constexpr (std::is_same_v<T, RestoreOptions::ndmp_data>) {
           s << std::setw(17) << "Type:" << std::setw(0) << "NDMP"
             << "\n";
@@ -645,12 +647,17 @@ bool RestoreCmd(UaContext* ua, const char*)
 
       jcr->dir_impl->restore_tree_root = nullptr;
     } else {
-      opt.data = RestoreOptions::native_data{
-          .BootStrapPath
-          = escaped_bsr_name ? escaped_bsr_name : jcr->RestoreBootstrap,
-          .expected_file_count = rx.selected_files,
-          .unlink_bsr = jcr->dir_impl->unlink_bsr,
+      auto data = RestoreOptions::native_data{
+          .bsr = std::move(rx.bsr),
+          .bsr_path = std::nullopt,
       };
+
+      if (!jcr->dir_impl->unlink_bsr) {
+        data.bsr_path
+            = escaped_bsr_name ? escaped_bsr_name : jcr->RestoreBootstrap;
+      }
+
+      opt.data = std::move(data);
     }
 
     if (rx.RegexWhere) {
@@ -678,8 +685,15 @@ bool RestoreCmd(UaContext* ua, const char*)
       FreeJcr(new_jcr);
 
       if (jobid == 0) {
+        ua->ErrorMsg(T_("Job failed.\n"));
         free_rx(&rx);
         return false;
+      } else {
+        ua->send->ObjectStart("run");
+        ua->send->ObjectKeyValue("jobid", jobid, T_("Job queued. JobId=%lu\n"));
+        ua->send->ObjectEnd("run");
+        ua->LogAuditEventInfoMsg(T_("Job queued. JobId=%lu"),
+                                 (long unsigned)jcr->JobId);
       }
     }
   }

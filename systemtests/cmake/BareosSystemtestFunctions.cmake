@@ -201,7 +201,7 @@ macro(find_systemtests_binary_paths SYSTEMTESTS_BINARIES)
     endif()
     set(DIR_PLUGINS_DIR_TO_TEST ${CMAKE_BINARY_DIR}/core/src/plugins/dird)
     if(TARGET grpc-plugin)
-      get_target_property(DIR_PLUGINS_DIR_TO_TEST grpc-plugin BINARY_DIR)
+      get_target_property(CONNECTION_PLUGINS_DIR_TO_TEST grpc-plugin BINARY_DIR)
     endif()
 
     set(SCRIPTS_DIR_TO_TEST ${CMAKE_BINARY_DIR}/core/scripts)

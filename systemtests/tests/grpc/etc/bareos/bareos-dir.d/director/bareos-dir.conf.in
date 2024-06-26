@@ -10,5 +10,5 @@ Director {                            # define myself
   Working Directory =  "@working_dir@"
   DirPort = @dir_port@
 
-  Plugin Directory = "@DIR_PLUGINS_DIR_TO_TEST@"
+  Plugin Directory = "@CONNECTION_PLUGINS_DIR_TO_TEST@"
 }

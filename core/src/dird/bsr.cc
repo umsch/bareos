@@ -500,26 +500,29 @@ std::unique_ptr<RestoreBootstrapRecord> BsrFromTree(TREE_ROOT* root)
 
 serialized_bsr SerializeBsr(RestoreBootstrapRecord* bsr)
 {
-  std::optional<std::pair<std::size_t, std::size_t>> last_job;
-  uint32_t LastIndex = 0;
-  size_t total_count = 0;
-
   std::string buffer;
-  bool first = true;
+
+  struct job_status {
+    uint32_t last_index{0};
+    uint32_t count{0};
+    bool first{true};
+  };
+
+  // keep state per job to properly detect split files.
+  std::unordered_map<std::uint64_t, job_status> m;
 
   for (auto* current = bsr; current; current = current->next.get()) {
-    std::pair<std::size_t, std::size_t> this_job{current->VolSessionId,
-                                                 current->VolSessionTime};
+    std::uint64_t jobid = static_cast<uint64_t>(current->VolSessionId) << 32
+                          | static_cast<uint64_t>(current->VolSessionTime);
 
-    if (last_job != this_job) {
-      // cannot compare indices between jobs
-      LastIndex = 0;
-    }
+    auto& status = m[jobid];
 
-    total_count += write_bsr_item(bsr, buffer, first, LastIndex);
-
-    last_job = this_job;
+    status.count
+        += write_bsr_item(current, buffer, status.first, status.last_index);
   }
+
+  std::size_t total_count = 0;
+  for (auto& [_, status] : m) { total_count += status.count; }
 
   return {.serialized = buffer, .expected_count = total_count};
 }

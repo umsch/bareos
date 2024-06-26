@@ -199,7 +199,12 @@ bool BareosDb::ListClientRecords(JobControlRecord* jcr,
                                  e_list_type type)
 {
   output_handler handler(jcr->gui, sendit, type);
-  return ListClientRecords(jcr, clientname, type == VERT_LIST, &handler);
+  sendit->ArrayStart("clients");
+  auto ret = ListClientRecords(jcr, clientname, type == VERT_LIST, &handler);
+  sendit->ArrayEnd("clients");
+
+  return ret;
+
 #  if 0
   DbLocker _{this};
   PoolMem clientfilter(PM_MESSAGE);
@@ -652,9 +657,14 @@ bool BareosDb::ListJobRecords(JobControlRecord* jcr,
                               e_list_type type)
 {
   output_handler handler(jcr->gui, sendit, type);
-  return ListJobRecords(jcr, jr, range, clientname, jobstatuslist, joblevels,
-                        jobtypes, volumename, poolname, since_time, last, count,
-                        type == VERT_LIST, &handler);
+
+  sendit->ArrayStart("jobs");
+  auto ret
+      = ListJobRecords(jcr, jr, range, clientname, jobstatuslist, joblevels,
+                       jobtypes, volumename, poolname, since_time, last, count,
+                       type == VERT_LIST, &handler);
+  sendit->ArrayEnd("jobs");
+  return ret;
 #  if 0
   char ed1[50];
   char dt[MAX_TIME_LENGTH];

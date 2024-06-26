@@ -130,28 +130,26 @@ bool output_handler::handle(SQL_ROW row)
 
       char ewc[30];
       for (auto& field : fields) {
-        {
-          max_len = std::min(field.maxlen, max_width);
-          const char* val = row[field.index];
-          if (val == NULL) {
-            value.bsprintf(" %-*s |", max_len, "NULL");
-          } else if (field.numeric && !gui && IsAnInteger(val)) {
-            if (field.name == "jobid") {
-              value.bsprintf(" %*s |", max_len, val);
-            } else {
-              value.bsprintf(" %*s |", max_len, add_commas(val, ewc));
-            }
-
+        max_len = std::min(field.maxlen, max_width);
+        const char* val = row[field.index];
+        if (val == NULL) {
+          value.bsprintf(" %-*s |", max_len, "NULL");
+        } else if (field.numeric && !gui && IsAnInteger(val)) {
+          if (field.name == "jobid") {
+            value.bsprintf(" %*s |", max_len, val);
           } else {
-            value.bsprintf(" %-*s |", max_len, val);
+            value.bsprintf(" %*s |", max_len, add_commas(val, ewc));
           }
-          if (&field == &fields.back()) { value.strcat("\n"); }
 
-          // Use value format string to send preformated value
-          send->ObjectKeyValue(field.name.c_str(), val, value.c_str());
+        } else {
+          value.bsprintf(" %-*s |", max_len, val);
         }
-        send->ObjectEnd();
+        if (&field == &fields.back()) { value.strcat("\n"); }
+
+        // Use value format string to send preformated value
+        send->ObjectKeyValue(field.name.c_str(), val, value.c_str());
       }
+      send->ObjectEnd();
     } break;
     case VERT_LIST: {
       Dmsg1(800, "ListResult starts vertical list at %d fields\n", num_fields);

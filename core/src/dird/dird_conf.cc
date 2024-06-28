@@ -3747,6 +3747,7 @@ static void DumpResource(int type,
     case R_JOB:
     case R_SCHEDULE:
     case R_POOL:
+    case R_GRPC:
       res->PrintConfig(output_formatter_resource, *my_config,
                        hide_sensitive_data, verbose);
       break;

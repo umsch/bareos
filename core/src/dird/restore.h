@@ -71,7 +71,6 @@ struct RestoreOptions {
   template <typename T> using required = T;
 
   struct ndmp_data {
-    required<std::string> JobIds;
     required<TREE_ROOT*> restore_tree;
   };
 
@@ -83,6 +82,8 @@ struct RestoreOptions {
   struct regex_where : std::string {};
   struct where : std::string {};
 
+  // we need the actual jobids as well in case we need to send restore objects!
+  required<std::string> jobids{};
   required<JobResource*> job{nullptr};
   required<std::variant<ndmp_data, native_data>> data;
   required<ClientResource*> restore_client{nullptr};

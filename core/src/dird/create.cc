@@ -142,7 +142,6 @@ JobControlRecord* CreateJob(RestoreOptions&& opts)
       return nullptr;
     }
 
-    jcr->JobIds = strdup(ndmp->JobIds.c_str());
     jcr->dir_impl->restore_tree_root
         = std::exchange(ndmp->restore_tree, nullptr);
   } else if (auto* native
@@ -179,6 +178,8 @@ JobControlRecord* CreateJob(RestoreOptions&& opts)
       return nullptr;
     }
 
+    jcr->JobIds = GetMemory(PM_FNAME);
+    PmStrcpy(jcr->JobIds, opts.jobids.c_str());
     jcr->RestoreBootstrap = strdup(bsr_path.c_str());
     jcr->dir_impl->ExpectedFiles = serialized.expected_count;
     jcr->dir_impl->unlink_bsr = unlink_bsr;

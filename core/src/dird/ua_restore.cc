@@ -113,6 +113,7 @@ static void PrintRestoreOptions(UaContext* ua, const RestoreOptions& res)
   s << "Run Restore Job\n";
   s << std::setw(17) << "JobName:" << std::setw(0) << res.job->resource_name_
     << "\n";
+  s << std::setw(17) << "JobIds:" << std::setw(0) << res.jobids << "\n";
 
   std::visit(
       [&](auto&& arg) {
@@ -127,8 +128,6 @@ static void PrintRestoreOptions(UaContext* ua, const RestoreOptions& res)
             << "\n";
         } else if constexpr (std::is_same_v<T, RestoreOptions::ndmp_data>) {
           s << std::setw(17) << "Type:" << std::setw(0) << "NDMP"
-            << "\n";
-          s << std::setw(17) << "  JobIds:" << std::setw(0) << arg.JobIds
             << "\n";
         } else {
           static_assert(false, "non-exhaustive visitor");
@@ -633,6 +632,7 @@ bool RestoreCmd(UaContext* ua, const char*)
   {
     RestoreOptions opt{};
 
+    opt.jobids = jcr->JobIds;
     opt.job = job;
     // TODO: think about acl
     opt.restore_client = static_cast<ClientResource*>(
@@ -641,7 +641,6 @@ bool RestoreCmd(UaContext* ua, const char*)
 
     if (job->Protocol != PT_NATIVE) {
       opt.data = RestoreOptions::ndmp_data{
-          .JobIds = jcr->JobIds,
           .restore_tree = jcr->dir_impl->restore_tree_root,
       };
 

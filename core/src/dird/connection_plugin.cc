@@ -53,11 +53,15 @@ struct select_tree_state {
   TREE_ROOT* root{nullptr};
   size_t count{0};
   TREE_NODE* current{nullptr};
+  std::string jobids;
 
   std::string path;
 
-  select_tree_state(TREE_ROOT* tree, size_t tree_count)
-      : root{tree}, count{tree_count}, current{(TREE_NODE*)tree}
+  select_tree_state(TREE_ROOT* tree, size_t tree_count, std::string&& jobids_)
+      : root{tree}
+      , count{tree_count}
+      , current{(TREE_NODE*)tree}
+      , jobids{std::move(jobids_)}
   {
   }
 
@@ -219,7 +223,19 @@ bool PluginStartFromJobIds(restore_session_handle* handle,
 
   TreeArgs args;
   args.initial_selection = TreeArgs::selection::None;
-  for (size_t i = 0; i < count; ++i) { args.jobids.insert(jobids[i]); }
+  bool first = true;
+  std::string jobid_string{};
+  for (size_t i = 0; i < count; ++i) {
+    auto [_, inserted] = args.jobids.insert(jobids[i]);
+    if (inserted) {
+      if (!first) {
+        jobid_string += ",";
+      } else {
+        first = false;
+      }
+      jobid_string += std::to_string(jobids[i]);
+    }
+  }
   args.estimated_size = 500;  // TODO: fix this
 
   auto& build_state = handle->state.emplace<build_restore_tree_state>(
@@ -234,7 +250,7 @@ bool PluginStartFromJobIds(restore_session_handle* handle,
 
   auto* root = ctx.root;
   auto size = ctx.TotalCount;
-  handle->state.emplace<select_tree_state>(root, size);
+  handle->state.emplace<select_tree_state>(root, size, std::move(jobid_string));
   ctx.release();
 
   return true;
@@ -404,6 +420,8 @@ bool PluginCreateRestoreJob(restore_session_handle* handle,
     handle->error = "Could not select a catalog.";
     return false;
   }
+
+  opts.jobids = state->jobids;
 
   opts.catalog = catalog;
 

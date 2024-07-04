@@ -37,4 +37,5 @@ message ListJobsRequest {
 
 message ListJobsResponse {
   bareos.common.Job job = 1;
+  // todo: add name, and client and time
 };

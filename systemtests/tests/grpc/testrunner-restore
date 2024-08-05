@@ -70,11 +70,10 @@ SESSION=$(jq -c ".session" "$log_home/restore.begin")
 
 grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
 grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \".\" } }" | tee "$log_home/restore.cd.relative"
-#grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"/home/ssura/Projekte/bareos/build/systemtests/tests/grpc/tmp/data/build/src/tests/Makefile\" } }" | tee "$log_home/restore.cd.bad" || :
-grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"/home/ssura/Projekte/bareos/build/systemtests/tests/grpc/tmp/data/build/src/tests\" } }" | tee "$log_home/restore.cd.absolute"
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"${tmp}/data/build/src/tests/Makefile\" } }" | tee "$log_home/restore.cd.bad" || :
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"${tmp}/data/build/src/tests\" } }" | tee "$log_home/restore.cd.absolute"
 grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"filter\" : { \"regex\" : \"*.c\" }, \"action\" : \"MARK\" }" | tee "$log_home/restore.cd.absolute"
 grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
-
 
 RESTOREOPTIONS="{
         \"restore_location\" : \"tmp/bareos-restores\",

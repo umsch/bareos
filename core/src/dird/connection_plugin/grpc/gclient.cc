@@ -44,7 +44,11 @@ class Client {
   {
     using namespace bareos::database;
 
+    bareos::config::CatalogId cid;
+    cid.set_name("MyCatalog");
+
     ListJobsRequest req;
+    *req.mutable_catalog() = cid;
 
     ClientContext ctx;
 

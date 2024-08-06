@@ -19,11 +19,46 @@
    02110-1301, USA.
 */
 
+#include <optional>
 #include "grpc.h"
 
 using grpc::ServerContext;
 using grpc::ServerWriter;
 using grpc::Status;
+
+// Convert standard time string yyyy-mm-dd hh:mm:ss to Unix time
+time_t StrToUtime(const char* str)
+{
+  tm datetime{};
+  time_t time;
+
+  char trailinggarbage[16]{""};
+
+  // Check for bad argument
+  if (!str || *str == 0) { return 0; }
+
+  if ((sscanf(str, "%u-%u-%u %u:%u:%u%15s", &datetime.tm_year, &datetime.tm_mon,
+              &datetime.tm_mday, &datetime.tm_hour, &datetime.tm_min,
+              &datetime.tm_sec, trailinggarbage)
+       != 7)
+      || trailinggarbage[0] != '\0') {
+    return 0;
+  }
+
+  // range for tm_mon is defined as 0-11
+  --datetime.tm_mon;
+  // tm_year is years since 1900
+  datetime.tm_year -= 1900;
+
+  // we don't know these, so we initialize to sane defaults
+  datetime.tm_wday = datetime.tm_yday = 0;
+
+  // set to -1 for "I don't know"
+  datetime.tm_isdst = -1;
+
+  time = mktime(&datetime);
+  return time;
+}
 
 namespace bareos::database {
 class DatabaseImpl final : public Database::Service {
@@ -140,15 +175,40 @@ class DatabaseImpl final : public Database::Service {
       db.list_jobs([writer = response](size_t field_count,
                                        const char* const* fields,
                                        const char* const* cols) -> bool {
+        ListJobsResponse resp;
+
+        std::optional<time_t> start_time;
+        std::optional<time_t> duration;
+
         for (size_t i = 0; i < field_count; ++i) {
-          if (strcmp(fields[i], "jobid") == 0) {
-            ListJobsResponse resp;
+          if (strcasecmp(fields[i], "jobid") == 0) {
             resp.mutable_job()->set_jobid(std::atoi(cols[i]));
-            writer->Write(resp);
-            return true;
+          } else if (strcasecmp(fields[i], "starttime") == 0) {
+            if (auto secs_from_epoch = StrToUtime(cols[i]);
+                secs_from_epoch >= 0) {
+              start_time.emplace(secs_from_epoch);
+              auto* start = resp.mutable_start_time();
+              start->set_seconds(secs_from_epoch);
+              start->set_nanos(0);
+            }
+          } else if (strcasecmp(fields[i], "duration") == 0) {
+            if (auto secs_from_epoch = StrToUtime(cols[i]);
+                secs_from_epoch >= 0) {
+              duration.emplace(secs_from_epoch);
+            }
+          } else if (strcasecmp(fields[i], "name") == 0) {
+            resp.set_name(cols[i]);
           }
         }
-        return false;
+
+        if (start_time && duration) {
+          auto* end = resp.mutable_end_time();
+          end->set_seconds(*start_time + *duration);
+          end->set_nanos(0);
+        }
+
+        writer->Write(resp);
+        return true;
       });
     } catch (const grpc_error& err) {
       return err.status;

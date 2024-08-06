@@ -8,6 +8,7 @@ package bareos.database;
 
 import "common.proto";
 import "config.proto";
+import "google/protobuf/timestamp.proto";
 
 /* Should these functions return a typed response (like now) or rather a generic
  * message SqlResponse { map<string, string>; } ?
@@ -37,5 +38,9 @@ message ListJobsRequest {
 
 message ListJobsResponse {
   bareos.common.Job job = 1;
-  // todo: add name, and client and time
+  bareos.common.Client client = 2;
+
+  string name = 3;
+  google.protobuf.Timestamp start_time = 4;
+  optional google.protobuf.Timestamp end_time = 5;
 };

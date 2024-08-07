@@ -14,9 +14,13 @@ service Restore {
   rpc Begin (BeginRequest) returns (BeginResponse);
 
   // these functions will only work once the tree is created
+  // how do plugin files work
   rpc ListFiles (ListFilesRequest) returns (stream File);
+
   rpc ChangeDirectory (ChangeDirectoryRequest) returns (ChangeDirectoryResponse);
   rpc ChangeMarkedStatus (ChangeMarkedRequest) returns (ChangeMarkedResponse);
+
+  // maybe list marked files as function
 
   rpc Run (RunRequest) returns (RunResponse);
   rpc Cancel (CancelRequest) returns (CancelResponse);

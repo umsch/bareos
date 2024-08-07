@@ -14,6 +14,10 @@ import "google/protobuf/timestamp.proto";
  * message SqlResponse { map<string, string>; } ?
  */
 service Database {
+
+
+  // we should somehow have a limit & offset in these requests
+  // most queries probably wont need all of them
   rpc ListClients (ListClientsRequest) returns (stream ListClientsResponse);
   rpc ListJobs (ListJobsRequest) returns (stream ListJobsResponse);
 };
@@ -38,6 +42,10 @@ message ListJobsRequest {
 
 message ListJobsResponse {
   bareos.common.Job job = 1;
+  // we should probably only return the jobid here and have a seperate
+  // JobInfo() rpc, as used databases have a lot of jobs in them
+
+
   bareos.common.Client client = 2;
 
   string name = 3;

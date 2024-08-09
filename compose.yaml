@@ -1,0 +1,37 @@
+version: '3.7'
+
+services:
+  bareos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bareos:fedora40-grpc
+    container_name: bareos
+    hostname: bareos
+    privileged: true
+    networks:
+      - envoy_network
+    volumes:
+      - .:/source:Z
+      - ./build:/build:Z
+    command: /source/grpc_build.sh
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: envoy
+    depends_on:
+      - bareos
+    user: root
+    networks:
+      - envoy_network
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:Z
+    environment:
+      - ENVOY_LOG_LEVEL=trace
+      - loglevel=debug
+
+
+networks:
+  envoy_network:

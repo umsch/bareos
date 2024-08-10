@@ -19,6 +19,9 @@
     "grpc-server-down": "podman-compose -f ../../compose.yaml down"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.2",
+    "@oruga-ui/oruga-next": "^0.9.0-pre.1",
+    "@oruga-ui/theme-bulma": "^0.3.0",
     "@protobuf-ts/grpcweb-transport": "^2.9.4",
     "grpc-web": "^1.5.0",
     "pinia": "^2.1.7",

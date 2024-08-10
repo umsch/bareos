@@ -4,8 +4,10 @@ cmake -DUSE_SYSTEM_FMT=ON -S /source -B /build -G Ninja
 cmake --build /build
 
 cd /build/systemtests/tests/grpc
+rm test-cleanup
+
 runtime.sh
-./test-setup
+ctest -R grpc
 
 PID=$(pidof bareos_dir-grpc)
 

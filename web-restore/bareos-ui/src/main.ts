@@ -1,14 +1,16 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
 import App from './App.vue'
 import router from './router'
 
-const app = createApp(App)
+import Oruga from '@oruga-ui/oruga-next'
 
-app.use(createPinia())
-app.use(router)
+import { bulmaConfig } from '@oruga-ui/theme-bulma'
+import '@oruga-ui/theme-bulma/dist/bulma.css'
+
+const app = createApp(App)
+  .use(Oruga, bulmaConfig)
+  .use(createPinia())
+  .use(router)
 
 app.mount('#app')

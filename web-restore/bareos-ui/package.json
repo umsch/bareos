@@ -14,7 +14,7 @@
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
-    "grpc-gen": "rm ./src/generated/* && protoc --ts_out ./src/generated/ --proto_path ../../core/src/dird/connection_plugin/grpc/ restore.proto database.proto --ts_opt generate_dependencies",
+    "grpc-gen": "rm ./src/generated/* && protoc --ts_out ./src/generated/ --proto_path ../../core/src/dird/connection_plugin/grpc/ restore.proto database.proto config.proto --ts_opt generate_dependencies",
     "grpc-server-up": "podman-compose -f ../../compose.yaml up -d",
     "grpc-server-down": "podman-compose -f ../../compose.yaml down"
   },

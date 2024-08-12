@@ -34,7 +34,7 @@ watch(selected, (newValue) => {
 })
 
 watch(
-  () => props.catalog_id,  // Watch the catalog_id prop
+  () => props.catalog_id, // Watch the catalog_id prop
   async (catalog_id) => {
     if (catalog_id) {
       await updateJobs(catalog_id)
@@ -48,24 +48,22 @@ const columns = ref([
     label: 'Job ID',
     numeric: true
   }
-
 ])
-
 </script>
 
 <template>
   <!--  <o-field label="Jobs">-->
   <o-table
     v-model:selected="selected"
-    :data="jobs" ,
+    :data="jobs"
+    ,
     :columns="columns"
     :loading="isLoading"
     striped
-    narrowed>
+    narrowed
+  >
   </o-table>
   <!--  </o-field>-->
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

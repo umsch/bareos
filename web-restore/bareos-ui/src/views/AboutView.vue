@@ -4,9 +4,7 @@
   </div>
 </template>
 
-<style>
-
-</style>
+<style></style>
 <script setup lang="ts">
-import HelloGrpc from "@/components/HelloGrpc.vue";
+import HelloGrpc from '@/components/HelloGrpc.vue'
 </script>

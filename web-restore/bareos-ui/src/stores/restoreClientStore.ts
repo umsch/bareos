@@ -39,8 +39,6 @@ export const useRestoreClientStore = defineStore('config', () => {
     console.log('Clients initialized')
   }
 
-
-
   const fetchCatalogs = async () => {
     if (!configClient.value) {
       console.error('configClient not initialized')
@@ -59,7 +57,6 @@ export const useRestoreClientStore = defineStore('config', () => {
 
     const call = databaseClient.value?.listClients({ catalog: catalog.id })
     for await (const client of call?.responses!) {
-
     }
   }
 

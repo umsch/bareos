@@ -5,7 +5,7 @@ import type { Catalog } from '@/generated/config'
 import { useRestoreClientStore } from '@/stores/restoreClientStore'
 
 const emit = defineEmits<{
-  (e: 'update:selectedCatalog', catalog: Catalog): void;
+  (e: 'update:selectedCatalog', catalog: Catalog): void
 }>()
 
 const restoreClientStore = useRestoreClientStore()
@@ -22,12 +22,10 @@ watch(selected, (newValue) => {
   }
 })
 
-
 const catalogs = ref<Catalog[]>([])
 const updateCatalogs = async () => {
   catalogs.value = await restoreClientStore.fetchCatalogs()
 }
-
 </script>
 <template>
   <o-field label="Catalog">
@@ -36,20 +34,15 @@ const updateCatalogs = async () => {
         <o-button
           variant="primary"
           :label="selected ? selected.name : 'Select Catalog'"
-          :icon-right="active ? 'caret-up' : 'caret-down'" />
+          :icon-right="active ? 'caret-up' : 'caret-down'"
+        />
       </template>
 
-      <o-dropdown-item
-        v-for="(catalog, index) in catalogs"
-        :key="index"
-        :value="catalog">
+      <o-dropdown-item v-for="(catalog, index) in catalogs" :key="index" :value="catalog">
         <div>
           <div>{{ catalog.name }}</div>
         </div>
       </o-dropdown-item>
-
     </o-dropdown>
   </o-field>
 </template>
-
-

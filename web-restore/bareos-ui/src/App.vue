@@ -7,8 +7,7 @@ import { RouterLink, RouterView } from 'vue-router'
     <div class="wrapper">
       <nav class="navbar">
         <div class="container">
-          <div class="navbar-brand">
-          </div>
+          <div class="navbar-brand"></div>
           <div class="navbar-menu">
             <div class="navbar-start">
               <a class="navbar-item">
@@ -30,5 +29,5 @@ import { RouterLink, RouterView } from 'vue-router'
 </template>
 
 <style lang="scss">
-@import "./styles/bareos";
+@import './styles/bareos';
 </style>

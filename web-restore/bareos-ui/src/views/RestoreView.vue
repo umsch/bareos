@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { onMounted, ref } from 'vue'
 import { useRestoreClientStore } from '@/stores/restoreClientStore'
 import CatalogDropdown from '@/components/restore/CatalogDropdown.vue'
@@ -17,7 +16,6 @@ const isJobsLoading = ref(false)
 
 const sessions = ref<RestoreSession[]>([])
 const isSessionsLoading = ref(false)
-
 
 onMounted(async () => {
   await updateSessions()
@@ -52,20 +50,15 @@ const updateSessions = async () => {
   </section>
 
   <section class="section">
-    <JobsTable
-      :catalog_id="wizzardStore.selectedCatalog?.id"
-      @update:selectedJob="setJob"
-    />
+    <JobsTable :catalog_id="wizzardStore.selectedCatalog?.id" @update:selectedJob="setJob" />
   </section>
 
-<!--  <section class="section">-->
-<!--    <SessionsTable-->
-<!--      :sessions="sessions"-->
-<!--      @update:selectedSession="setSession"-->
-<!--      @update:deleteSession="deleteSession"-->
-<!--      :isLoading="isJobsLoading"-->
-<!--    />-->
-<!--  </section>-->
-
-
+  <!--  <section class="section">-->
+  <!--    <SessionsTable-->
+  <!--      :sessions="sessions"-->
+  <!--      @update:selectedSession="setSession"-->
+  <!--      @update:deleteSession="deleteSession"-->
+  <!--      :isLoading="isJobsLoading"-->
+  <!--    />-->
+  <!--  </section>-->
 </template>

@@ -5,1157 +5,1556 @@
 //
 // LICENSE HERE
 //
-import { ServiceType } from "@protobuf-ts/runtime-rpc";
-import { WireType } from "@protobuf-ts/runtime";
-import type { BinaryWriteOptions } from "@protobuf-ts/runtime";
-import type { IBinaryWriter } from "@protobuf-ts/runtime";
-import { UnknownFieldHandler } from "@protobuf-ts/runtime";
-import type { BinaryReadOptions } from "@protobuf-ts/runtime";
-import type { IBinaryReader } from "@protobuf-ts/runtime";
-import type { PartialMessage } from "@protobuf-ts/runtime";
-import { reflectionMergePartial } from "@protobuf-ts/runtime";
-import { MessageType } from "@protobuf-ts/runtime";
-import { Client } from "./common";
-import { JobId } from "./config";
-import { Job } from "./common";
+import { ServiceType } from '@protobuf-ts/runtime-rpc'
+import { WireType } from '@protobuf-ts/runtime'
+import type { BinaryWriteOptions } from '@protobuf-ts/runtime'
+import type { IBinaryWriter } from '@protobuf-ts/runtime'
+import { UnknownFieldHandler } from '@protobuf-ts/runtime'
+import type { BinaryReadOptions } from '@protobuf-ts/runtime'
+import type { IBinaryReader } from '@protobuf-ts/runtime'
+import type { PartialMessage } from '@protobuf-ts/runtime'
+import { reflectionMergePartial } from '@protobuf-ts/runtime'
+import { MessageType } from '@protobuf-ts/runtime'
+import { Client } from './common'
+import { JobId } from './config'
+import { Job } from './common'
 /**
  * @generated from protobuf message bareos.restore.ListSessionsRequest
  */
-export interface ListSessionsRequest {
-}
+export interface ListSessionsRequest {}
 /**
  * @generated from protobuf message bareos.restore.ListSessionsResponse
  */
 export interface ListSessionsResponse {
-    /**
-     * @generated from protobuf field: repeated bareos.restore.RestoreSession sessions = 1;
-     */
-    sessions: RestoreSession[];
+  /**
+   * @generated from protobuf field: repeated bareos.restore.RestoreSession sessions = 1;
+   */
+  sessions: RestoreSession[]
 }
 /**
  * @generated from protobuf message bareos.restore.BeginRequest
  */
 export interface BeginRequest {
-    /**
-     * @generated from protobuf field: bareos.common.Job backup_job = 1;
-     */
-    backupJob?: Job;
-    /**
-     * @generated from protobuf field: bool find_job_chain = 2;
-     */
-    findJobChain: boolean;
+  /**
+   * @generated from protobuf field: bareos.common.Job backup_job = 1;
+   */
+  backupJob?: Job
+  /**
+   * @generated from protobuf field: bool find_job_chain = 2;
+   */
+  findJobChain: boolean
 }
 /**
  * @generated from protobuf message bareos.restore.RestoreSession
  */
 export interface RestoreSession {
-    /**
-     * @generated from protobuf field: string token = 1;
-     */
-    token: string;
+  /**
+   * @generated from protobuf field: string token = 1;
+   */
+  token: string
 }
 /**
  * @generated from protobuf message bareos.restore.BeginResponse
  */
 export interface BeginResponse {
-    /**
-     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
-     */
-    session?: RestoreSession;
+  /**
+   * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+   */
+  session?: RestoreSession
 }
 /**
  * @generated from protobuf message bareos.restore.RestoreOptions
  */
 export interface RestoreOptions {
-    /**
-     * @generated from protobuf field: optional bareos.restore.ReplaceType replace = 1;
-     */
-    replace?: ReplaceType;
-    /**
-     * @generated from protobuf field: optional bareos.config.JobId restore_job = 3;
-     */
-    restoreJob?: JobId;
-    /**
-     * @generated from protobuf field: optional string restore_location = 4;
-     */
-    restoreLocation?: string;
-    /**
-     * @generated from protobuf field: optional bareos.common.Client restore_client = 5;
-     */
-    restoreClient?: Client;
+  /**
+   * @generated from protobuf field: optional bareos.restore.ReplaceType replace = 1;
+   */
+  replace?: ReplaceType
+  /**
+   * @generated from protobuf field: optional bareos.config.JobId restore_job = 3;
+   */
+  restoreJob?: JobId
+  /**
+   * @generated from protobuf field: optional string restore_location = 4;
+   */
+  restoreLocation?: string
+  /**
+   * @generated from protobuf field: optional bareos.common.Client restore_client = 5;
+   */
+  restoreClient?: Client
 }
 /**
  * @generated from protobuf message bareos.restore.RunRequest
  */
 export interface RunRequest {
-    /**
-     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
-     */
-    session?: RestoreSession;
-    /**
-     * @generated from protobuf field: bareos.restore.RestoreOptions restore_options = 2;
-     */
-    restoreOptions?: RestoreOptions;
+  /**
+   * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+   */
+  session?: RestoreSession
+  /**
+   * @generated from protobuf field: bareos.restore.RestoreOptions restore_options = 2;
+   */
+  restoreOptions?: RestoreOptions
 }
 /**
  * @generated from protobuf message bareos.restore.RunResponse
  */
 export interface RunResponse {
-    /**
-     * @generated from protobuf field: bareos.common.Job jobid = 1;
-     */
-    jobid?: Job;
+  /**
+   * @generated from protobuf field: bareos.common.Job jobid = 1;
+   */
+  jobid?: Job
 }
 /**
  * @generated from protobuf message bareos.restore.CancelRequest
  */
 export interface CancelRequest {
-    /**
-     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
-     */
-    session?: RestoreSession;
+  /**
+   * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+   */
+  session?: RestoreSession
 }
 /**
  * @generated from protobuf message bareos.restore.CancelResponse
  */
-export interface CancelResponse {
-}
+export interface CancelResponse {}
 /**
  * @generated from protobuf message bareos.restore.Path
  */
 export interface Path {
-    /**
-     * @generated from protobuf field: string path = 1;
-     */
-    path: string;
+  /**
+   * @generated from protobuf field: string path = 1;
+   */
+  path: string
 }
 /**
  * @generated from protobuf message bareos.restore.ChangeDirectoryRequest
  */
 export interface ChangeDirectoryRequest {
-    /**
-     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
-     */
-    session?: RestoreSession;
-    /**
-     * this path can be relative
-     *
-     * @generated from protobuf field: bareos.restore.Path directory = 2;
-     */
-    directory?: Path;
+  /**
+   * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+   */
+  session?: RestoreSession
+  /**
+   * this path can be relative
+   *
+   * @generated from protobuf field: bareos.restore.Path directory = 2;
+   */
+  directory?: Path
 }
 /**
  * @generated from protobuf message bareos.restore.ChangeDirectoryResponse
  */
 export interface ChangeDirectoryResponse {
-    /**
-     * @generated from protobuf field: bareos.restore.Path current_directory = 1;
-     */
-    currentDirectory?: Path;
+  /**
+   * @generated from protobuf field: bareos.restore.Path current_directory = 1;
+   */
+  currentDirectory?: Path
 }
 /**
  * @generated from protobuf message bareos.restore.Regex
  */
 export interface Regex {
-    /**
-     * @generated from protobuf field: string regex = 1;
-     */
-    regex: string;
+  /**
+   * @generated from protobuf field: string regex = 1;
+   */
+  regex: string
 }
 /**
  * @generated from protobuf message bareos.restore.ChangeMarkedRequest
  */
 export interface ChangeMarkedRequest {
-    /**
-     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
-     */
-    session?: RestoreSession;
-    /**
-     * @generated from protobuf field: bareos.restore.MarkAction action = 2;
-     */
-    action: MarkAction;
-    /**
-     * mark/unmark everything under the current directory that matches the regex
-     *
-     * @generated from protobuf field: bareos.restore.Regex filter = 3;
-     */
-    filter?: Regex;
+  /**
+   * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+   */
+  session?: RestoreSession
+  /**
+   * @generated from protobuf field: bareos.restore.MarkAction action = 2;
+   */
+  action: MarkAction
+  /**
+   * mark/unmark everything under the current directory that matches the regex
+   *
+   * @generated from protobuf field: bareos.restore.Regex filter = 3;
+   */
+  filter?: Regex
 }
 /**
  * @generated from protobuf message bareos.restore.ChangeMarkedResponse
  */
 export interface ChangeMarkedResponse {
-    /**
-     * returns how many states were changed
-     *
-     * @generated from protobuf field: int64 affected_count = 1;
-     */
-    affectedCount: bigint;
+  /**
+   * returns how many states were changed
+   *
+   * @generated from protobuf field: int64 affected_count = 1;
+   */
+  affectedCount: bigint
 }
 /**
  * @generated from protobuf message bareos.restore.ListFilesRequest
  */
 export interface ListFilesRequest {
-    /**
-     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
-     */
-    session?: RestoreSession;
+  /**
+   * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+   */
+  session?: RestoreSession
 }
 /**
  * @generated from protobuf message bareos.restore.File
  */
 export interface File {
-    /**
-     * @generated from protobuf field: string name = 1;
-     */
-    name: string;
-    /**
-     * @generated from protobuf field: bool marked = 2;
-     */
-    marked: boolean;
-    /**
-     * @generated from protobuf field: bareos.restore.FileType type = 3;
-     */
-    type: FileType;
+  /**
+   * @generated from protobuf field: string name = 1;
+   */
+  name: string
+  /**
+   * @generated from protobuf field: bool marked = 2;
+   */
+  marked: boolean
+  /**
+   * @generated from protobuf field: bareos.restore.FileType type = 3;
+   */
+  type: FileType
 }
 /**
  * @generated from protobuf enum bareos.restore.ReplaceType
  */
 export enum ReplaceType {
-    /**
-     * @generated from protobuf enum value: REPLACE_TYPE_UNSPECIFIED = 0;
-     */
-    REPLACE_TYPE_UNSPECIFIED = 0,
-    /**
-     * @generated from protobuf enum value: ALWAYS = 1;
-     */
-    ALWAYS = 1,
-    /**
-     * @generated from protobuf enum value: NEVER = 2;
-     */
-    NEVER = 2,
-    /**
-     * @generated from protobuf enum value: IF_NEWER = 3;
-     */
-    IF_NEWER = 3,
-    /**
-     * @generated from protobuf enum value: IF_OLDER = 4;
-     */
-    IF_OLDER = 4
+  /**
+   * @generated from protobuf enum value: REPLACE_TYPE_UNSPECIFIED = 0;
+   */
+  REPLACE_TYPE_UNSPECIFIED = 0,
+  /**
+   * @generated from protobuf enum value: ALWAYS = 1;
+   */
+  ALWAYS = 1,
+  /**
+   * @generated from protobuf enum value: NEVER = 2;
+   */
+  NEVER = 2,
+  /**
+   * @generated from protobuf enum value: IF_NEWER = 3;
+   */
+  IF_NEWER = 3,
+  /**
+   * @generated from protobuf enum value: IF_OLDER = 4;
+   */
+  IF_OLDER = 4
 }
 /**
  * @generated from protobuf enum bareos.restore.MarkAction
  */
 export enum MarkAction {
-    /**
-     * @generated from protobuf enum value: MARK_ACTION_UNSPECIFIED = 0;
-     */
-    MARK_ACTION_UNSPECIFIED = 0,
-    /**
-     * @generated from protobuf enum value: MARK = 1;
-     */
-    MARK = 1,
-    /**
-     * @generated from protobuf enum value: UNMARK = 2;
-     */
-    UNMARK = 2
+  /**
+   * @generated from protobuf enum value: MARK_ACTION_UNSPECIFIED = 0;
+   */
+  MARK_ACTION_UNSPECIFIED = 0,
+  /**
+   * @generated from protobuf enum value: MARK = 1;
+   */
+  MARK = 1,
+  /**
+   * @generated from protobuf enum value: UNMARK = 2;
+   */
+  UNMARK = 2
 }
 /**
  * @generated from protobuf enum bareos.restore.FileType
  */
 export enum FileType {
-    /**
-     * @generated from protobuf enum value: FILE_TYPE_UNSPECIFIED = 0;
-     */
-    FILE_TYPE_UNSPECIFIED = 0,
-    /**
-     * @generated from protobuf enum value: DIRECTORY = 1;
-     */
-    DIRECTORY = 1,
-    /**
-     * @generated from protobuf enum value: FILE = 2;
-     */
-    FILE = 2,
-    /**
-     * @generated from protobuf enum value: DIRECTORY_NOT_BACKED_UP = 3;
-     */
-    DIRECTORY_NOT_BACKED_UP = 3
+  /**
+   * @generated from protobuf enum value: FILE_TYPE_UNSPECIFIED = 0;
+   */
+  FILE_TYPE_UNSPECIFIED = 0,
+  /**
+   * @generated from protobuf enum value: DIRECTORY = 1;
+   */
+  DIRECTORY = 1,
+  /**
+   * @generated from protobuf enum value: FILE = 2;
+   */
+  FILE = 2,
+  /**
+   * @generated from protobuf enum value: DIRECTORY_NOT_BACKED_UP = 3;
+   */
+  DIRECTORY_NOT_BACKED_UP = 3
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class ListSessionsRequest$Type extends MessageType<ListSessionsRequest> {
-    constructor() {
-        super("bareos.restore.ListSessionsRequest", []);
-    }
-    create(value?: PartialMessage<ListSessionsRequest>): ListSessionsRequest {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<ListSessionsRequest>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ListSessionsRequest): ListSessionsRequest {
-        return target ?? this.create();
-    }
-    internalBinaryWrite(message: ListSessionsRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+  constructor() {
+    super('bareos.restore.ListSessionsRequest', [])
+  }
+  create(value?: PartialMessage<ListSessionsRequest>): ListSessionsRequest {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<ListSessionsRequest>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: ListSessionsRequest
+  ): ListSessionsRequest {
+    return target ?? this.create()
+  }
+  internalBinaryWrite(
+    message: ListSessionsRequest,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.ListSessionsRequest
  */
-export const ListSessionsRequest = new ListSessionsRequest$Type();
+export const ListSessionsRequest = new ListSessionsRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class ListSessionsResponse$Type extends MessageType<ListSessionsResponse> {
-    constructor() {
-        super("bareos.restore.ListSessionsResponse", [
-            { no: 1, name: "sessions", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => RestoreSession }
-        ]);
+  constructor() {
+    super('bareos.restore.ListSessionsResponse', [
+      {
+        no: 1,
+        name: 'sessions',
+        kind: 'message',
+        repeat: 1 /*RepeatType.PACKED*/,
+        T: () => RestoreSession
+      }
+    ])
+  }
+  create(value?: PartialMessage<ListSessionsResponse>): ListSessionsResponse {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.sessions = []
+    if (value !== undefined) reflectionMergePartial<ListSessionsResponse>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: ListSessionsResponse
+  ): ListSessionsResponse {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* repeated bareos.restore.RestoreSession sessions */ 1:
+          message.sessions.push(RestoreSession.internalBinaryRead(reader, reader.uint32(), options))
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<ListSessionsResponse>): ListSessionsResponse {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.sessions = [];
-        if (value !== undefined)
-            reflectionMergePartial<ListSessionsResponse>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ListSessionsResponse): ListSessionsResponse {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* repeated bareos.restore.RestoreSession sessions */ 1:
-                    message.sessions.push(RestoreSession.internalBinaryRead(reader, reader.uint32(), options));
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: ListSessionsResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* repeated bareos.restore.RestoreSession sessions = 1; */
-        for (let i = 0; i < message.sessions.length; i++)
-            RestoreSession.internalBinaryWrite(message.sessions[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: ListSessionsResponse,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* repeated bareos.restore.RestoreSession sessions = 1; */
+    for (let i = 0; i < message.sessions.length; i++)
+      RestoreSession.internalBinaryWrite(
+        message.sessions[i],
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.ListSessionsResponse
  */
-export const ListSessionsResponse = new ListSessionsResponse$Type();
+export const ListSessionsResponse = new ListSessionsResponse$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class BeginRequest$Type extends MessageType<BeginRequest> {
-    constructor() {
-        super("bareos.restore.BeginRequest", [
-            { no: 1, name: "backup_job", kind: "message", T: () => Job },
-            { no: 2, name: "find_job_chain", kind: "scalar", T: 8 /*ScalarType.BOOL*/ }
-        ]);
+  constructor() {
+    super('bareos.restore.BeginRequest', [
+      { no: 1, name: 'backup_job', kind: 'message', T: () => Job },
+      { no: 2, name: 'find_job_chain', kind: 'scalar', T: 8 /*ScalarType.BOOL*/ }
+    ])
+  }
+  create(value?: PartialMessage<BeginRequest>): BeginRequest {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.findJobChain = false
+    if (value !== undefined) reflectionMergePartial<BeginRequest>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: BeginRequest
+  ): BeginRequest {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.common.Job backup_job */ 1:
+          message.backupJob = Job.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.backupJob
+          )
+          break
+        case /* bool find_job_chain */ 2:
+          message.findJobChain = reader.bool()
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<BeginRequest>): BeginRequest {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.findJobChain = false;
-        if (value !== undefined)
-            reflectionMergePartial<BeginRequest>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BeginRequest): BeginRequest {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.common.Job backup_job */ 1:
-                    message.backupJob = Job.internalBinaryRead(reader, reader.uint32(), options, message.backupJob);
-                    break;
-                case /* bool find_job_chain */ 2:
-                    message.findJobChain = reader.bool();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: BeginRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.Job backup_job = 1; */
-        if (message.backupJob)
-            Job.internalBinaryWrite(message.backupJob, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* bool find_job_chain = 2; */
-        if (message.findJobChain !== false)
-            writer.tag(2, WireType.Varint).bool(message.findJobChain);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: BeginRequest,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.common.Job backup_job = 1; */
+    if (message.backupJob)
+      Job.internalBinaryWrite(
+        message.backupJob,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    /* bool find_job_chain = 2; */
+    if (message.findJobChain !== false) writer.tag(2, WireType.Varint).bool(message.findJobChain)
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.BeginRequest
  */
-export const BeginRequest = new BeginRequest$Type();
+export const BeginRequest = new BeginRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class RestoreSession$Type extends MessageType<RestoreSession> {
-    constructor() {
-        super("bareos.restore.RestoreSession", [
-            { no: 1, name: "token", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
-        ]);
+  constructor() {
+    super('bareos.restore.RestoreSession', [
+      { no: 1, name: 'token', kind: 'scalar', T: 9 /*ScalarType.STRING*/ }
+    ])
+  }
+  create(value?: PartialMessage<RestoreSession>): RestoreSession {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.token = ''
+    if (value !== undefined) reflectionMergePartial<RestoreSession>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: RestoreSession
+  ): RestoreSession {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* string token */ 1:
+          message.token = reader.string()
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<RestoreSession>): RestoreSession {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.token = "";
-        if (value !== undefined)
-            reflectionMergePartial<RestoreSession>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: RestoreSession): RestoreSession {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* string token */ 1:
-                    message.token = reader.string();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: RestoreSession, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string token = 1; */
-        if (message.token !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.token);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: RestoreSession,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* string token = 1; */
+    if (message.token !== '') writer.tag(1, WireType.LengthDelimited).string(message.token)
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.RestoreSession
  */
-export const RestoreSession = new RestoreSession$Type();
+export const RestoreSession = new RestoreSession$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class BeginResponse$Type extends MessageType<BeginResponse> {
-    constructor() {
-        super("bareos.restore.BeginResponse", [
-            { no: 1, name: "session", kind: "message", T: () => RestoreSession }
-        ]);
+  constructor() {
+    super('bareos.restore.BeginResponse', [
+      { no: 1, name: 'session', kind: 'message', T: () => RestoreSession }
+    ])
+  }
+  create(value?: PartialMessage<BeginResponse>): BeginResponse {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<BeginResponse>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: BeginResponse
+  ): BeginResponse {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.restore.RestoreSession session */ 1:
+          message.session = RestoreSession.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.session
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<BeginResponse>): BeginResponse {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<BeginResponse>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BeginResponse): BeginResponse {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.restore.RestoreSession session */ 1:
-                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: BeginResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.RestoreSession session = 1; */
-        if (message.session)
-            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: BeginResponse,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.restore.RestoreSession session = 1; */
+    if (message.session)
+      RestoreSession.internalBinaryWrite(
+        message.session,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.BeginResponse
  */
-export const BeginResponse = new BeginResponse$Type();
+export const BeginResponse = new BeginResponse$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class RestoreOptions$Type extends MessageType<RestoreOptions> {
-    constructor() {
-        super("bareos.restore.RestoreOptions", [
-            { no: 1, name: "replace", kind: "enum", opt: true, T: () => ["bareos.restore.ReplaceType", ReplaceType] },
-            { no: 3, name: "restore_job", kind: "message", T: () => JobId },
-            { no: 4, name: "restore_location", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
-            { no: 5, name: "restore_client", kind: "message", T: () => Client }
-        ]);
+  constructor() {
+    super('bareos.restore.RestoreOptions', [
+      {
+        no: 1,
+        name: 'replace',
+        kind: 'enum',
+        opt: true,
+        T: () => ['bareos.restore.ReplaceType', ReplaceType]
+      },
+      { no: 3, name: 'restore_job', kind: 'message', T: () => JobId },
+      { no: 4, name: 'restore_location', kind: 'scalar', opt: true, T: 9 /*ScalarType.STRING*/ },
+      { no: 5, name: 'restore_client', kind: 'message', T: () => Client }
+    ])
+  }
+  create(value?: PartialMessage<RestoreOptions>): RestoreOptions {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<RestoreOptions>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: RestoreOptions
+  ): RestoreOptions {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* optional bareos.restore.ReplaceType replace */ 1:
+          message.replace = reader.int32()
+          break
+        case /* optional bareos.config.JobId restore_job */ 3:
+          message.restoreJob = JobId.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.restoreJob
+          )
+          break
+        case /* optional string restore_location */ 4:
+          message.restoreLocation = reader.string()
+          break
+        case /* optional bareos.common.Client restore_client */ 5:
+          message.restoreClient = Client.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.restoreClient
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<RestoreOptions>): RestoreOptions {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<RestoreOptions>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: RestoreOptions): RestoreOptions {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* optional bareos.restore.ReplaceType replace */ 1:
-                    message.replace = reader.int32();
-                    break;
-                case /* optional bareos.config.JobId restore_job */ 3:
-                    message.restoreJob = JobId.internalBinaryRead(reader, reader.uint32(), options, message.restoreJob);
-                    break;
-                case /* optional string restore_location */ 4:
-                    message.restoreLocation = reader.string();
-                    break;
-                case /* optional bareos.common.Client restore_client */ 5:
-                    message.restoreClient = Client.internalBinaryRead(reader, reader.uint32(), options, message.restoreClient);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: RestoreOptions, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* optional bareos.restore.ReplaceType replace = 1; */
-        if (message.replace !== undefined)
-            writer.tag(1, WireType.Varint).int32(message.replace);
-        /* optional bareos.config.JobId restore_job = 3; */
-        if (message.restoreJob)
-            JobId.internalBinaryWrite(message.restoreJob, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
-        /* optional string restore_location = 4; */
-        if (message.restoreLocation !== undefined)
-            writer.tag(4, WireType.LengthDelimited).string(message.restoreLocation);
-        /* optional bareos.common.Client restore_client = 5; */
-        if (message.restoreClient)
-            Client.internalBinaryWrite(message.restoreClient, writer.tag(5, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: RestoreOptions,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* optional bareos.restore.ReplaceType replace = 1; */
+    if (message.replace !== undefined) writer.tag(1, WireType.Varint).int32(message.replace)
+    /* optional bareos.config.JobId restore_job = 3; */
+    if (message.restoreJob)
+      JobId.internalBinaryWrite(
+        message.restoreJob,
+        writer.tag(3, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    /* optional string restore_location = 4; */
+    if (message.restoreLocation !== undefined)
+      writer.tag(4, WireType.LengthDelimited).string(message.restoreLocation)
+    /* optional bareos.common.Client restore_client = 5; */
+    if (message.restoreClient)
+      Client.internalBinaryWrite(
+        message.restoreClient,
+        writer.tag(5, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.RestoreOptions
  */
-export const RestoreOptions = new RestoreOptions$Type();
+export const RestoreOptions = new RestoreOptions$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class RunRequest$Type extends MessageType<RunRequest> {
-    constructor() {
-        super("bareos.restore.RunRequest", [
-            { no: 1, name: "session", kind: "message", T: () => RestoreSession },
-            { no: 2, name: "restore_options", kind: "message", T: () => RestoreOptions }
-        ]);
+  constructor() {
+    super('bareos.restore.RunRequest', [
+      { no: 1, name: 'session', kind: 'message', T: () => RestoreSession },
+      { no: 2, name: 'restore_options', kind: 'message', T: () => RestoreOptions }
+    ])
+  }
+  create(value?: PartialMessage<RunRequest>): RunRequest {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<RunRequest>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: RunRequest
+  ): RunRequest {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.restore.RestoreSession session */ 1:
+          message.session = RestoreSession.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.session
+          )
+          break
+        case /* bareos.restore.RestoreOptions restore_options */ 2:
+          message.restoreOptions = RestoreOptions.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.restoreOptions
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<RunRequest>): RunRequest {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<RunRequest>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: RunRequest): RunRequest {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.restore.RestoreSession session */ 1:
-                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
-                    break;
-                case /* bareos.restore.RestoreOptions restore_options */ 2:
-                    message.restoreOptions = RestoreOptions.internalBinaryRead(reader, reader.uint32(), options, message.restoreOptions);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: RunRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.RestoreSession session = 1; */
-        if (message.session)
-            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* bareos.restore.RestoreOptions restore_options = 2; */
-        if (message.restoreOptions)
-            RestoreOptions.internalBinaryWrite(message.restoreOptions, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: RunRequest,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.restore.RestoreSession session = 1; */
+    if (message.session)
+      RestoreSession.internalBinaryWrite(
+        message.session,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    /* bareos.restore.RestoreOptions restore_options = 2; */
+    if (message.restoreOptions)
+      RestoreOptions.internalBinaryWrite(
+        message.restoreOptions,
+        writer.tag(2, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.RunRequest
  */
-export const RunRequest = new RunRequest$Type();
+export const RunRequest = new RunRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class RunResponse$Type extends MessageType<RunResponse> {
-    constructor() {
-        super("bareos.restore.RunResponse", [
-            { no: 1, name: "jobid", kind: "message", T: () => Job }
-        ]);
+  constructor() {
+    super('bareos.restore.RunResponse', [{ no: 1, name: 'jobid', kind: 'message', T: () => Job }])
+  }
+  create(value?: PartialMessage<RunResponse>): RunResponse {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<RunResponse>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: RunResponse
+  ): RunResponse {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.common.Job jobid */ 1:
+          message.jobid = Job.internalBinaryRead(reader, reader.uint32(), options, message.jobid)
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<RunResponse>): RunResponse {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<RunResponse>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: RunResponse): RunResponse {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.common.Job jobid */ 1:
-                    message.jobid = Job.internalBinaryRead(reader, reader.uint32(), options, message.jobid);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: RunResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.Job jobid = 1; */
-        if (message.jobid)
-            Job.internalBinaryWrite(message.jobid, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: RunResponse,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.common.Job jobid = 1; */
+    if (message.jobid)
+      Job.internalBinaryWrite(
+        message.jobid,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.RunResponse
  */
-export const RunResponse = new RunResponse$Type();
+export const RunResponse = new RunResponse$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class CancelRequest$Type extends MessageType<CancelRequest> {
-    constructor() {
-        super("bareos.restore.CancelRequest", [
-            { no: 1, name: "session", kind: "message", T: () => RestoreSession }
-        ]);
+  constructor() {
+    super('bareos.restore.CancelRequest', [
+      { no: 1, name: 'session', kind: 'message', T: () => RestoreSession }
+    ])
+  }
+  create(value?: PartialMessage<CancelRequest>): CancelRequest {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<CancelRequest>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: CancelRequest
+  ): CancelRequest {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.restore.RestoreSession session */ 1:
+          message.session = RestoreSession.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.session
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<CancelRequest>): CancelRequest {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<CancelRequest>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: CancelRequest): CancelRequest {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.restore.RestoreSession session */ 1:
-                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: CancelRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.RestoreSession session = 1; */
-        if (message.session)
-            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: CancelRequest,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.restore.RestoreSession session = 1; */
+    if (message.session)
+      RestoreSession.internalBinaryWrite(
+        message.session,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.CancelRequest
  */
-export const CancelRequest = new CancelRequest$Type();
+export const CancelRequest = new CancelRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class CancelResponse$Type extends MessageType<CancelResponse> {
-    constructor() {
-        super("bareos.restore.CancelResponse", []);
-    }
-    create(value?: PartialMessage<CancelResponse>): CancelResponse {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<CancelResponse>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: CancelResponse): CancelResponse {
-        return target ?? this.create();
-    }
-    internalBinaryWrite(message: CancelResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+  constructor() {
+    super('bareos.restore.CancelResponse', [])
+  }
+  create(value?: PartialMessage<CancelResponse>): CancelResponse {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<CancelResponse>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: CancelResponse
+  ): CancelResponse {
+    return target ?? this.create()
+  }
+  internalBinaryWrite(
+    message: CancelResponse,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.CancelResponse
  */
-export const CancelResponse = new CancelResponse$Type();
+export const CancelResponse = new CancelResponse$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class Path$Type extends MessageType<Path> {
-    constructor() {
-        super("bareos.restore.Path", [
-            { no: 1, name: "path", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
-        ]);
+  constructor() {
+    super('bareos.restore.Path', [
+      { no: 1, name: 'path', kind: 'scalar', T: 9 /*ScalarType.STRING*/ }
+    ])
+  }
+  create(value?: PartialMessage<Path>): Path {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.path = ''
+    if (value !== undefined) reflectionMergePartial<Path>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: Path
+  ): Path {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* string path */ 1:
+          message.path = reader.string()
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<Path>): Path {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.path = "";
-        if (value !== undefined)
-            reflectionMergePartial<Path>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Path): Path {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* string path */ 1:
-                    message.path = reader.string();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: Path, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string path = 1; */
-        if (message.path !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.path);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: Path,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* string path = 1; */
+    if (message.path !== '') writer.tag(1, WireType.LengthDelimited).string(message.path)
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.Path
  */
-export const Path = new Path$Type();
+export const Path = new Path$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class ChangeDirectoryRequest$Type extends MessageType<ChangeDirectoryRequest> {
-    constructor() {
-        super("bareos.restore.ChangeDirectoryRequest", [
-            { no: 1, name: "session", kind: "message", T: () => RestoreSession },
-            { no: 2, name: "directory", kind: "message", T: () => Path }
-        ]);
+  constructor() {
+    super('bareos.restore.ChangeDirectoryRequest', [
+      { no: 1, name: 'session', kind: 'message', T: () => RestoreSession },
+      { no: 2, name: 'directory', kind: 'message', T: () => Path }
+    ])
+  }
+  create(value?: PartialMessage<ChangeDirectoryRequest>): ChangeDirectoryRequest {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<ChangeDirectoryRequest>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: ChangeDirectoryRequest
+  ): ChangeDirectoryRequest {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.restore.RestoreSession session */ 1:
+          message.session = RestoreSession.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.session
+          )
+          break
+        case /* bareos.restore.Path directory */ 2:
+          message.directory = Path.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.directory
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<ChangeDirectoryRequest>): ChangeDirectoryRequest {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<ChangeDirectoryRequest>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ChangeDirectoryRequest): ChangeDirectoryRequest {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.restore.RestoreSession session */ 1:
-                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
-                    break;
-                case /* bareos.restore.Path directory */ 2:
-                    message.directory = Path.internalBinaryRead(reader, reader.uint32(), options, message.directory);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: ChangeDirectoryRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.RestoreSession session = 1; */
-        if (message.session)
-            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* bareos.restore.Path directory = 2; */
-        if (message.directory)
-            Path.internalBinaryWrite(message.directory, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: ChangeDirectoryRequest,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.restore.RestoreSession session = 1; */
+    if (message.session)
+      RestoreSession.internalBinaryWrite(
+        message.session,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    /* bareos.restore.Path directory = 2; */
+    if (message.directory)
+      Path.internalBinaryWrite(
+        message.directory,
+        writer.tag(2, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.ChangeDirectoryRequest
  */
-export const ChangeDirectoryRequest = new ChangeDirectoryRequest$Type();
+export const ChangeDirectoryRequest = new ChangeDirectoryRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class ChangeDirectoryResponse$Type extends MessageType<ChangeDirectoryResponse> {
-    constructor() {
-        super("bareos.restore.ChangeDirectoryResponse", [
-            { no: 1, name: "current_directory", kind: "message", T: () => Path }
-        ]);
+  constructor() {
+    super('bareos.restore.ChangeDirectoryResponse', [
+      { no: 1, name: 'current_directory', kind: 'message', T: () => Path }
+    ])
+  }
+  create(value?: PartialMessage<ChangeDirectoryResponse>): ChangeDirectoryResponse {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<ChangeDirectoryResponse>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: ChangeDirectoryResponse
+  ): ChangeDirectoryResponse {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.restore.Path current_directory */ 1:
+          message.currentDirectory = Path.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.currentDirectory
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<ChangeDirectoryResponse>): ChangeDirectoryResponse {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<ChangeDirectoryResponse>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ChangeDirectoryResponse): ChangeDirectoryResponse {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.restore.Path current_directory */ 1:
-                    message.currentDirectory = Path.internalBinaryRead(reader, reader.uint32(), options, message.currentDirectory);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: ChangeDirectoryResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.Path current_directory = 1; */
-        if (message.currentDirectory)
-            Path.internalBinaryWrite(message.currentDirectory, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: ChangeDirectoryResponse,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.restore.Path current_directory = 1; */
+    if (message.currentDirectory)
+      Path.internalBinaryWrite(
+        message.currentDirectory,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.ChangeDirectoryResponse
  */
-export const ChangeDirectoryResponse = new ChangeDirectoryResponse$Type();
+export const ChangeDirectoryResponse = new ChangeDirectoryResponse$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class Regex$Type extends MessageType<Regex> {
-    constructor() {
-        super("bareos.restore.Regex", [
-            { no: 1, name: "regex", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
-        ]);
+  constructor() {
+    super('bareos.restore.Regex', [
+      { no: 1, name: 'regex', kind: 'scalar', T: 9 /*ScalarType.STRING*/ }
+    ])
+  }
+  create(value?: PartialMessage<Regex>): Regex {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.regex = ''
+    if (value !== undefined) reflectionMergePartial<Regex>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: Regex
+  ): Regex {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* string regex */ 1:
+          message.regex = reader.string()
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<Regex>): Regex {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.regex = "";
-        if (value !== undefined)
-            reflectionMergePartial<Regex>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Regex): Regex {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* string regex */ 1:
-                    message.regex = reader.string();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: Regex, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string regex = 1; */
-        if (message.regex !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.regex);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: Regex,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* string regex = 1; */
+    if (message.regex !== '') writer.tag(1, WireType.LengthDelimited).string(message.regex)
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.Regex
  */
-export const Regex = new Regex$Type();
+export const Regex = new Regex$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class ChangeMarkedRequest$Type extends MessageType<ChangeMarkedRequest> {
-    constructor() {
-        super("bareos.restore.ChangeMarkedRequest", [
-            { no: 1, name: "session", kind: "message", T: () => RestoreSession },
-            { no: 2, name: "action", kind: "enum", T: () => ["bareos.restore.MarkAction", MarkAction] },
-            { no: 3, name: "filter", kind: "message", T: () => Regex }
-        ]);
+  constructor() {
+    super('bareos.restore.ChangeMarkedRequest', [
+      { no: 1, name: 'session', kind: 'message', T: () => RestoreSession },
+      { no: 2, name: 'action', kind: 'enum', T: () => ['bareos.restore.MarkAction', MarkAction] },
+      { no: 3, name: 'filter', kind: 'message', T: () => Regex }
+    ])
+  }
+  create(value?: PartialMessage<ChangeMarkedRequest>): ChangeMarkedRequest {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.action = 0
+    if (value !== undefined) reflectionMergePartial<ChangeMarkedRequest>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: ChangeMarkedRequest
+  ): ChangeMarkedRequest {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.restore.RestoreSession session */ 1:
+          message.session = RestoreSession.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.session
+          )
+          break
+        case /* bareos.restore.MarkAction action */ 2:
+          message.action = reader.int32()
+          break
+        case /* bareos.restore.Regex filter */ 3:
+          message.filter = Regex.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.filter
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<ChangeMarkedRequest>): ChangeMarkedRequest {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.action = 0;
-        if (value !== undefined)
-            reflectionMergePartial<ChangeMarkedRequest>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ChangeMarkedRequest): ChangeMarkedRequest {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.restore.RestoreSession session */ 1:
-                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
-                    break;
-                case /* bareos.restore.MarkAction action */ 2:
-                    message.action = reader.int32();
-                    break;
-                case /* bareos.restore.Regex filter */ 3:
-                    message.filter = Regex.internalBinaryRead(reader, reader.uint32(), options, message.filter);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: ChangeMarkedRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.RestoreSession session = 1; */
-        if (message.session)
-            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* bareos.restore.MarkAction action = 2; */
-        if (message.action !== 0)
-            writer.tag(2, WireType.Varint).int32(message.action);
-        /* bareos.restore.Regex filter = 3; */
-        if (message.filter)
-            Regex.internalBinaryWrite(message.filter, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: ChangeMarkedRequest,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.restore.RestoreSession session = 1; */
+    if (message.session)
+      RestoreSession.internalBinaryWrite(
+        message.session,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    /* bareos.restore.MarkAction action = 2; */
+    if (message.action !== 0) writer.tag(2, WireType.Varint).int32(message.action)
+    /* bareos.restore.Regex filter = 3; */
+    if (message.filter)
+      Regex.internalBinaryWrite(
+        message.filter,
+        writer.tag(3, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.ChangeMarkedRequest
  */
-export const ChangeMarkedRequest = new ChangeMarkedRequest$Type();
+export const ChangeMarkedRequest = new ChangeMarkedRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class ChangeMarkedResponse$Type extends MessageType<ChangeMarkedResponse> {
-    constructor() {
-        super("bareos.restore.ChangeMarkedResponse", [
-            { no: 1, name: "affected_count", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
-        ]);
+  constructor() {
+    super('bareos.restore.ChangeMarkedResponse', [
+      {
+        no: 1,
+        name: 'affected_count',
+        kind: 'scalar',
+        T: 3 /*ScalarType.INT64*/,
+        L: 0 /*LongType.BIGINT*/
+      }
+    ])
+  }
+  create(value?: PartialMessage<ChangeMarkedResponse>): ChangeMarkedResponse {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.affectedCount = 0n
+    if (value !== undefined) reflectionMergePartial<ChangeMarkedResponse>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: ChangeMarkedResponse
+  ): ChangeMarkedResponse {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* int64 affected_count */ 1:
+          message.affectedCount = reader.int64().toBigInt()
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<ChangeMarkedResponse>): ChangeMarkedResponse {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.affectedCount = 0n;
-        if (value !== undefined)
-            reflectionMergePartial<ChangeMarkedResponse>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ChangeMarkedResponse): ChangeMarkedResponse {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* int64 affected_count */ 1:
-                    message.affectedCount = reader.int64().toBigInt();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: ChangeMarkedResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* int64 affected_count = 1; */
-        if (message.affectedCount !== 0n)
-            writer.tag(1, WireType.Varint).int64(message.affectedCount);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: ChangeMarkedResponse,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* int64 affected_count = 1; */
+    if (message.affectedCount !== 0n) writer.tag(1, WireType.Varint).int64(message.affectedCount)
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.ChangeMarkedResponse
  */
-export const ChangeMarkedResponse = new ChangeMarkedResponse$Type();
+export const ChangeMarkedResponse = new ChangeMarkedResponse$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class ListFilesRequest$Type extends MessageType<ListFilesRequest> {
-    constructor() {
-        super("bareos.restore.ListFilesRequest", [
-            { no: 1, name: "session", kind: "message", T: () => RestoreSession }
-        ]);
+  constructor() {
+    super('bareos.restore.ListFilesRequest', [
+      { no: 1, name: 'session', kind: 'message', T: () => RestoreSession }
+    ])
+  }
+  create(value?: PartialMessage<ListFilesRequest>): ListFilesRequest {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    if (value !== undefined) reflectionMergePartial<ListFilesRequest>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: ListFilesRequest
+  ): ListFilesRequest {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* bareos.restore.RestoreSession session */ 1:
+          message.session = RestoreSession.internalBinaryRead(
+            reader,
+            reader.uint32(),
+            options,
+            message.session
+          )
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<ListFilesRequest>): ListFilesRequest {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        if (value !== undefined)
-            reflectionMergePartial<ListFilesRequest>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ListFilesRequest): ListFilesRequest {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* bareos.restore.RestoreSession session */ 1:
-                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: ListFilesRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.RestoreSession session = 1; */
-        if (message.session)
-            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: ListFilesRequest,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* bareos.restore.RestoreSession session = 1; */
+    if (message.session)
+      RestoreSession.internalBinaryWrite(
+        message.session,
+        writer.tag(1, WireType.LengthDelimited).fork(),
+        options
+      ).join()
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.ListFilesRequest
  */
-export const ListFilesRequest = new ListFilesRequest$Type();
+export const ListFilesRequest = new ListFilesRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class File$Type extends MessageType<File> {
-    constructor() {
-        super("bareos.restore.File", [
-            { no: 1, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 2, name: "marked", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
-            { no: 3, name: "type", kind: "enum", T: () => ["bareos.restore.FileType", FileType] }
-        ]);
+  constructor() {
+    super('bareos.restore.File', [
+      { no: 1, name: 'name', kind: 'scalar', T: 9 /*ScalarType.STRING*/ },
+      { no: 2, name: 'marked', kind: 'scalar', T: 8 /*ScalarType.BOOL*/ },
+      { no: 3, name: 'type', kind: 'enum', T: () => ['bareos.restore.FileType', FileType] }
+    ])
+  }
+  create(value?: PartialMessage<File>): File {
+    const message = globalThis.Object.create(this.messagePrototype!)
+    message.name = ''
+    message.marked = false
+    message.type = 0
+    if (value !== undefined) reflectionMergePartial<File>(this, message, value)
+    return message
+  }
+  internalBinaryRead(
+    reader: IBinaryReader,
+    length: number,
+    options: BinaryReadOptions,
+    target?: File
+  ): File {
+    let message = target ?? this.create(),
+      end = reader.pos + length
+    while (reader.pos < end) {
+      let [fieldNo, wireType] = reader.tag()
+      switch (fieldNo) {
+        case /* string name */ 1:
+          message.name = reader.string()
+          break
+        case /* bool marked */ 2:
+          message.marked = reader.bool()
+          break
+        case /* bareos.restore.FileType type */ 3:
+          message.type = reader.int32()
+          break
+        default:
+          let u = options.readUnknownField
+          if (u === 'throw')
+            throw new globalThis.Error(
+              `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+            )
+          let d = reader.skip(wireType)
+          if (u !== false)
+            (u === true ? UnknownFieldHandler.onRead : u)(
+              this.typeName,
+              message,
+              fieldNo,
+              wireType,
+              d
+            )
+      }
     }
-    create(value?: PartialMessage<File>): File {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.name = "";
-        message.marked = false;
-        message.type = 0;
-        if (value !== undefined)
-            reflectionMergePartial<File>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: File): File {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* string name */ 1:
-                    message.name = reader.string();
-                    break;
-                case /* bool marked */ 2:
-                    message.marked = reader.bool();
-                    break;
-                case /* bareos.restore.FileType type */ 3:
-                    message.type = reader.int32();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: File, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string name = 1; */
-        if (message.name !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.name);
-        /* bool marked = 2; */
-        if (message.marked !== false)
-            writer.tag(2, WireType.Varint).bool(message.marked);
-        /* bareos.restore.FileType type = 3; */
-        if (message.type !== 0)
-            writer.tag(3, WireType.Varint).int32(message.type);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    return message
+  }
+  internalBinaryWrite(
+    message: File,
+    writer: IBinaryWriter,
+    options: BinaryWriteOptions
+  ): IBinaryWriter {
+    /* string name = 1; */
+    if (message.name !== '') writer.tag(1, WireType.LengthDelimited).string(message.name)
+    /* bool marked = 2; */
+    if (message.marked !== false) writer.tag(2, WireType.Varint).bool(message.marked)
+    /* bareos.restore.FileType type = 3; */
+    if (message.type !== 0) writer.tag(3, WireType.Varint).int32(message.type)
+    let u = options.writeUnknownFields
+    if (u !== false) (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer)
+    return writer
+  }
 }
 /**
  * @generated MessageType for protobuf message bareos.restore.File
  */
-export const File = new File$Type();
+export const File = new File$Type()
 /**
  * @generated ServiceType for protobuf service bareos.restore.Restore
  */
-export const Restore = new ServiceType("bareos.restore.Restore", [
-    { name: "ListSessions", options: {}, I: ListSessionsRequest, O: ListSessionsResponse },
-    { name: "Begin", options: {}, I: BeginRequest, O: BeginResponse },
-    { name: "ListFiles", serverStreaming: true, options: {}, I: ListFilesRequest, O: File },
-    { name: "ChangeDirectory", options: {}, I: ChangeDirectoryRequest, O: ChangeDirectoryResponse },
-    { name: "ChangeMarkedStatus", options: {}, I: ChangeMarkedRequest, O: ChangeMarkedResponse },
-    { name: "Run", options: {}, I: RunRequest, O: RunResponse },
-    { name: "Cancel", options: {}, I: CancelRequest, O: CancelResponse }
-]);
+export const Restore = new ServiceType('bareos.restore.Restore', [
+  { name: 'ListSessions', options: {}, I: ListSessionsRequest, O: ListSessionsResponse },
+  { name: 'Begin', options: {}, I: BeginRequest, O: BeginResponse },
+  { name: 'ListFiles', serverStreaming: true, options: {}, I: ListFilesRequest, O: File },
+  { name: 'ChangeDirectory', options: {}, I: ChangeDirectoryRequest, O: ChangeDirectoryResponse },
+  { name: 'ChangeMarkedStatus', options: {}, I: ChangeMarkedRequest, O: ChangeMarkedResponse },
+  { name: 'Run', options: {}, I: RunRequest, O: RunResponse },
+  { name: 'Cancel', options: {}, I: CancelRequest, O: CancelResponse }
+])

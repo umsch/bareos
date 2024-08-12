@@ -1,86 +1,56 @@
 <script setup lang="ts">
 
 import { onMounted, ref } from 'vue'
-
-import { ConfigClient, type IConfigClient } from '@/generated/config.client'
-import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import { ODropdown } from '@oruga-ui/oruga-next'
+import { useRestoreClientStore } from '@/stores/restoreClientStore'
+import CatalogDropdown from '@/components/restore/CatalogDropdown.vue'
+import { useWizzardStore } from '@/stores/wizzardStore'
 import type { Catalog } from '@/generated/config'
+import { Job } from '@/generated/common'
+import JobsTable from '@/components/restore/JobsTable.vue'
+import type { RestoreSession } from '@/generated/restore'
 
-const activeStep = ref('1')
-const prevIcon = ref('chevron-left')
-const nextIcon = ref('chevron-right')
+const restoreClientStore = useRestoreClientStore()
+const wizzardStore = useWizzardStore()
 
-const transport = ref(new GrpcWebFetchTransport({ baseUrl: 'http://127.0.0.1:9090' }))
-const configClient = ref<IConfigClient>()
-const catalogs = ref<Catalog[]>([])
-const selectedCatalog = ref<Catalog>()
+const jobs = ref<Job[]>([])
+const isJobsLoading = ref(false)
 
-const fetchCatalogs = async () => {
-  if (!configClient.value) {
-    console.error('configClient not initialized')
-    return
-  }
+const sessions = ref<RestoreSession[]>([])
+const isSessionsLoading = ref(false)
 
-  const response = await configClient.value.listCatalogs({})
-  catalogs.value = response.response.catalogs
-}
 
 onMounted(() => {
-  configClient.value = new ConfigClient(transport.value)
-  fetchCatalogs()
+  restoreClientStore.initializeClient()
 })
 
+const setCatalog = async (catalog: Catalog) => {
+  wizzardStore.selectedCatalog = catalog
+
+  try {
+    isJobsLoading.value = true
+    jobs.value = await restoreClientStore.fetchJobs(catalog)
+  } finally {
+    isJobsLoading.value = false
+  }
+}
 
 </script>
 
 <template>
-  <section>
-    <o-field label="Catalog">
-      <o-dropdown v-model="selectedCatalog">
-        <template #trigger="{ active }">
-          <o-button
-            variant="primary"
-            :label="selectedCatalog ? selectedCatalog.name : 'Select Catalog'"
-            :icon-right="active ? 'caret-up' : 'caret-down'" />
-        </template>
-
-        <o-dropdown-item
-          v-for="(catalog, index) in catalogs"
-          :key="index"
-          :value="catalog">
-          <div>
-            <div>{{ catalog.name }}</div>
-          </div>
-        </o-dropdown-item>
-
-      </o-dropdown>
-    </o-field>
-
-
-    <o-steps
-      variant="primary"
-      :v-model="activeStep"
-      animated
-      rounded
-      has-navigation
-      :icon-prev="prevIcon"
-      :icon-next="nextIcon"
-    >
-      <o-step-item
-        value="1"
-        step="1"
-        label="eins"
-        clickable>
-        <h1>Account</h1>
-        Lorem ipsum dolor sit amet.
-      </o-step-item>
-    </o-steps>
+  <section class="section">
+    <CatalogDropdown
+      :catalogs="restoreClientStore.catalogs"
+      :initialSelection="wizzardStore.selectedCatalog"
+      @update:selectedCatalog="setCatalog"
+    />
+  </section>
+  <section class="section">
+    <JobsTable
+      :jobs="jobs"
+      :initialSelection="wizzardStore.selectedJob"
+      @update:selectedJob="wizzardStore.selectedJob = $event"
+      :isLoading="isJobsLoading"
+    />
   </section>
 
-
 </template>
-
-<style scoped>
-
-</style>

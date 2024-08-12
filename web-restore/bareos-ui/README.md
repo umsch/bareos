@@ -62,9 +62,13 @@ npm run lint
 
 ## Notes
 
-Create TS client for use in browser use
+**Create TS client for use in browser use**
 
 https://github.com/timostamm/protobuf-ts
+
+**Bulma CSS Framework Documentation**
+
+https://versions.bulma.io/0.9.4/documentation/
 
 **Generate TypeScript stubs:**
 

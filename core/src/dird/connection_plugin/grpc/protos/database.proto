@@ -4,10 +4,11 @@
 
 syntax = "proto3";
 
+import "common/entities.proto";
+
+
 package bareos.database;
 
-import "common.proto";
-import "config.proto";
 
 /* Should these functions return a typed response (like now) or rather a generic
  * message SqlResponse { map<string, string>; } ?
@@ -18,7 +19,7 @@ service Database {
 };
 
 message ListClientsRequest {
-  bareos.config.CatalogId catalog = 1;
+  bareos.common.CatalogId catalog = 1;
 };
 
 message ListClientsResponse {
@@ -31,7 +32,7 @@ message ClientFilter {
 };
 
 message ListJobsRequest {
-  bareos.config.CatalogId catalog = 1;
+  bareos.common.CatalogId catalog = 1;
   optional ClientFilter client_filter = 2;
 };
 

@@ -1,0 +1,90 @@
+/*
+ * LICENSE HERE
+ */
+
+syntax = "proto3";
+
+package bareos.common;
+
+// Job
+
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  RESTORE = 1;
+  BACKUP = 2;
+  COPY = 3;
+  VERIFY = 4;
+  ADMIN = 5;
+  ARCHIVE = 6;
+  MIGRATE = 7;
+  CONSOLIDATE = 8;
+};
+
+enum JobLevel {
+  JOB_LEVEL_UNSPECIFIED = 0;
+  FULL = 1;
+  DIFFERENTIAL = 2;
+  INCREMENTAL = 3;
+};
+
+message JobId {
+  int64 jobId = 1;
+}
+
+message Job {
+  JobId jobId = 1;
+  string name = 2;
+  JobType type = 3;
+  optional JobLevel default_level = 4;
+};
+
+// Session
+
+message SessionId {
+  string token = 1;
+}
+
+message RestoreSession {
+  SessionId session_id = 1;
+  Job job = 2;
+};
+
+
+// File
+
+enum FileType {
+  FILE_TYPE_UNSPECIFIED = 0;
+  DIRECTORY = 1;
+  FILE = 2;
+  DIRECTORY_NOT_BACKED_UP = 3;
+};
+
+message File {
+  string name = 1;
+  bool marked = 2;
+  FileType type = 3;
+}
+
+// Client
+
+message ClientId {
+  string name = 1;
+};
+
+message Client {
+  ClientId id = 1;
+  string name = 2;
+  string address = 3;
+};
+
+// Catalog
+
+message CatalogId {
+  string id = 1;
+}
+
+message Catalog {
+  CatalogId catalog = 1;
+  string name = 2;
+  string dbname = 3;
+};

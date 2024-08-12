@@ -4,10 +4,10 @@
 
 syntax = "proto3";
 
+import "common/entities.proto";
+
 package bareos.restore;
 
-import "config.proto";
-import "common.proto";
 
 service Restore {
   rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
@@ -15,7 +15,7 @@ service Restore {
   rpc DeleteSession (DeleteSessionRequest) returns (DeleteSessionResponse);
 
   // these functions will only work once the tree is created
-  rpc ListFiles (ListFilesRequest) returns (stream File);
+  rpc ListFiles (ListFilesRequest) returns (stream bareos.common.File);
   rpc ChangeDirectory (ChangeDirectoryRequest) returns (ChangeDirectoryResponse);
   rpc ChangeMarkedStatus (ChangeMarkedRequest) returns (ChangeMarkedResponse);
 
@@ -23,24 +23,27 @@ service Restore {
   rpc Cancel (CancelRequest) returns (CancelResponse);
 }
 
+message DeleteSessionRequest {
+  bareos.common.SessionId session_id = 1;
+};
+
+message DeleteSessionResponse {
+};
+
 message ListSessionsRequest {
 };
 
 message ListSessionsResponse {
-  repeated RestoreSession sessions = 1;
+  repeated bareos.common.RestoreSession sessions = 1;
 };
 
 message CreateSessionRequest {
-  bareos.common.Job backup_job = 1;
+  bareos.common.JobId backup_job = 1;
   bool find_job_chain = 2;
 };
 
-message RestoreSession {
-  string token = 1;
-};
-
 message CreateSessionResponse {
-  RestoreSession session = 1;
+  bareos.common.RestoreSession session = 1;
 };
 
 enum ReplaceType {
@@ -52,23 +55,23 @@ enum ReplaceType {
 };
 
 message RestoreOptions {
-  optional ReplaceType replace = 1;
-  optional bareos.config.JobId restore_job = 3;
+  optional bareos.common.JobId restore_job = 1;
+  optional bareos.common.Client restore_client = 2;
+  optional ReplaceType replace = 3;
   optional string restore_location = 4;
-  optional bareos.common.Client restore_client = 5;
 };
 
 message RunRequest {
-  RestoreSession session = 1;
+  bareos.common.SessionId session = 1;
   RestoreOptions restore_options = 2;
 };
 
 message RunResponse {
-  bareos.common.Job jobid = 1;
+  bareos.common.Job job_id = 1;
 }
 
 message CancelRequest {
-  RestoreSession session = 1;
+  bareos.common.SessionId session = 1;
 };
 
 message CancelResponse {}
@@ -78,7 +81,7 @@ message Path {
 };
 
 message ChangeDirectoryRequest {
-  RestoreSession session = 1;
+  bareos.common.SessionId session = 1;
   // this path can be relative
   Path directory = 2;
 }
@@ -98,7 +101,7 @@ message Regex {
 };
 
 message ChangeMarkedRequest {
-  RestoreSession session = 1;
+  bareos.common.SessionId session = 1;
   MarkAction action = 2;
 
   // mark/unmark everything under the current directory that matches the regex
@@ -111,18 +114,7 @@ message ChangeMarkedResponse {
 }
 
 message ListFilesRequest {
-  RestoreSession session = 1;
+  bareos.common.SessionId session = 1;
 }
 
-enum FileType {
-  FILE_TYPE_UNSPECIFIED = 0;
-  DIRECTORY = 1;
-  FILE = 2;
-  DIRECTORY_NOT_BACKED_UP = 3;
-};
 
-message File {
-  string name = 1;
-  bool marked = 2;
-  FileType type = 3;
-}

@@ -1,0 +1,41 @@
+/*
+ * LICENSE HERE
+ */
+
+syntax = "proto3";
+
+package bareos.database;
+
+import "common.proto";
+import "config.proto";
+
+/* Should these functions return a typed response (like now) or rather a generic
+ * message SqlResponse { map<string, string>; } ?
+ */
+service Database {
+  rpc ListClients (ListClientsRequest) returns (stream ListClientsResponse);
+  rpc ListJobs (ListJobsRequest) returns (stream ListJobsResponse);
+};
+
+message ListClientsRequest {
+  bareos.config.CatalogId catalog = 1;
+};
+
+message ListClientsResponse {
+  bareos.common.Client client = 1;
+};
+
+message ClientFilter {
+  // select only jobs that were created on _one_ of these clients.
+  repeated bareos.common.Client client = 1;
+};
+
+message ListJobsRequest {
+  bareos.config.CatalogId catalog = 1;
+  optional ClientFilter client_filter = 2;
+};
+
+message ListJobsResponse {
+  bareos.common.Job job = 1;
+  // todo: add name, and client and time
+};

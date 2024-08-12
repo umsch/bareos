@@ -1,0 +1,15 @@
+/*
+ * LICENSE HERE
+ */
+
+syntax = "proto3";
+
+package bareos.common;
+
+message Client {
+  string name = 1;
+}
+
+message Job {
+  int64 jobid = 1;
+};

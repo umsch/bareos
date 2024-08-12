@@ -19,21 +19,27 @@ const sessions = ref<RestoreSession[]>([])
 const isSessionsLoading = ref(false)
 
 
-onMounted(() => {
-  restoreClientStore.initializeClient()
+onMounted(async () => {
+  await updateSessions()
 })
 
 const setCatalog = async (catalog: Catalog) => {
   wizzardStore.selectedCatalog = catalog
-
-  try {
-    isJobsLoading.value = true
-    jobs.value = await restoreClientStore.fetchJobs(catalog)
-  } finally {
-    isJobsLoading.value = false
-  }
 }
 
+const setJob = async (job: Job) => {
+  wizzardStore.selectedJob = job
+  console.log('selectedJob', job.jobid)
+}
+
+const updateSessions = async () => {
+  try {
+    isSessionsLoading.value = true
+    sessions.value = await restoreClientStore.fetchSessions()
+  } finally {
+    isSessionsLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -44,13 +50,22 @@ const setCatalog = async (catalog: Catalog) => {
       @update:selectedCatalog="setCatalog"
     />
   </section>
+
   <section class="section">
     <JobsTable
-      :jobs="jobs"
-      :initialSelection="wizzardStore.selectedJob"
-      @update:selectedJob="wizzardStore.selectedJob = $event"
-      :isLoading="isJobsLoading"
+      :catalog_id="wizzardStore.selectedCatalog?.id"
+      @update:selectedJob="setJob"
     />
   </section>
+
+<!--  <section class="section">-->
+<!--    <SessionsTable-->
+<!--      :sessions="sessions"-->
+<!--      @update:selectedSession="setSession"-->
+<!--      @update:deleteSession="deleteSession"-->
+<!--      :isLoading="isJobsLoading"-->
+<!--    />-->
+<!--  </section>-->
+
 
 </template>

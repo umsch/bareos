@@ -1,28 +1,37 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, ref, watch } from 'vue';
-import type { Catalog } from '@/generated/config';
+import { defineProps, defineEmits, ref, watch, onMounted } from 'vue'
+import type { Catalog } from '@/generated/config'
 
-const props = defineProps<{
-  catalogs: Catalog[];
-  initialSelection: Catalog | null;
-}>();
+import { useRestoreClientStore } from '@/stores/restoreClientStore'
 
 const emit = defineEmits<{
   (e: 'update:selectedCatalog', catalog: Catalog): void;
-}>();
+}>()
 
-const selected = ref<Catalog | null>(props.initialSelection);
+const restoreClientStore = useRestoreClientStore()
+
+const selected = ref<Catalog | null>(null)
+
+onMounted(async () => {
+  await updateCatalogs()
+})
 
 watch(selected, (newValue) => {
   if (newValue) {
-    emit('update:selectedCatalog', newValue);
+    emit('update:selectedCatalog', newValue)
   }
-});
+})
+
+
+const catalogs = ref<Catalog[]>([])
+const updateCatalogs = async () => {
+  catalogs.value = await restoreClientStore.fetchCatalogs()
+}
 
 </script>
 <template>
   <o-field label="Catalog">
-    <o-dropdown v-model="selected" expanded>
+    <o-dropdown v-model="selected">
       <template #trigger="{ active }">
         <o-button
           variant="primary"

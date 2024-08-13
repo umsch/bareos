@@ -1,46 +1,9 @@
 <script setup lang="ts">
-import type { Job } from '@/generated/common'
-import { ref, watch } from 'vue'
-import type { CatalogId } from '@/generated/config'
-import { useRestoreClientStore } from '@/stores/restoreClientStore'
+import { ref } from 'vue'
 
-const props = defineProps<{
-  catalog_id: CatalogId | undefined
-}>()
+import {useWizardStore} from '@/stores/wizardStore'
 
-const emit = defineEmits<{
-  (e: 'update:selectedJob', job: Job): void
-}>()
-
-const restoreClientStore = useRestoreClientStore()
-
-const selected = ref<Job | null>(null)
-const jobs = ref<Job[]>([])
-const isLoading = ref(false)
-
-const updateJobs = async (catalog_id: CatalogId) => {
-  isLoading.value = true
-  try {
-    jobs.value = await restoreClientStore.fetchJobs(catalog_id)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-watch(selected, (newValue) => {
-  if (newValue) {
-    emit('update:selectedJob', newValue)
-  }
-})
-
-watch(
-  () => props.catalog_id, // Watch the catalog_id prop
-  async (catalog_id) => {
-    if (catalog_id) {
-      await updateJobs(catalog_id)
-    }
-  }
-)
+const wizard = useWizardStore()
 
 const columns = ref([
   {
@@ -53,10 +16,9 @@ const columns = ref([
 
 <template>
   <o-table
-    v-model:selected="selected"
-    :data="jobs"
+    v-model:selected="wizard.selectedJob"
+    :data="wizard.jobs"
     :columns="columns"
-    :loading="isLoading"
     striped
     narrowed
   ></o-table>

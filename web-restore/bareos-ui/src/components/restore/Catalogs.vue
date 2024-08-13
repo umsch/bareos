@@ -1,46 +1,36 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import type { Catalog } from '@/generated/config'
+import { computed } from 'vue'
+import { useWizardStore } from '@/stores/wizardStore'
 
-import { useRestoreClientStore } from '@/stores/restoreClientStore'
+import { OField } from '@oruga-ui/oruga-next'
+import { isEmpty } from 'lodash'
 
-const emit = defineEmits<{
-  (e: 'update:selectedCatalog', catalog: Catalog): void
-}>()
+const wizardStore = useWizardStore()
 
-const restoreClientStore = useRestoreClientStore()
+const noCatalogs = computed(() => isEmpty(wizardStore.catalogs))
+const noCatalogSelected = computed(() => !wizardStore.selectedCatalog)
 
-const selected = ref<Catalog | null>(null)
-
-onMounted(async () => {
-  await updateCatalogs()
-})
-
-watch(selected, (newValue) => {
-  if (newValue) {
-    emit('update:selectedCatalog', newValue)
-  }
-})
-
-const catalogs = ref<Catalog[]>([])
-const updateCatalogs = async () => {
-  catalogs.value = await restoreClientStore.fetchCatalogs()
-}
 </script>
 <template>
-  <o-dropdown v-model="selected">
-    <template #trigger="{ active }">
-      <o-button
-        variant="primary"
-        :label="selected ? selected.name : 'Select Catalog'"
-        :icon-right="active ? 'caret-up' : 'caret-down'"
-      />
-    </template>
+  <o-field
+    label="Catalog:"
+    :variant="!noCatalogs ? 'primary' : 'warning'"
+    :message="!noCatalogs ? undefined : 'no catalogs found'">
 
-    <o-dropdown-item v-for="(catalog, index) in catalogs" :key="index" :value="catalog">
-      <div>
-        <div>{{ catalog.name }}</div>
-      </div>
-    </o-dropdown-item>
-  </o-dropdown>
+    <o-dropdown v-model="wizardStore.selectedCatalog">
+      <template #trigger="{ active }">
+        <o-button
+          variant="primary"
+          :label="!noCatalogSelected ? wizardStore.selectedCatalog?.name : 'Select Catalog'"
+          :icon-right="active ? 'caret-up' : 'caret-down'"
+        />
+      </template>
+
+      <o-dropdown-item v-for="(catalog, index) in wizardStore.catalogs" :key="index" :value="catalog">
+        <div>
+          <div>{{ catalog.name }}</div>
+        </div>
+      </o-dropdown-item>
+    </o-dropdown>
+  </o-field>
 </template>

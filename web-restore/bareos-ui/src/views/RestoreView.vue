@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRestoreClientStore } from '@/stores/restoreClientStore'
-import CatalogDropdown from '@/components/restore/Catalogs.vue'
-import { useWizzardStore } from '@/stores/wizzardStore'
+import Catalogs from '@/components/restore/Catalogs.vue'
+import { useWizardStore } from '@/stores/wizardStore'
 import type { Catalog } from '@/generated/config'
 import { Job } from '@/generated/common'
 import JobsTable from '@/components/restore/Jobs.vue'
@@ -11,7 +11,7 @@ import RestoreSessions from '@/components/restore/RestoreSessions.vue'
 import { OField } from '@oruga-ui/oruga-next'
 
 const restoreClientStore = useRestoreClientStore()
-const wizzardStore = useWizzardStore()
+const wizardStore = useWizardStore()
 
 const sessions = ref<RestoreSession[]>([])
 const isSessionsLoading = ref(false)
@@ -21,16 +21,16 @@ onMounted(async () => {
 })
 
 const setCatalog = async (catalog: Catalog) => {
-  wizzardStore.selectedCatalog = catalog
+  wizardStore.selectedCatalog = catalog
 }
 
 const setJob = async (job: Job) => {
-  wizzardStore.selectedJob = job
+  wizardStore.selectedJob = job
   console.log('selectedJob', job.jobid)
 }
 
 const setSession = async (session: RestoreSession) => {
-  wizzardStore.selectedSession = session
+  wizardStore.selectedSession = session
   console.log('selectedSession', session.token)
 }
 
@@ -53,25 +53,19 @@ const updateSessions = async () => {
             <p class="card-header-title">start new restore session</p>
           </div>
           <div class="card-content">
-            <o-field label="Catalog:" horizontal>
-              <CatalogDropdown
-                :catalogs="restoreClientStore.catalogs"
-                :initialSelection="wizzardStore.selectedCatalog"
-                @update:selectedCatalog="setCatalog"
-              />
-            </o-field>
+              <Catalogs />
 
             <JobsTable
-              :catalog_id="wizzardStore.selectedCatalog?.id"
+              :catalog_id="wizardStore.selectedCatalog?.id"
               @update:selectedJob="setJob"
             />
           </div>
           <footer class="card-footer">
             <o-button
-              :disabled="!wizzardStore.selectedJob"
+              :disabled="!wizardStore.selectedJob"
               variant="primary"
-              label="start restore session"
-              @click=""
+              :label="'start restore session' + (wizardStore.selectedJob ? ' for job ' + wizardStore.selectedJob.jobid : '')"
+              @click="wizardStore.startRestoreSession"
             />
           </footer>
         </div>
@@ -85,14 +79,6 @@ const updateSessions = async () => {
           <div class="card-content">
             <RestoreSessions />
           </div>
-          <footer class="card-footer">
-            <o-button
-              :disabled="!wizzardStore.selectedJob"
-              variant="primary"
-              label="start restore session"
-              @click=""
-            />
-          </footer>
         </div>
       </div>
     </div>

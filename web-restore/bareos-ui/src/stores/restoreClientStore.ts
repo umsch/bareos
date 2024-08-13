@@ -76,13 +76,13 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   }
 
   const fetchSessions = async () => {
-    let sessions: RestoreSession[] = []
-    try {
-      const response = await restoreClient.value?.listSessions({})
-      sessions = response?.response.sessions!
-    } finally {
-      return sessions
-    }
+    const response = await restoreClient.value?.listSessions({})
+    return response?.response.sessions!
+  }
+
+  const createSession = async (job: Job) => {
+    const response = await restoreClient.value?.begin({ backupJob: job, findJobChain: false })
+    return response?.response.session
   }
 
   return {
@@ -91,6 +91,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     fetchCatalogs,
     fetchClients,
     fetchJobs,
-    fetchSessions
+    fetchSessions,
+    createSession
   }
 })

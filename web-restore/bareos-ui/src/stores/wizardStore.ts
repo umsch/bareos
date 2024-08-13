@@ -10,6 +10,7 @@ export const useWizardStore = defineStore('wizard', () => {
 
   onMounted(async () => {
     await updateCatalogs()
+    await updateSessions()
   })
 
   // clients
@@ -73,6 +74,10 @@ export const useWizardStore = defineStore('wizard', () => {
     if (!selectedJob.value) {
       throw new Error('No job selected')
     }
+
+    const session = await restoreClient.createSession(selectedJob.value)
+    await updateSessions()
+    selectedSession.value = session!
   }
 
   return {

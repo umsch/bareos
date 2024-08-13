@@ -28,21 +28,19 @@ const updateCatalogs = async () => {
 }
 </script>
 <template>
-  <o-field label="Catalog">
-    <o-dropdown v-model="selected">
-      <template #trigger="{ active }">
-        <o-button
-          variant="primary"
-          :label="selected ? selected.name : 'Select Catalog'"
-          :icon-right="active ? 'caret-up' : 'caret-down'"
-        />
-      </template>
+  <o-dropdown v-model="selected">
+    <template #trigger="{ active }">
+      <o-button
+        variant="primary"
+        :label="selected ? selected.name : 'Select Catalog'"
+        :icon-right="active ? 'caret-up' : 'caret-down'"
+      />
+    </template>
 
-      <o-dropdown-item v-for="(catalog, index) in catalogs" :key="index" :value="catalog">
-        <div>
-          <div>{{ catalog.name }}</div>
-        </div>
-      </o-dropdown-item>
-    </o-dropdown>
-  </o-field>
+    <o-dropdown-item v-for="(catalog, index) in catalogs" :key="index" :value="catalog">
+      <div>
+        <div>{{ catalog.name }}</div>
+      </div>
+    </o-dropdown-item>
+  </o-dropdown>
 </template>

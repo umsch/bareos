@@ -52,18 +52,14 @@ const columns = ref([
 </script>
 
 <template>
-  <!--  <o-field label="Jobs">-->
   <o-table
     v-model:selected="selected"
     :data="jobs"
-    ,
     :columns="columns"
     :loading="isLoading"
     striped
     narrowed
-  >
-  </o-table>
-  <!--  </o-field>-->
+  ></o-table>
 </template>
 
 <style scoped></style>

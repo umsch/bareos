@@ -8,7 +8,7 @@ import type { Job } from '@/generated/common'
 import { type IRestoreClient, RestoreClient } from '@/generated/restore.client'
 import type { RestoreSession } from '@/generated/restore'
 
-export const useRestoreClientStore = defineStore('config', () => {
+export const useRestoreClientStore = defineStore('restore-client', () => {
   const transport = ref(new GrpcWebFetchTransport({ baseUrl: 'http://127.0.0.1:9090' }))
 
   const configClient = ref<IConfigClient | null>(null)

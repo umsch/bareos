@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import type { Catalog } from '@/generated/config'
 
 import { useRestoreClientStore } from '@/stores/restoreClientStore'

@@ -11,9 +11,6 @@ import type { RestoreSession } from '@/generated/restore'
 const restoreClientStore = useRestoreClientStore()
 const wizzardStore = useWizzardStore()
 
-const jobs = ref<Job[]>([])
-const isJobsLoading = ref(false)
-
 const sessions = ref<RestoreSession[]>([])
 const isSessionsLoading = ref(false)
 

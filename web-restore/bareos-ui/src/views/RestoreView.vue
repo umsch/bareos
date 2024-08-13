@@ -9,6 +9,7 @@ import JobsTable from '@/components/restore/Jobs.vue'
 import type { RestoreSession } from '@/generated/restore'
 import RestoreSessions from '@/components/restore/RestoreSessions.vue'
 import { OField } from '@oruga-ui/oruga-next'
+import FilesBrowser from '@/components/restore/FilesBrowser.vue'
 
 const restoreClientStore = useRestoreClientStore()
 const wizardStore = useWizardStore()
@@ -59,10 +60,11 @@ const updateSessions = async () => {
           </div>
           <footer class="card-footer">
             <o-button
+              class="card-footer-item"
               :disabled="!wizardStore.selectedJob"
               variant="primary"
               :label="
-                'start restore session' +
+                'start new restore session' +
                 (wizardStore.selectedJob ? ' for job ' + wizardStore.selectedJob.jobid : '')
               "
               @click="wizardStore.startRestoreSession"
@@ -80,6 +82,20 @@ const updateSessions = async () => {
             <RestoreSessions />
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <div class="card-header">
+        <p class="card-header-title">restore session</p>
+      </div>
+      <div class="card-content">
+        <FilesBrowser />
+      </div>
+      <div class="card-footer">
+        <o-button variant="primary" class="card-footer-item"> Start </o-button>
       </div>
     </div>
   </section>

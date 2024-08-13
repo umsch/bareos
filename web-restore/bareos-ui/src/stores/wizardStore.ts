@@ -80,6 +80,10 @@ export const useWizardStore = defineStore('wizard', () => {
     selectedSession.value = session!
   }
 
+  watch(selectedSession, async (session) => {
+    console.debug('selected session changed', session)
+  })
+
   return {
     updateCatalogs,
     catalogs,

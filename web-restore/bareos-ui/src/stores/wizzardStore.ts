@@ -20,12 +20,10 @@ export const useWizzardStore = defineStore('wizzard', () => {
     try {
       isSessionsLoading.value = true
       sessions.value = await restoreClient.fetchSessions()
-
     } finally {
       isSessionsLoading.value = false
     }
   }
-
 
   return {
     selectedCatalog,

@@ -9,7 +9,8 @@ const columns = ref([
   {
     field: 'token',
     label: 'session'
-  }])
+  }
+])
 </script>
 
 <template>
@@ -23,6 +24,4 @@ const columns = ref([
   ></o-table>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

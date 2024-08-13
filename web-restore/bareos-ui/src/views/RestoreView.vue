@@ -50,9 +50,7 @@ const updateSessions = async () => {
       <div class="column">
         <div class="card">
           <div class="card-header">
-            <p class="card-header-title">
-              start new restore session
-            </p>
+            <p class="card-header-title">start new restore session</p>
           </div>
           <div class="card-content">
             <o-field label="Catalog:" horizontal>
@@ -65,7 +63,8 @@ const updateSessions = async () => {
 
             <JobsTable
               :catalog_id="wizzardStore.selectedCatalog?.id"
-              @update:selectedJob="setJob" />
+              @update:selectedJob="setJob"
+            />
           </div>
           <footer class="card-footer">
             <o-button
@@ -81,13 +80,10 @@ const updateSessions = async () => {
       <div class="column">
         <div class="card">
           <div class="card-header">
-            <p class="card-header-title">
-              select existing restore session
-            </p>
+            <p class="card-header-title">select existing restore session</p>
           </div>
           <div class="card-content">
-            <RestoreSessions
-            />
+            <RestoreSessions />
           </div>
           <footer class="card-footer">
             <o-button
@@ -98,10 +94,7 @@ const updateSessions = async () => {
             />
           </footer>
         </div>
-
       </div>
-
     </div>
   </section>
-
 </template>

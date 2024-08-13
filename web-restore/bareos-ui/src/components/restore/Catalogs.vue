@@ -9,14 +9,13 @@ const wizardStore = useWizardStore()
 
 const noCatalogs = computed(() => isEmpty(wizardStore.catalogs))
 const noCatalogSelected = computed(() => !wizardStore.selectedCatalog)
-
 </script>
 <template>
   <o-field
     label="Catalog:"
     :variant="!noCatalogs ? 'primary' : 'warning'"
-    :message="!noCatalogs ? undefined : 'no catalogs found'">
-
+    :message="!noCatalogs ? undefined : 'no catalogs found'"
+  >
     <o-dropdown v-model="wizardStore.selectedCatalog">
       <template #trigger="{ active }">
         <o-button
@@ -26,7 +25,11 @@ const noCatalogSelected = computed(() => !wizardStore.selectedCatalog)
         />
       </template>
 
-      <o-dropdown-item v-for="(catalog, index) in wizardStore.catalogs" :key="index" :value="catalog">
+      <o-dropdown-item
+        v-for="(catalog, index) in wizardStore.catalogs"
+        :key="index"
+        :value="catalog"
+      >
         <div>
           <div>{{ catalog.name }}</div>
         </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import {useWizardStore} from '@/stores/wizardStore'
+import { useWizardStore } from '@/stores/wizardStore'
 
 const wizard = useWizardStore()
 

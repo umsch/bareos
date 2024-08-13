@@ -26,7 +26,6 @@ export const useWizardStore = defineStore('wizard', () => {
     }
   }
 
-
   // jobs
   const selectedJob = ref<Job | null>(null)
   const jobs = ref<Job[]>([])
@@ -74,10 +73,7 @@ export const useWizardStore = defineStore('wizard', () => {
     if (!selectedJob.value) {
       throw new Error('No job selected')
     }
-
-
   }
-
 
   return {
     updateCatalogs,

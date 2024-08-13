@@ -53,18 +53,18 @@ const updateSessions = async () => {
             <p class="card-header-title">start new restore session</p>
           </div>
           <div class="card-content">
-              <Catalogs />
+            <Catalogs />
 
-            <JobsTable
-              :catalog_id="wizardStore.selectedCatalog?.id"
-              @update:selectedJob="setJob"
-            />
+            <JobsTable :catalog_id="wizardStore.selectedCatalog?.id" @update:selectedJob="setJob" />
           </div>
           <footer class="card-footer">
             <o-button
               :disabled="!wizardStore.selectedJob"
               variant="primary"
-              :label="'start restore session' + (wizardStore.selectedJob ? ' for job ' + wizardStore.selectedJob.jobid : '')"
+              :label="
+                'start restore session' +
+                (wizardStore.selectedJob ? ' for job ' + wizardStore.selectedJob.jobid : '')
+              "
               @click="wizardStore.startRestoreSession"
             />
           </footer>

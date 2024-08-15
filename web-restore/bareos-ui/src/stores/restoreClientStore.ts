@@ -102,7 +102,10 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   }
 
   const changeDirectory = async (session: RestoreSession, path: string) => {
-    const response = await restoreClient.value?.changeDirectory({ session: session, directory: { path: path } })
+    const response = await restoreClient.value?.changeDirectory({
+      session: session,
+      directory: { path: path }
+    })
     return response?.response.currentDirectory?.path
   }
 

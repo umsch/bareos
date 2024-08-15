@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { useWizardStore } from '@/stores/wizardStore'
 import { computed, ref, watch } from 'vue'
 import { OCheckbox, OTableColumn } from '@oruga-ui/oruga-next'
@@ -40,28 +39,26 @@ const getIcon = (type: FileType) => {
   }
 }
 
-function splitPath(dirPath: string): Array<{ name: string, path: string }> {
-  const parts = dirPath.split('/').filter(Boolean);
-  let currentPath = '';
+function splitPath(dirPath: string): Array<{ name: string; path: string }> {
+  const parts = dirPath.split('/').filter(Boolean)
+  let currentPath = ''
 
   const result = parts.map((part, index) => {
-    currentPath += '/' + part;
+    currentPath += '/' + part
     return {
       name: index === 0 ? 'root' : part,
       path: index === 0 ? '/' : currentPath
-    };
-  });
+    }
+  })
 
-  return [{ name: 'root', path: '/' }, ...result.slice(1)];
+  return [{ name: 'root', path: '/' }, ...result.slice(1)]
 }
-
 
 const breadcrumbs = computed(() => {
   console.debug('wizard.cwd:', wizard.cwd)
   console.debug('wizard.cwd?.split:', splitPath(wizard.cwd || ''))
   return splitPath(wizard.cwd || '')
 })
-
 
 const changeDirectory = (name: string) => {
   console.debug('changeDirectory:', name)
@@ -74,17 +71,16 @@ const isRowSelectable = (row: any) => {
   return row.type !== FileType.FILE
 }
 
-const selected = ref<File>();
+const selected = ref<File>()
 
 watch(selected, (value) => {
   console.debug('selected:', value)
   wizard.changeDirectory(value?.name ?? '')
 })
 
-const updateMarking = (value: Boolean, row : File) => {
+const updateMarking = (value: Boolean, row: File) => {
   console.log('updateMarking:', value, row)
 }
-
 </script>
 
 <template>
@@ -92,7 +88,9 @@ const updateMarking = (value: Boolean, row : File) => {
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <template v-for="(breadcrumb, index) in breadcrumbs" :key="index">
-        <li :class="{ 'is-active': index === breadcrumbs!.length - 1 }"><a href="#" @click="changeDirectory(breadcrumb.path)">{{ breadcrumb.name }}</a></li>
+        <li :class="{ 'is-active': index === breadcrumbs!.length - 1 }">
+          <a href="#" @click="changeDirectory(breadcrumb.path)">{{ breadcrumb.name }}</a>
+        </li>
       </template>
     </ul>
   </nav>
@@ -103,11 +101,12 @@ const updateMarking = (value: Boolean, row : File) => {
     paginated
     per-page="20"
     :isRowSelectable="isRowSelectable"
-    v-model:selected="selected">
-    <o-table-column field="marked" label="Marked" width="40" v-slot="props" >
-      <o-checkbox v-model="props.row.marked"  @input="value => updateMarking(value, props.row)"/>
+    v-model:selected="selected"
+  >
+    <o-table-column field="marked" label="Marked" width="40" v-slot="props">
+      <o-checkbox v-model="props.row.marked" @input="(value) => updateMarking(value, props.row)" />
     </o-table-column>
-    <o-table-column field="type" label="Type" width="40" v-slot="props" >
+    <o-table-column field="type" label="Type" width="40" v-slot="props">
       <o-icon :icon="getIcon(props.row.type)"></o-icon>
     </o-table-column>
     <o-table-column field="name" label="Name" v-slot="props" searchable>

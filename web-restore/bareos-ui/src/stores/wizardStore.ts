@@ -104,6 +104,14 @@ export const useWizardStore = defineStore('wizard', () => {
     files.value = await restoreClient.fetchFiles(selectedSession.value)
   }
 
+  const updateMarkedStatus = async (file: File) => {
+    if (!selectedSession.value) {
+      throw new Error('No session selected')
+    }
+
+    await restoreClient.changeMarkedStatus(selectedSession.value, file, file.marked)
+  }
+
   return {
     updateCatalogs,
     catalogs,
@@ -120,6 +128,7 @@ export const useWizardStore = defineStore('wizard', () => {
     startRestoreSession,
     files,
     cwd,
-    changeDirectory
+    changeDirectory,
+    updateMarkedStatus
   }
 })

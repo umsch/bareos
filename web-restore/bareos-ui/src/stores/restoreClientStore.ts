@@ -6,7 +6,7 @@ import type { Catalog, CatalogId } from '@/generated/config'
 import { DatabaseClient, type IDatabaseClient } from '@/generated/database.client'
 import type { Job } from '@/generated/common'
 import { type IRestoreClient, RestoreClient } from '@/generated/restore.client'
-import type { RestoreSession, File } from '@/generated/restore'
+import { type RestoreSession, type File, MarkAction } from '@/generated/restore'
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
   const transport = ref(new GrpcWebFetchTransport({ baseUrl: 'http://127.0.0.1:9090' }))
@@ -109,6 +109,14 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return response?.response.currentDirectory?.path
   }
 
+  const changeMarkedStatus = async (session: RestoreSession, file: File, mark: boolean) => {
+    const response = await restoreClient.value?.changeMarkedStatus({
+      session: session,
+      action: mark ? MarkAction.MARK : MarkAction.UNMARK,
+      filter: { regex: file.name }
+    })
+  }
+
   return {
     transport,
     catalogs,
@@ -118,6 +126,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     fetchSessions,
     createSession,
     fetchFiles,
-    changeDirectory
+    changeDirectory,
+    changeMarkedStatus
   }
 })

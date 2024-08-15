@@ -2,7 +2,7 @@
 import { useWizardStore } from '@/stores/wizardStore'
 import { computed, ref, watch } from 'vue'
 import { OCheckbox, OTableColumn } from '@oruga-ui/oruga-next'
-import { FileType } from '@/generated/restore'
+import { FileType, File } from '@/generated/restore'
 
 const wizard = useWizardStore()
 const columns = ref([
@@ -78,8 +78,9 @@ watch(selected, (value) => {
   wizard.changeDirectory(value?.name ?? '')
 })
 
-const updateMarking = (value: Boolean, row: File) => {
-  console.log('updateMarking:', value, row)
+const updateMarkedStatus = async (value: boolean, file: File) => {
+  console.log('updateMarking:', value, file)
+  await wizard.updateMarkedStatus(file)
 }
 </script>
 
@@ -104,7 +105,10 @@ const updateMarking = (value: Boolean, row: File) => {
     v-model:selected="selected"
   >
     <o-table-column field="marked" label="Marked" width="40" v-slot="props">
-      <o-checkbox v-model="props.row.marked" @input="(value) => updateMarking(value, props.row)" />
+      <o-checkbox
+        v-model="props.row.marked"
+        @update:modelValue="(value) => updateMarkedStatus(value as boolean, props.row)"
+      />
     </o-table-column>
     <o-table-column field="type" label="Type" width="40" v-slot="props">
       <o-icon :icon="getIcon(props.row.type)"></o-icon>

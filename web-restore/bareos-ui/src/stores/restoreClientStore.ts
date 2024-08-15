@@ -6,7 +6,7 @@ import type { Catalog, CatalogId } from '@/generated/config'
 import { DatabaseClient, type IDatabaseClient } from '@/generated/database.client'
 import type { Job } from '@/generated/common'
 import { type IRestoreClient, RestoreClient } from '@/generated/restore.client'
-import type { RestoreSession } from '@/generated/restore'
+import type { RestoreSession, File } from '@/generated/restore'
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
   const transport = ref(new GrpcWebFetchTransport({ baseUrl: 'http://127.0.0.1:9090' }))
@@ -85,6 +85,27 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return response?.response.session
   }
 
+  const fetchFiles = async (session: RestoreSession) => {
+    console.debug('fetching files for session', session)
+    const files: File[] = []
+    try {
+      const call = restoreClient.value?.listFiles({ session: session })
+      console.debug('call', call)
+      for await (const file of call?.responses!) {
+        console.debug('file', file)
+        files.push(file)
+      }
+    } catch (e) {
+      console.error('error', e)
+    }
+    return files
+  }
+
+  const changeDirectory = async (session: RestoreSession, path: string) => {
+    const response = await restoreClient.value?.changeDirectory({ session: session, directory: { path: path } })
+    return response?.response.currentDirectory?.path
+  }
+
   return {
     transport,
     catalogs,
@@ -92,6 +113,8 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     fetchClients,
     fetchJobs,
     fetchSessions,
-    createSession
+    createSession,
+    fetchFiles,
+    changeDirectory
   }
 })

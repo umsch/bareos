@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import type { Catalog, CatalogId } from '@/generated/config'
 import { onMounted, ref, watch } from 'vue'
 import type { Client, Job } from '@/generated/common'
-import type { RestoreSession } from '@/generated/restore'
+import type { RestoreSession, File } from '@/generated/restore'
 import { useRestoreClientStore } from '@/stores/restoreClientStore'
 
 export const useWizardStore = defineStore('wizard', () => {
@@ -80,9 +80,29 @@ export const useWizardStore = defineStore('wizard', () => {
     selectedSession.value = session!
   }
 
+  const files = ref<File[]>([])
+  const cwd = ref<string | undefined>('')
+
   watch(selectedSession, async (session) => {
     console.debug('selected session changed', session)
+
+    if (!session) {
+      return
+    }
+
+    cwd.value = await restoreClient.changeDirectory(session, '.')
+
+    files.value = await restoreClient.fetchFiles(session)
   })
+
+  const changeDirectory = async (path: string) => {
+    if (!selectedSession.value) {
+      throw new Error('No session selected')
+    }
+
+    cwd.value = await restoreClient.changeDirectory(selectedSession.value, path)
+    files.value = await restoreClient.fetchFiles(selectedSession.value)
+  }
 
   return {
     updateCatalogs,
@@ -97,6 +117,9 @@ export const useWizardStore = defineStore('wizard', () => {
     isSessionsLoading,
     sessions,
     selectedSession,
-    startRestoreSession
+    startRestoreSession,
+    files,
+    cwd,
+    changeDirectory
   }
 })

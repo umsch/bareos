@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useWizardStore } from '@/stores/wizardStore'
-import { ODropdown, OField } from '@oruga-ui/oruga-next'
+import { OButton, ODropdown, OField } from '@oruga-ui/oruga-next'
 import { isEmpty } from 'lodash'
 import { computed } from 'vue'
 
@@ -38,6 +38,11 @@ const noSessions = computed(() => isEmpty(wizardStore.sessions))
         </div>
       </o-dropdown-item>
     </o-dropdown>
+    <o-button
+      icon-left="trash"
+      :disabled="!wizardStore.selectedSession"
+      @click="wizardStore.deleteRestoreSession"
+    ></o-button>
   </o-field>
 </template>
 

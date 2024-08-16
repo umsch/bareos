@@ -4,7 +4,7 @@ import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import { ConfigClient, type IConfigClient } from '@/generated/config.client'
 import type { Catalog, CatalogId } from '@/generated/config'
 import { DatabaseClient, type IDatabaseClient } from '@/generated/database.client'
-import type { Job } from '@/generated/common'
+import type { Client, Job } from '@/generated/common'
 import { type IRestoreClient, RestoreClient } from '@/generated/restore.client'
 import { type RestoreSession, type File, MarkAction } from '@/generated/restore'
 
@@ -12,11 +12,10 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   const transport = ref(new GrpcWebFetchTransport({ baseUrl: 'http://127.0.0.1:9090' }))
 
   const configClient = ref<IConfigClient | null>(null)
-  const catalogs = ref<Catalog[]>([])
-
   const databaseClient = ref<IDatabaseClient | null>(null)
-
   const restoreClient = ref<IRestoreClient | null>(null)
+
+  const catalogs = ref<Catalog[]>([])
 
   onBeforeMount(async () => {
     console.log('Initializing clients')
@@ -52,12 +51,17 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   const fetchClients = async (catalog: Catalog) => {
     if (!configClient.value) {
       console.error('configClient not initialized')
-      return
+      return []
     }
+
+    const clients: Client[] = []
 
     const call = databaseClient.value?.listClients({ catalog: catalog.id })
     for await (const client of call?.responses!) {
+      clients.push(client.client!)
     }
+
+    return clients
   }
 
   const fetchJobs = async (catalog_id: CatalogId) => {
@@ -85,6 +89,10 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return response?.response.session
   }
 
+  const deleteSession = async (session: RestoreSession) => {
+    await restoreClient.value?.cancel({ session })
+  }
+
   const fetchFiles = async (session: RestoreSession) => {
     console.debug('fetching files for session', session)
     const files: File[] = []
@@ -110,11 +118,15 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   }
 
   const changeMarkedStatus = async (session: RestoreSession, file: File, mark: boolean) => {
+    console.debug('changing marked status: ', file, mark)
+
     const response = await restoreClient.value?.changeMarkedStatus({
       session: session,
       action: mark ? MarkAction.MARK : MarkAction.UNMARK,
       filter: { regex: file.name }
     })
+
+    console.debug('number of changed files: ', response?.response.affectedCount)
   }
 
   return {
@@ -125,6 +137,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     fetchJobs,
     fetchSessions,
     createSession,
+    deleteSession,
     fetchFiles,
     changeDirectory,
     changeMarkedStatus

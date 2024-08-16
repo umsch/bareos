@@ -57,7 +57,15 @@ export const useWizardStore = defineStore('wizard', () => {
   }
 
   // client
+  const clients = ref<Client[]>([])
   const selectedClient = ref<Client | null>(null)
+  const updateClients = async (catalog: Catalog) => {
+    if (!selectedCatalog.value) {
+      throw new Error('No catalog selected')
+    }
+
+    clients.value = await restoreClient.fetchClients(catalog)
+  }
 
   // logics
 
@@ -65,6 +73,7 @@ export const useWizardStore = defineStore('wizard', () => {
     console.debug('selected catalog changed', catalog)
     if (catalog?.id) {
       await updateJobs(catalog.id)
+      await updateClients(catalog)
     }
   })
 
@@ -80,19 +89,29 @@ export const useWizardStore = defineStore('wizard', () => {
     selectedSession.value = session!
   }
 
+  const deleteRestoreSession = async () => {
+    if (!selectedSession.value) {
+      return
+    }
+
+    await restoreClient.deleteSession(selectedSession.value)
+    selectedSession.value = null
+    await updateSessions()
+  }
+
   const files = ref<File[]>([])
   const cwd = ref<string | undefined>('')
 
   watch(selectedSession, async (session) => {
     console.debug('selected session changed', session)
 
-    if (!session) {
-      return
+    if (session) {
+      cwd.value = await restoreClient.changeDirectory(session, '.')
+      files.value = await restoreClient.fetchFiles(session)
+    } else {
+      cwd.value = undefined
+      files.value = []
     }
-
-    cwd.value = await restoreClient.changeDirectory(session, '.')
-
-    files.value = await restoreClient.fetchFiles(session)
   })
 
   const changeDirectory = async (path: string) => {
@@ -116,6 +135,7 @@ export const useWizardStore = defineStore('wizard', () => {
     updateCatalogs,
     catalogs,
     selectedCatalog,
+    clients,
     selectedClient,
     updateJobs,
     isJobsLoading,
@@ -126,6 +146,7 @@ export const useWizardStore = defineStore('wizard', () => {
     sessions,
     selectedSession,
     startRestoreSession,
+    deleteRestoreSession,
     files,
     cwd,
     changeDirectory,

@@ -8,8 +8,8 @@ import { Job } from '@/generated/common'
 import JobsTable from '@/components/restore/Jobs.vue'
 import type { RestoreSession } from '@/generated/restore'
 import RestoreSessions from '@/components/restore/RestoreSessions.vue'
-import { OField } from '@oruga-ui/oruga-next'
 import FilesBrowser from '@/components/restore/FilesBrowser.vue'
+import Clients from '@/components/restore/Clients.vue'
 
 const restoreClientStore = useRestoreClientStore()
 const wizardStore = useWizardStore()
@@ -21,18 +21,9 @@ onMounted(async () => {
   await updateSessions()
 })
 
-const setCatalog = async (catalog: Catalog) => {
-  wizardStore.selectedCatalog = catalog
-}
-
 const setJob = async (job: Job) => {
   wizardStore.selectedJob = job
   console.log('selectedJob', job.jobid)
-}
-
-const setSession = async (session: RestoreSession) => {
-  wizardStore.selectedSession = session
-  console.log('selectedSession', session.token)
 }
 
 const updateSessions = async () => {
@@ -95,7 +86,14 @@ const updateSessions = async () => {
         <FilesBrowser />
       </div>
       <div class="card-footer">
-        <o-button variant="primary" class="card-footer-item"> Start </o-button>
+        <Clients />
+        <o-button
+          variant="primary"
+          class="card-footer-item"
+          :disabled="!wizardStore.selectedClient"
+        >
+          Start
+        </o-button>
       </div>
     </div>
   </section>

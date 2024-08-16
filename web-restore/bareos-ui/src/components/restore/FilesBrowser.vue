@@ -40,6 +40,10 @@ const getIcon = (type: FileType) => {
 }
 
 function splitPath(dirPath: string): Array<{ name: string; path: string }> {
+  if (!dirPath || dirPath.length === 0) {
+    return []
+  }
+
   const parts = dirPath.split('/').filter(Boolean)
   let currentPath = ''
 
@@ -85,7 +89,6 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
 </script>
 
 <template>
-  marked: {{ checkedFiles }}
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <template v-for="(breadcrumb, index) in breadcrumbs" :key="index">
@@ -103,11 +106,13 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
     per-page="20"
     :isRowSelectable="isRowSelectable"
     v-model:selected="selected"
+    narrowed
   >
     <o-table-column field="marked" label="Marked" width="40" v-slot="props">
       <o-checkbox
         v-model="props.row.marked"
         @update:modelValue="(value) => updateMarkedStatus(value as boolean, props.row)"
+        size="normal"
       />
     </o-table-column>
     <o-table-column field="type" label="Type" width="40" v-slot="props">

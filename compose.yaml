@@ -9,6 +9,8 @@ services:
     container_name: bareos
     hostname: bareos
     privileged: true
+    ports:
+      - "30036:30036"
     networks:
       - envoy_network
     volumes:

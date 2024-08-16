@@ -47,7 +47,7 @@ const updateSessions = async () => {
           <div class="card-content">
             <Catalogs />
 
-            <JobsTable :catalog_id="wizardStore.selectedCatalog?.id" @update:selectedJob="setJob" />
+            <JobsTable v-if="wizardStore.selectedCatalog" :catalog_id="wizardStore.selectedCatalog?.id" @update:selectedJob="setJob" />
           </div>
           <footer class="card-footer">
             <o-button
@@ -58,7 +58,7 @@ const updateSessions = async () => {
                 'start new restore session' +
                 (wizardStore.selectedJob ? ' for job ' + wizardStore.selectedJob.jobid : '')
               "
-              @click="wizardStore.startRestoreSession"
+              @click="wizardStore.createRestoreSession"
             />
           </footer>
         </div>
@@ -91,6 +91,7 @@ const updateSessions = async () => {
           variant="primary"
           class="card-footer-item"
           :disabled="!wizardStore.selectedClient"
+          @click="wizardStore.runRestoreSession"
         >
           Start
         </o-button>

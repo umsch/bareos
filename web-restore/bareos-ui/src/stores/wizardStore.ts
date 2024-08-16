@@ -4,6 +4,7 @@ import { onMounted, ref, watch } from 'vue'
 import type { Client, Job } from '@/generated/common'
 import type { RestoreSession, File } from '@/generated/restore'
 import { useRestoreClientStore } from '@/stores/restoreClientStore'
+import { first, isEmpty } from 'lodash'
 
 export const useWizardStore = defineStore('wizard', () => {
   const restoreClient = useRestoreClientStore()
@@ -11,6 +12,10 @@ export const useWizardStore = defineStore('wizard', () => {
   onMounted(async () => {
     await updateCatalogs()
     await updateSessions()
+
+    if (!selectedCatalog.value && !isEmpty(catalogs.value)) {
+      selectedCatalog.value = first(catalogs.value)!
+    }
   })
 
   // clients
@@ -77,7 +82,7 @@ export const useWizardStore = defineStore('wizard', () => {
     }
   })
 
-  const startRestoreSession = async () => {
+  const createRestoreSession = async () => {
     console.debug('starting restore session', selectedJob.value?.jobid)
 
     if (!selectedJob.value) {
@@ -87,6 +92,18 @@ export const useWizardStore = defineStore('wizard', () => {
     const session = await restoreClient.createSession(selectedJob.value)
     await updateSessions()
     selectedSession.value = session!
+  }
+
+  const runRestoreSession = async () => {
+    if (!selectedClient.value) {
+      throw new Error('No client selected')
+    }
+
+    if (!selectedSession.value) {
+      throw new Error('No session selected')
+    }
+
+    await restoreClient.runSession(selectedSession.value!, selectedClient.value)
   }
 
   const deleteRestoreSession = async () => {
@@ -145,7 +162,8 @@ export const useWizardStore = defineStore('wizard', () => {
     isSessionsLoading,
     sessions,
     selectedSession,
-    startRestoreSession,
+    createRestoreSession,
+    runRestoreSession,
     deleteRestoreSession,
     files,
     cwd,

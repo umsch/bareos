@@ -93,6 +93,23 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     await restoreClient.value?.cancel({ session })
   }
 
+  const runSession = async (session: RestoreSession, client: Client) => {
+    console.debug("running session:", session, client)
+    try {
+      await restoreClient.value?.run({
+        session,
+        restoreOptions: {
+          restoreClient: client
+        }
+      })
+    }
+    catch (e) {
+      console.error(e)
+    }
+
+    console.debug("session end")
+  }
+
   const fetchFiles = async (session: RestoreSession) => {
     console.debug('fetching files for session', session)
     const files: File[] = []
@@ -138,6 +155,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     fetchSessions,
     createSession,
     deleteSession,
+    runSession,
     fetchFiles,
     changeDirectory,
     changeMarkedStatus

@@ -60,7 +60,6 @@ function splitPath(dirPath: string): Array<{ name: string; path: string }> {
 
 const breadcrumbs = computed(() => {
   console.debug('wizard.cwd:', wizard.cwd)
-  console.debug('wizard.cwd?.split:', splitPath(wizard.cwd || ''))
   return splitPath(wizard.cwd || '')
 })
 

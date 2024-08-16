@@ -35,7 +35,7 @@ set -u
 # They are always set to the local test directory.
 export BAREOS_WEBUI_CONFDIR=${current_test_directory}/etc/bareos-webui/
 
-BAREOS_DIRECTOR_ADDRESS="127.0.0.1"
+BAREOS_DIRECTOR_ADDRESS="0.0.0.0"
 
 if ! [ -d "${BAREOS_WEBUI_CONFDIR}" ]; then
     mkdir -p "${BAREOS_WEBUI_CONFDIR}"

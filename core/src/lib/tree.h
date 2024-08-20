@@ -29,6 +29,7 @@
 #define BAREOS_LIB_TREE_H_
 
 #include <vector>
+#include "include/baconfig.h"
 #include "lib/htable.h"
 #include "lib/rblist.h"
 
@@ -71,6 +72,7 @@ struct s_tree_node : rblink {
       , soft_link{false}
       , inserted{false}
       , loaded{false}
+      , in_use{false}
   {
   }
 
@@ -88,6 +90,7 @@ struct s_tree_node : rblink {
   unsigned int soft_link : 1;   /* set if is soft link */
   unsigned int inserted : 1;    /* set when node newly inserted */
   unsigned int loaded : 1;      /* set when the dir is in the tree */
+  unsigned int in_use : 1;      /* set when the dir is in the tree */
   uint32_t JobId{};             /* JobId */
 
   struct s_tree_node* parent{};
@@ -121,6 +124,7 @@ struct node_allocator {
 
   static constexpr size_t start_count = 1024;
 
+  // this is an index into the current array
   size_t next_slot{0};
 
   // the pages have sizes:

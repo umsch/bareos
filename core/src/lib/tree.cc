@@ -74,7 +74,7 @@ s_tree_node* node_allocator::get(size_t index)
 
   auto* ptr = &pages[page_index][offset];
 
-  if (ptr->fname == nullptr) {
+  if (!ptr->in_use) {
     // index is ok, but not allocated
     return nullptr;
   }
@@ -109,48 +109,47 @@ size_t node_allocator::indexof(s_tree_node* n)
 
 s_tree_node* node_allocator::allocate()
 {
+  s_tree_node* allocated = nullptr;
   if (freelist) {
-    auto* allocated = freelist;
+    allocated = freelist;
     freelist = allocated->next;
 
+    // zero out the memory
     *allocated = {};
+  } else {
+    // precondition: we can always allocate the next node in the last
+    //               page, and pages is never empty
 
-    return allocated;
+    ASSERT(pages.size() > 0);
+    size_t current_page_size = page_size(pages.size() - 1);
+    ASSERT(next_slot < current_page_size);
+
+    auto& last = pages.back();
+
+    allocated = &last[next_slot++];
+
+    ASSERT(!allocated->in_use);
+
+    // we are using allocated for the first time, so we do not need to zero it
+    // out as it should still be zero
+    if (next_slot == current_page_size) {
+      // we need to allocate the next page already, so as to keep the
+      // preconditions true
+
+      size_t next_page_size = page_size(pages.size());
+      pages.emplace_back(std::make_unique<s_tree_node[]>(next_page_size));
+      next_slot = 0;
+    }
   }
 
-  // precondition: we can always allocate the next node in the last
-  //               page, and pages is never empty
-
-  ASSERT(pages.size() > 0);
-
-  auto& last = pages.back();
-
-  auto* allocated = &last[next_slot++];
-  // we are using allocated for the first time, so we do not need to zero it out
-  // as it should still be zero
-
-
-  size_t current_page_size = page_size(pages.size() - 1);
-
-  ASSERT(next_slot <= current_page_size);
-
-  if (next_slot == current_page_size) {
-    // we need to allocate the next page already, so as to keep the precondition
-    // true
-
-    size_t next_page_size = page_size(pages.size());
-    pages.emplace_back(std::make_unique<s_tree_node[]>(next_page_size));
-    next_slot = 0;
-  }
-
+  allocated->in_use = true;
   return allocated;
 }
 
 void node_allocator::free(s_tree_node* n)
 {
   n->next = freelist;
-  n->fname = nullptr;  // as no tree node has fname actually be 0,
-                       // we can use this to see if a node is allocated
+  n->in_use = false;
   freelist = n;
 }
 

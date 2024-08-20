@@ -655,6 +655,33 @@ void PluginFinishRestoreSession(restore_session_handle* handle)
 //                         std::string{path.substr(pos + 1)});
 // }
 
+bool can_recurse(TREE_NODE* node)
+{
+  // we can recurse into all non files, as well as into softlinks with children.
+  if (node->type != TN_FILE) { return true; }
+  if (node->soft_link) { return node->child.size() > 0; }
+  return false;
+}
+
+void UpdateMarkStatusRecursively(TREE_NODE* node, bool mark)
+{
+  std::vector<TREE_NODE*> stack;
+  if (!can_recurse(node)) { return; }
+
+  stack.push_back(node);
+
+  while (!stack.empty()) {
+    TREE_NODE* parent = stack.back();
+    stack.pop_back();
+    TREE_NODE* child = nullptr;
+    while ((child = static_cast<TREE_NODE*>(node->child.next(child)))) {
+      child->extract = mark;
+
+      if (can_recurse(child)) { stack.push_back(child); }
+    }
+  }
+}
+
 bool PluginMarkUnmark(restore_session_handle* handle,
                       size_t index,
                       bool mark,
@@ -672,25 +699,10 @@ bool PluginMarkUnmark(restore_session_handle* handle,
     return false;
   }
 
-  if (recursive) {
-    handle->error = "recursive is not implemented";
-    return false;
-  }
 
-  if (node->extract != mark) {
-    node->extract = mark;
+  if (node->extract != mark) { node->extract = mark; }
 
-    // file_status status = {
-    //   .id = index,
-    //   .name = node->fname,
-    //   .type = file_type(static_cast<FILETYPES>(node->type)),
-    //   .marked = mark,
-    // };
-    // if (!(*cb)(user, status)) {
-    //   handle->error = "user error";
-    //   return false;
-    // }
-  }
+  if (recursive) { UpdateMarkStatusRecursively(node, mark); }
 
 
   return true;

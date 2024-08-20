@@ -61,7 +61,7 @@ s_tree_node* node_allocator::get(size_t index)
   // we do not handle the root here
   if (index == 0) { return nullptr; }
 
-  size_t page_index = flog2(index);
+  size_t page_index = flog2(index / start_count);
 
   // its not a real index
   if (pages.size() <= page_index) { return nullptr; }
@@ -71,6 +71,8 @@ s_tree_node* node_allocator::get(size_t index)
   ASSERT(index > cum_size);
 
   auto offset = index - 1 - cum_size;
+
+  ASSERT(offset < page_size(page_index));
 
   auto* ptr = &pages[page_index][offset];
 
@@ -92,10 +94,10 @@ size_t node_allocator::indexof(s_tree_node* n)
     size_t page_index = pages.size() - 1 - i;
 
     uintptr_t start_ptr = reinterpret_cast<uintptr_t>(pages[page_index].get());
-    uintptr_t end_ptr = start_ptr + page_size(page_index);
+    uintptr_t end_ptr = start_ptr + sizeof(pages[0][0]) * page_size(page_index);
 
     if (start_ptr <= address && address < end_ptr) {
-      auto offset = address - start_ptr;
+      size_t offset = n - pages[page_index].get();
 
       // the root node has index 0, so we always need to add 1 here
       return 1 + offset + cum_page_size_until(page_index);
@@ -561,4 +563,22 @@ TREE_NODE* tree_relcwd(char* path, TREE_ROOT* root, TREE_NODE* node)
 
   // Check the next segment if any
   return tree_relcwd(p + 1, root, cd);
+}
+
+size_t NodeIndex(TREE_ROOT* root, TREE_NODE* node)
+{
+  if (node == root) {
+    return 0;
+  } else {
+    return root->alloc.indexof(node);
+  }
+}
+
+s_tree_node* NodeWithIndex(TREE_ROOT* root, size_t index)
+{
+  if (index == 0) {
+    return root;
+  } else {
+    return root->alloc.get(index);
+  }
 }

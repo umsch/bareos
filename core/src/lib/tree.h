@@ -206,4 +206,8 @@ void TreeRemoveNode(TREE_ROOT* root, TREE_NODE* node);
 #define FirstTreeNode(r) (r)->first
 #define NextTreeNode(n) (n)->next
 
+
+size_t NodeIndex(TREE_ROOT* root, TREE_NODE* node);
+s_tree_node* NodeWithIndex(TREE_ROOT* root, size_t index);
+
 #endif  // BAREOS_LIB_TREE_H_

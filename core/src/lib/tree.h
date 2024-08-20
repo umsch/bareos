@@ -2,7 +2,7 @@
    BAREOS® - Backup Archiving REcovery Open Sourced
 
    Copyright (C) 2002-2009 Free Software Foundation Europe e.V.
-   Copyright (C) 2016-2023 Bareos GmbH & Co. KG
+   Copyright (C) 2016-2024 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -28,6 +28,7 @@
 #ifndef BAREOS_LIB_TREE_H_
 #define BAREOS_LIB_TREE_H_
 
+#include <vector>
 #include "lib/htable.h"
 #include "lib/rblist.h"
 
@@ -96,6 +97,46 @@ struct s_tree_node {
 };
 typedef struct s_tree_node TREE_NODE;
 
+
+struct node_allocator {
+  s_tree_node* allocate();
+  void free(s_tree_node* n);
+
+  node_allocator()
+  {
+    pages.emplace_back(std::make_unique<s_tree_node[]>(start_count));
+  }
+
+  size_t indexof(s_tree_node* n);
+  s_tree_node* get(size_t index);
+
+ private:
+  s_tree_node* freelist;
+
+  static constexpr size_t start_count = 1024;
+
+  size_t next_slot{0};
+
+  // the pages have sizes:
+  // X << 0, X << 1, X << 2, ...
+  // where X = start_count
+  std::vector<std::unique_ptr<s_tree_node[]>> pages;
+
+  static constexpr size_t page_size(size_t index)
+  {
+    size_t doubling_factor = index;
+    return start_count << doubling_factor;
+  }
+
+  static constexpr size_t cum_page_size_until(size_t index)
+  {
+    // computes the cumulative page size of page indices < index
+    if (index == 0) { return 0; }
+
+    return start_count << (index - 1);
+  }
+};
+
 /* hardlink hashtable entry */
 struct s_hl_entry {
   uint64_t key;
@@ -145,6 +186,9 @@ struct s_tree_root {
   char* cached_path{};         /* cached current path */
   TREE_NODE* cached_parent{};  /* cached parent for above path */
   HardlinkTable hardlinks;     /* references to first occurence of hardlinks */
+
+  size_t current_node_id{};
+  node_allocator alloc;
 };
 typedef struct s_tree_root TREE_ROOT;
 

@@ -489,6 +489,7 @@ bool PluginListFiles(restore_session_handle* handle,
 
   while ((child = (TREE_NODE*)state->current->child.next(child))) {
     file_status status = {
+        .id = NodeIndex(state->root, child),
         .name = child->fname,
         .type = file_type(static_cast<FILETYPES>(child->type)),
         .marked = child->extract || child->extract_dir,
@@ -640,56 +641,57 @@ void PluginFinishRestoreSession(restore_session_handle* handle)
   delete handle;
 }
 
-static std::pair<std::string, std::string> split_path_into_dir_file(
-    std::string_view path)
-{
-  auto pos = path.find_last_of('/');
-  if (pos == path.npos) {
-    return std::make_pair(std::string{}, std::string{path});
-  } else if (pos == path.size()) {
-    return std::make_pair(std::string{path}, std::string{});
-  }
+// static std::pair<std::string, std::string> split_path_into_dir_file(
+//     std::string_view path)
+// {
+//   auto pos = path.find_last_of('/');
+//   if (pos == path.npos) {
+//     return std::make_pair(std::string{}, std::string{path});
+//   } else if (pos == path.size()) {
+//     return std::make_pair(std::string{path}, std::string{});
+//   }
 
-  return std::make_pair(std::string{path.substr(0, pos + 1)},
-                        std::string{path.substr(pos + 1)});
-}
+//   return std::make_pair(std::string{path.substr(0, pos + 1)},
+//                         std::string{path.substr(pos + 1)});
+// }
 
 bool PluginMarkUnmark(restore_session_handle* handle,
-                      const char* regex,
+                      size_t index,
                       bool mark,
-                      file_callback* cb,
-                      void* user)
+                      bool recursive)
 {
   auto* state = std::get_if<select_tree_state>(&handle->state);
   if (!state) {
     handle->error = "Wrong state";
     return false;
   }
+  TREE_NODE* node = NodeWithIndex(state->root, index);
 
-  auto [dir, file] = split_path_into_dir_file(regex);
-
-  if (dir.size()) {
-    handle->error = "Unimplemented";
+  if (!node) {
+    handle->error = "invalid index";
     return false;
   }
 
-  TREE_NODE* child = nullptr;
-
-  while ((child = (TREE_NODE*)state->current->child.next(child))) {
-    if (child->extract != mark) {
-      if (!fnmatch(file.c_str(), child->fname, 0)) { continue; }
-      child->extract = mark;
-      file_status status = {
-          .name = child->fname,
-          .type = file_type(static_cast<FILETYPES>(child->type)),
-          .marked = mark,
-      };
-      if (!(*cb)(user, status)) {
-        handle->error = "user error";
-        return false;
-      }
-    }
+  if (recursive) {
+    handle->error = "recursive is not implemented";
+    return false;
   }
+
+  if (node->extract != mark) {
+    node->extract = mark;
+
+    // file_status status = {
+    //   .id = index,
+    //   .name = node->fname,
+    //   .type = file_type(static_cast<FILETYPES>(node->type)),
+    //   .marked = mark,
+    // };
+    // if (!(*cb)(user, status)) {
+    //   handle->error = "user error";
+    //   return false;
+    // }
+  }
+
 
   return true;
 }

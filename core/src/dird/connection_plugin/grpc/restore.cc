@@ -478,6 +478,7 @@ class RestoreImpl : public Restore::Service {
 
       auto lambda = [response](file_status status) -> bool {
         File f;
+        f.mutable_id()->set_value(status.id);
         f.set_name(status.name);
         f.set_marked(status.marked);
         f.set_type(bareos_to_grpc_ft(status.type));
@@ -506,14 +507,8 @@ class RestoreImpl : public Restore::Service {
       auto handle = get_session(request->session());
 
       auto action = request->action();
-      auto& regex = request->filter();
-
-      size_t num_affected = 0;
-
-      auto lambda = [&num_affected](file_status) -> bool {
-        num_affected += 1;
-        return true;
-      };
+      auto id = request->affected_id();
+      auto recursive = request->recursive();
 
       bool mark = [&]() {
         switch (action) {
@@ -527,14 +522,13 @@ class RestoreImpl : public Restore::Service {
         }
       }();
 
-      if (!cap.mark_unmark(handle.Bareos(), regex.regex().c_str(), mark,
-                           c_callback<decltype(lambda)>, &lambda)) {
+      if (!cap.mark_unmark(handle.Bareos(), id.value(), mark, recursive)) {
         const char* error = cap.error_string(handle.Bareos());
         return Status(grpc::StatusCode::UNKNOWN,
                       error ? error : "Internal error.");
       }
 
-      response->set_affected_count(num_affected);
+      (void)response;
       return Status::OK;
     } catch (const grpc_error& err) {
       return err.status;

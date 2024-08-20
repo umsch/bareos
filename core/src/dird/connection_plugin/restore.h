@@ -43,6 +43,7 @@ enum bareos_file_type
 };
 
 struct file_status {
+  size_t id;
   const char* name;
   bareos_file_type type;
   bool marked;
@@ -78,10 +79,9 @@ typedef bool(ListFiles_t)(struct restore_session_handle*,
 typedef bool(ChangeDirectory_t)(struct restore_session_handle*,
                                 const char* dir);
 typedef bool(MarkUnmark_t)(struct restore_session_handle*,
-                           const char* regex,
+                           size_t index,
                            bool mark,
-                           file_callback* cb,
-                           void* user);
+                           bool recursive);
 typedef const char*(CurrentDirectory_t)(struct restore_session_handle*);
 
 typedef bool(key_value_handler)(void* user, const char* key, const char* value);

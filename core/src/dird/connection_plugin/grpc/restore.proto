@@ -105,12 +105,13 @@ message ChangeMarkedRequest {
   MarkAction action = 2;
 
   // mark/unmark everything under the current directory that matches the regex
-  Regex filter = 3;
+  FileId affected_id = 3;
+  // if set and the file is a directory, then we recursively mark all
+  // files inside that directory
+  bool recursive = 4;
 }
 
 message ChangeMarkedResponse {
-  // returns how many states were changed
-  int64 affected_count = 1;
 }
 
 message ListFilesRequest {
@@ -124,7 +125,12 @@ enum FileType {
   DIRECTORY_NOT_BACKED_UP = 3;
 };
 
+message FileId {
+  uint64 value = 1;
+};
+
 message File {
+  FileId id = 4;
   string name = 1;
   bool marked = 2;
   FileType type = 3;

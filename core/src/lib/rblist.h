@@ -2,7 +2,7 @@
    BAREOS® - Backup Archiving REcovery Open Sourced
 
    Copyright (C) 2005-2007 Free Software Foundation Europe e.V.
-   Copyright (C) 2016-2022 Bareos GmbH & Co. KG
+   Copyright (C) 2016-2024 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -28,6 +28,7 @@
 #define BAREOS_LIB_RBLIST_H_
 
 
+#include <cstdint>
 #define M_ABORT 1
 
 #define foreach_rblist(var, tree)                                    \
@@ -56,8 +57,8 @@ class rblist {
 
  private:
   void* head = nullptr;
-  int16_t loffset = 0;
   uint32_t num_items = 0;
+  int16_t loffset = 0;
   bool down = false;
   void LeftRotate(void* item);
   void RightRotate(void* item);

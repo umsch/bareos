@@ -431,8 +431,8 @@ static TREE_NODE* search_and_insert_tree_node(char* fname,
   }
 
   // It was not found, but is now inserted
-  node->fname_len = strlen(fname);
-  node->fname = tree_alloc<char>(root, node->fname_len + 1);
+  auto fname_len = strlen(fname);
+  node->fname = tree_alloc<char>(root, fname_len + 1);
   strcpy(node->fname, fname);
   node->parent = parent;
   node->type = type;

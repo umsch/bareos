@@ -62,7 +62,7 @@ struct delta_list {
  * Keep this node as small as possible because
  *   there is one for each file.
  */
-struct s_tree_node {
+struct s_tree_node : rblink {
   s_tree_node()
       : type{false}
       , extract{false}
@@ -73,15 +73,14 @@ struct s_tree_node {
       , loaded{false}
   {
   }
+
   /* KEEP sibling as the first member to avoid having to
    *  do initialization of child */
-  rblink sibling;
-  rblist child;
-  char* fname{};                /* file name */
-  int32_t FileIndex{};          /* file index */
-  uint32_t JobId{};             /* JobId */
-  int32_t delta_seq{};          /* current delta sequence */
-  uint16_t fname_len{};         /* filename length */
+
+  // rblink has alignment of 8 but ends with a single char at the end,
+  // so we have 7 bytes (with alignment = 1) that we can use fill
+  // up with our own data for free
+
   unsigned int type : 8;        /* node type */
   unsigned int extract : 1;     /* extract item */
   unsigned int extract_dir : 1; /* extract dir entry only */
@@ -89,11 +88,18 @@ struct s_tree_node {
   unsigned int soft_link : 1;   /* set if is soft link */
   unsigned int inserted : 1;    /* set when node newly inserted */
   unsigned int loaded : 1;      /* set when the dir is in the tree */
+  uint32_t JobId{};             /* JobId */
+
   struct s_tree_node* parent{};
   struct s_tree_node* next{};      /* next hash of FileIndex */
   struct delta_list* delta_list{}; /* delta parts for this node */
+  char* fname{};                   /* file name */
   uint64_t fhinfo{};               /* NDMP Fh_info */
   uint64_t fhnode{};               /* NDMP Fh_node */
+
+  rblist child;
+  int32_t FileIndex{}; /* file index */
+  int32_t delta_seq{}; /* current delta sequence */
 };
 typedef struct s_tree_node TREE_NODE;
 

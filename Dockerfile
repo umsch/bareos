@@ -3,7 +3,7 @@ FROM bareos:fedora40 as bareos_system
 
 LABEL description="build and test bareos grpc environment"
 
-RUN dnf install -y grpc-devel procps hostname grpcurl jq python3-selenium php-cli
+RUN dnf install -y grpc-devel procps hostname grpcurl jq python3-selenium php-cli protobuf-compiler protobuf-devel
 
 #FROM bareos_system AS build
 

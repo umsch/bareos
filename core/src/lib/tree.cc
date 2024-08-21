@@ -2,7 +2,7 @@
    BAREOS® - Backup Archiving REcovery Open Sourced
 
    Copyright (C) 2002-2012 Free Software Foundation Europe e.V.
-   Copyright (C) 2013-2023 Bareos GmbH & Co. KG
+   Copyright (C) 2013-2024 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -33,6 +33,127 @@
 #define B_PAGE_SIZE 4096
 #define MAX_PAGES 2400
 #define MAX_BUF_SIZE (MAX_PAGES * B_PAGE_SIZE) /* approx 10MB */
+
+// computes the largest power of 2 thats not larger than x
+// i.e. it is the largest number satisfying (1 << flog2(x)) <= x
+// As this is not possible for 0, we just return 0
+
+size_t flog2(size_t x)
+{
+#ifdef HAVE_MSVC
+  size_t index;
+  if (_BitScanReverse(&index, x)) {
+    // this is untested, but it should return the right result :)
+    return index;
+  } else {
+    // _BitScanReverse returns false iff x is 0
+    return 0;
+  }
+#else
+  if (!x) return 0;
+
+  return (sizeof(x) * 8 - __builtin_clzl(x)) - 1;
+#endif
+}
+
+s_tree_node* node_allocator::get(size_t index)
+{
+  // we do not handle the root here
+  if (index == 0) { return nullptr; }
+
+  size_t page_index = flog2(index / start_count);
+
+  // its not a real index
+  if (pages.size() <= page_index) { return nullptr; }
+
+  auto cum_size = cum_page_size_until(page_index);
+
+  ASSERT(index > cum_size);
+
+  auto offset = index - 1 - cum_size;
+
+  ASSERT(offset < page_size(page_index));
+
+  auto* ptr = &pages[page_index][offset];
+
+  if (!ptr->in_use) {
+    // index is ok, but not allocated
+    return nullptr;
+  }
+
+  return ptr;
+}
+
+size_t node_allocator::indexof(s_tree_node* n)
+{
+  uintptr_t address = reinterpret_cast<uintptr_t>(n);
+
+  // we go through the vector in reverse order since the probability
+  // that n is inside each page increases monotonically with the index
+  for (size_t i = 0; i < pages.size(); ++i) {
+    size_t page_index = pages.size() - 1 - i;
+
+    uintptr_t start_ptr = reinterpret_cast<uintptr_t>(pages[page_index].get());
+    uintptr_t end_ptr = start_ptr + sizeof(pages[0][0]) * page_size(page_index);
+
+    if (start_ptr <= address && address < end_ptr) {
+      size_t offset = n - pages[page_index].get();
+
+      // the root node has index 0, so we always need to add 1 here
+      return 1 + offset + cum_page_size_until(page_index);
+    }
+  }
+
+
+  ASSERT(!"Trying to get index of unmanaged node");
+  return 0;
+}
+
+s_tree_node* node_allocator::allocate()
+{
+  s_tree_node* allocated = nullptr;
+  if (freelist) {
+    allocated = freelist;
+    freelist = allocated->next;
+
+    // zero out the memory
+    *allocated = {};
+  } else {
+    // precondition: we can always allocate the next node in the last
+    //               page, and pages is never empty
+
+    ASSERT(pages.size() > 0);
+    size_t current_page_size = page_size(pages.size() - 1);
+    ASSERT(next_slot < current_page_size);
+
+    auto& last = pages.back();
+
+    allocated = &last[next_slot++];
+
+    ASSERT(!allocated->in_use);
+
+    // we are using allocated for the first time, so we do not need to zero it
+    // out as it should still be zero
+    if (next_slot == current_page_size) {
+      // we need to allocate the next page already, so as to keep the
+      // preconditions true
+
+      size_t next_page_size = page_size(pages.size());
+      pages.emplace_back(std::make_unique<s_tree_node[]>(next_page_size));
+      next_slot = 0;
+    }
+  }
+
+  allocated->in_use = true;
+  return allocated;
+}
+
+void node_allocator::free(s_tree_node* n)
+{
+  n->next = freelist;
+  n->in_use = false;
+  freelist = n;
+}
 
 /* Forward referenced subroutines */
 static TREE_NODE* search_and_insert_tree_node(char* fname,
@@ -91,38 +212,28 @@ TREE_ROOT* new_tree(int count)
   root->cached_path_len = -1;
   root->cached_path = GetPoolMemory(PM_FNAME);
   root->type = TN_ROOT;
-  root->fname = "";
+  root->fname = (char*)"";
   return root;
 }
 
 // Create a new tree node.
 static TREE_NODE* new_tree_node(TREE_ROOT* root)
 {
-  TREE_NODE* node;
-  int size = sizeof(TREE_NODE);
-  node = tree_alloc<TREE_NODE>(root, size);
-  node = new (node) TREE_NODE();
+  TREE_NODE* node = root->alloc.allocate();
   node->delta_seq = -1;
   return node;
 }
 
 // This routine can be called to release the previously allocated tree node.
-static void FreeTreeNode(TREE_ROOT* root)
+static void FreeTreeNode(TREE_ROOT* root, TREE_NODE* node)
 {
-  int asize = BALIGN(sizeof(TREE_NODE));
-  root->mem->rem += asize;
-  root->mem->mem = (char*)root->mem->mem - asize;
+  root->alloc.free(node);
 }
 
 void TreeRemoveNode(TREE_ROOT* root, TREE_NODE* node)
 {
-  int asize = BALIGN(sizeof(TREE_NODE));
   node->parent->child.remove(node);
-  if (((char*)root->mem->mem - asize) == (char*)node) {
-    FreeTreeNode(root);
-  } else {
-    Dmsg0(0, "Can't release tree node\n");
-  }
+  FreeTreeNode(root, node);
 }
 
 /*
@@ -314,15 +425,15 @@ static TREE_NODE* search_and_insert_tree_node(char* fname,
   node = new_tree_node(root);
   node->fname = fname;
   found_node = (TREE_NODE*)parent->child.insert(node, NodeCompare);
-  if (found_node != node) { /* already in list */
-    FreeTreeNode(root);     /* free node allocated above */
+  if (found_node != node) {   /* already in list */
+    FreeTreeNode(root, node); /* free node allocated above */
     found_node->inserted = false;
     return found_node;
   }
 
   // It was not found, but is now inserted
-  node->fname_len = strlen(fname);
-  node->fname = tree_alloc<char>(root, node->fname_len + 1);
+  auto fname_len = strlen(fname);
+  node->fname = tree_alloc<char>(root, fname_len + 1);
   strcpy(node->fname, fname);
   node->parent = parent;
   node->type = type;
@@ -452,4 +563,22 @@ TREE_NODE* tree_relcwd(char* path, TREE_ROOT* root, TREE_NODE* node)
 
   // Check the next segment if any
   return tree_relcwd(p + 1, root, cd);
+}
+
+size_t NodeIndex(TREE_ROOT* root, TREE_NODE* node)
+{
+  if (node == root) {
+    return 0;
+  } else {
+    return root->alloc.indexof(node);
+  }
+}
+
+s_tree_node* NodeWithIndex(TREE_ROOT* root, size_t index)
+{
+  if (index == 0) {
+    return root;
+  } else {
+    return root->alloc.get(index);
+  }
 }

@@ -68,12 +68,17 @@ grpc bareos.restore.Restore/Begin "{ \"backup_job\" : $JOB, \"find_job_chain\" :
 SESSION=$(jq -c ".session" "$log_home/restore.begin")
 
 
-grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.0"
 grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \".\" } }" | tee "$log_home/restore.cd.relative"
 grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"${tmp}/data/build/src/tests/Makefile\" } }" | tee "$log_home/restore.cd.bad" || :
 grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"${tmp}/data/build/src/tests\" } }" | tee "$log_home/restore.cd.absolute"
-grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"filter\" : { \"regex\" : \"*.c\" }, \"action\" : \"MARK\" }" | tee "$log_home/restore.cd.absolute"
 grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
+FID=$(jq -s ".[0].id.value" "$log_home/restore.ls.1")
+echo ">>>> FID = $FID"
+grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $FID }, \"action\" : \"MARK\" }" | tee "$log_home/restore.cd.absolute"
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.2"
+# -e tells jq to treat output=false/null as error
+jq -e -s "map(select(.id.value == $FID)) | all(.marked)" "$log_home/restore.ls.2"
 
 RESTOREOPTIONS="{
         \"restore_location\" : \"tmp/bareos-restores\",
@@ -82,10 +87,10 @@ RESTOREOPTIONS="{
         \"replace\" : \"NEVER\"
 }"
 
-grpc bareos.restore.Restore/Run "{\"session\" : $SESSION, \"restore_options\" : $RESTOREOPTIONS }" | tee "$log_home/restore.ls.1"
+grpc bareos.restore.Restore/Run "{\"session\" : $SESSION, \"restore_options\" : $RESTOREOPTIONS }" | tee "$log_home/restore.run"
 
 # check that the job actually exists in the database
-JOBID=$(jq ".jobid | .jobid" "$log_home/restore.ls.1")
+JOBID=$(jq ".jobid | .jobid" "$log_home/restore.run")
 grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list.after"
 jq -s "map(.job.jobid) | any(. == $JOBID)" "$log_home/jobs.list.after"
 

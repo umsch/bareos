@@ -8,11 +8,16 @@ package bareos.database;
 
 import "common.proto";
 import "config.proto";
+import "google/protobuf/timestamp.proto";
 
 /* Should these functions return a typed response (like now) or rather a generic
  * message SqlResponse { map<string, string>; } ?
  */
 service Database {
+
+
+  // we should somehow have a limit & offset in these requests
+  // most queries probably wont need all of them
   rpc ListClients (ListClientsRequest) returns (stream ListClientsResponse);
   rpc ListJobs (ListJobsRequest) returns (stream ListJobsResponse);
 };
@@ -37,5 +42,13 @@ message ListJobsRequest {
 
 message ListJobsResponse {
   bareos.common.Job job = 1;
-  // todo: add name, and client and time
+  // we should probably only return the jobid here and have a seperate
+  // JobInfo() rpc, as used databases have a lot of jobs in them
+
+
+  bareos.common.Client client = 2;
+
+  string name = 3;
+  google.protobuf.Timestamp start_time = 4;
+  optional google.protobuf.Timestamp end_time = 5;
 };

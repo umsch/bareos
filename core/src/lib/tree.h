@@ -2,7 +2,7 @@
    BAREOS® - Backup Archiving REcovery Open Sourced
 
    Copyright (C) 2002-2009 Free Software Foundation Europe e.V.
-   Copyright (C) 2016-2023 Bareos GmbH & Co. KG
+   Copyright (C) 2016-2024 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -28,6 +28,8 @@
 #ifndef BAREOS_LIB_TREE_H_
 #define BAREOS_LIB_TREE_H_
 
+#include <vector>
+#include "include/baconfig.h"
 #include "lib/htable.h"
 #include "lib/rblist.h"
 
@@ -61,7 +63,7 @@ struct delta_list {
  * Keep this node as small as possible because
  *   there is one for each file.
  */
-struct s_tree_node {
+struct s_tree_node : rblink {
   s_tree_node()
       : type{false}
       , extract{false}
@@ -70,17 +72,17 @@ struct s_tree_node {
       , soft_link{false}
       , inserted{false}
       , loaded{false}
+      , in_use{false}
   {
   }
+
   /* KEEP sibling as the first member to avoid having to
    *  do initialization of child */
-  rblink sibling;
-  rblist child;
-  char* fname{};                /* file name */
-  int32_t FileIndex{};          /* file index */
-  uint32_t JobId{};             /* JobId */
-  int32_t delta_seq{};          /* current delta sequence */
-  uint16_t fname_len{};         /* filename length */
+
+  // rblink has alignment of 8 but ends with a single char at the end,
+  // so we have 7 bytes (with alignment = 1) that we can use fill
+  // up with our own data for free
+
   unsigned int type : 8;        /* node type */
   unsigned int extract : 1;     /* extract item */
   unsigned int extract_dir : 1; /* extract dir entry only */
@@ -88,13 +90,62 @@ struct s_tree_node {
   unsigned int soft_link : 1;   /* set if is soft link */
   unsigned int inserted : 1;    /* set when node newly inserted */
   unsigned int loaded : 1;      /* set when the dir is in the tree */
+  unsigned int in_use : 1;      /* set when the dir is in the tree */
+  uint32_t JobId{};             /* JobId */
+
   struct s_tree_node* parent{};
   struct s_tree_node* next{};      /* next hash of FileIndex */
   struct delta_list* delta_list{}; /* delta parts for this node */
+  char* fname{};                   /* file name */
   uint64_t fhinfo{};               /* NDMP Fh_info */
   uint64_t fhnode{};               /* NDMP Fh_node */
+
+  rblist child;
+  int32_t FileIndex{}; /* file index */
+  int32_t delta_seq{}; /* current delta sequence */
 };
 typedef struct s_tree_node TREE_NODE;
+
+
+struct node_allocator {
+  s_tree_node* allocate();
+  void free(s_tree_node* n);
+
+  node_allocator()
+  {
+    pages.emplace_back(std::make_unique<s_tree_node[]>(start_count));
+  }
+
+  size_t indexof(s_tree_node* n);
+  s_tree_node* get(size_t index);
+
+ private:
+  s_tree_node* freelist;
+
+  static constexpr size_t start_count = 1024;
+
+  // this is an index into the current array
+  size_t next_slot{0};
+
+  // the pages have sizes:
+  // X << 0, X << 1, X << 2, ...
+  // where X = start_count
+  std::vector<std::unique_ptr<s_tree_node[]>> pages;
+
+  static constexpr size_t page_size(size_t index)
+  {
+    size_t doubling_factor = index;
+    return start_count << doubling_factor;
+  }
+
+  static constexpr size_t cum_page_size_until(size_t index)
+  {
+    // computes the cumulative page size of page indices < index
+    if (index == 0) { return 0; }
+
+    return start_count << (index - 1);
+  }
+};
 
 /* hardlink hashtable entry */
 struct s_hl_entry {
@@ -106,36 +157,7 @@ typedef struct s_hl_entry HL_ENTRY;
 
 using HardlinkTable = htable<uint64_t, HL_ENTRY, MonotonicBuffer::Size::Small>;
 
-struct s_tree_root {
-  s_tree_root()
-      : type{false}
-      , extract{false}
-      , extract_dir{false}
-      , have_link{false}
-      , inserted{false}
-      , loaded{false}
-  {
-  }
-  /* KEEP sibling as the first member to avoid having to
-   *  do initialization of child */
-  rblink sibling{};
-  rblist child;
-  const char* fname{};          /* file name */
-  int32_t FileIndex{};          /* file index */
-  uint32_t JobId{};             /* JobId */
-  int32_t delta_seq{};          /* current delta sequence */
-  uint16_t fname_len{};         /* filename length */
-  unsigned int type : 8;        /* node type */
-  unsigned int extract : 1;     /* extract item */
-  unsigned int extract_dir : 1; /* extract dir entry only */
-  unsigned int have_link : 1;   /* set if have hard link */
-  unsigned int inserted : 1;    /* set when newly inserted */
-  unsigned int loaded : 1;      /* set when the dir is in the tree */
-  struct s_tree_node* parent{};
-  struct s_tree_node* next{};      /* next hash of FileIndex */
-  struct delta_list* delta_list{}; /* delta parts for this node */
-
-  /* The above ^^^ must be identical to a TREE_NODE structure */
+struct s_tree_root : public s_tree_node {
   struct s_tree_node* first{}; /* first entry in the tree */
   struct s_tree_node* last{};  /* last entry in tree */
   struct s_mem* mem{};         /* tree memory */
@@ -145,6 +167,9 @@ struct s_tree_root {
   char* cached_path{};         /* cached current path */
   TREE_NODE* cached_parent{};  /* cached parent for above path */
   HardlinkTable hardlinks;     /* references to first occurence of hardlinks */
+
+  size_t current_node_id{};
+  node_allocator alloc;
 };
 typedef struct s_tree_root TREE_ROOT;
 
@@ -180,5 +205,9 @@ void TreeRemoveNode(TREE_ROOT* root, TREE_NODE* node);
  */
 #define FirstTreeNode(r) (r)->first
 #define NextTreeNode(n) (n)->next
+
+
+size_t NodeIndex(TREE_ROOT* root, TREE_NODE* node);
+s_tree_node* NodeWithIndex(TREE_ROOT* root, size_t index);
 
 #endif  // BAREOS_LIB_TREE_H_

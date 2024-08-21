@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
-import { ref, onBeforeMount } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import { ConfigClient, type IConfigClient } from '@/generated/config.client'
 import type { Catalog, CatalogId } from '@/generated/config'
 import { DatabaseClient, type IDatabaseClient } from '@/generated/database.client'
 import type { Client, Job } from '@/generated/common'
 import { type IRestoreClient, RestoreClient } from '@/generated/restore.client'
-import { type RestoreSession, type File, MarkAction } from '@/generated/restore'
+import { type File, FileType, MarkAction, type RestoreSession } from '@/generated/restore'
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
   const transport = ref(new GrpcWebFetchTransport({ baseUrl: 'http://127.0.0.1:9090' }))
@@ -137,13 +137,12 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   const changeMarkedStatus = async (session: RestoreSession, file: File, mark: boolean) => {
     console.debug('changing marked status: ', file, mark)
 
-    const response = await restoreClient.value?.changeMarkedStatus({
+    await restoreClient.value?.changeMarkedStatus({
       session: session,
       action: mark ? MarkAction.MARK : MarkAction.UNMARK,
-      filter: { regex: file.name }
+      affectedId: file.id!,
+      recursive: file.type === FileType.DIRECTORY || file.type === FileType.DIRECTORY_NOT_BACKED_UP
     })
-
-    console.debug('number of changed files: ', response?.response.affectedCount)
   }
 
   return {

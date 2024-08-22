@@ -130,6 +130,28 @@ export interface Path {
     path: string;
 }
 /**
+ * @generated from protobuf message bareos.restore.PathToFileRequest
+ */
+export interface PathToFileRequest {
+    /**
+     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+     */
+    session?: RestoreSession;
+    /**
+     * @generated from protobuf field: bareos.restore.Path p = 2;
+     */
+    p?: Path;
+}
+/**
+ * @generated from protobuf message bareos.restore.PathToFileResponse
+ */
+export interface PathToFileResponse {
+    /**
+     * @generated from protobuf field: bareos.restore.File f = 1;
+     */
+    f?: File;
+}
+/**
  * @generated from protobuf message bareos.restore.ChangeDirectoryRequest
  */
 export interface ChangeDirectoryRequest {
@@ -140,9 +162,9 @@ export interface ChangeDirectoryRequest {
     /**
      * this path can be relative
      *
-     * @generated from protobuf field: bareos.restore.Path directory = 2;
+     * @generated from protobuf field: bareos.restore.FileId directory = 2;
      */
-    directory?: Path;
+    directory?: FileId;
 }
 /**
  * @generated from protobuf message bareos.restore.ChangeDirectoryResponse
@@ -201,6 +223,12 @@ export interface ListFilesRequest {
      * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
      */
     session?: RestoreSession;
+    /**
+     * if root is not set, then the current directory is used
+     *
+     * @generated from protobuf field: optional bareos.restore.FileId root = 2;
+     */
+    root?: FileId;
 }
 /**
  * @generated from protobuf message bareos.restore.FileId
@@ -799,11 +827,110 @@ class Path$Type extends MessageType<Path> {
  */
 export const Path = new Path$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class PathToFileRequest$Type extends MessageType<PathToFileRequest> {
+    constructor() {
+        super("bareos.restore.PathToFileRequest", [
+            { no: 1, name: "session", kind: "message", T: () => RestoreSession },
+            { no: 2, name: "p", kind: "message", T: () => Path }
+        ]);
+    }
+    create(value?: PartialMessage<PathToFileRequest>): PathToFileRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<PathToFileRequest>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: PathToFileRequest): PathToFileRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.restore.RestoreSession session */ 1:
+                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
+                    break;
+                case /* bareos.restore.Path p */ 2:
+                    message.p = Path.internalBinaryRead(reader, reader.uint32(), options, message.p);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: PathToFileRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.restore.RestoreSession session = 1; */
+        if (message.session)
+            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.restore.Path p = 2; */
+        if (message.p)
+            Path.internalBinaryWrite(message.p, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.restore.PathToFileRequest
+ */
+export const PathToFileRequest = new PathToFileRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class PathToFileResponse$Type extends MessageType<PathToFileResponse> {
+    constructor() {
+        super("bareos.restore.PathToFileResponse", [
+            { no: 1, name: "f", kind: "message", T: () => File }
+        ]);
+    }
+    create(value?: PartialMessage<PathToFileResponse>): PathToFileResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<PathToFileResponse>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: PathToFileResponse): PathToFileResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.restore.File f */ 1:
+                    message.f = File.internalBinaryRead(reader, reader.uint32(), options, message.f);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: PathToFileResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.restore.File f = 1; */
+        if (message.f)
+            File.internalBinaryWrite(message.f, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.restore.PathToFileResponse
+ */
+export const PathToFileResponse = new PathToFileResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ChangeDirectoryRequest$Type extends MessageType<ChangeDirectoryRequest> {
     constructor() {
         super("bareos.restore.ChangeDirectoryRequest", [
             { no: 1, name: "session", kind: "message", T: () => RestoreSession },
-            { no: 2, name: "directory", kind: "message", T: () => Path }
+            { no: 2, name: "directory", kind: "message", T: () => FileId }
         ]);
     }
     create(value?: PartialMessage<ChangeDirectoryRequest>): ChangeDirectoryRequest {
@@ -820,8 +947,8 @@ class ChangeDirectoryRequest$Type extends MessageType<ChangeDirectoryRequest> {
                 case /* bareos.restore.RestoreSession session */ 1:
                     message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
                     break;
-                case /* bareos.restore.Path directory */ 2:
-                    message.directory = Path.internalBinaryRead(reader, reader.uint32(), options, message.directory);
+                case /* bareos.restore.FileId directory */ 2:
+                    message.directory = FileId.internalBinaryRead(reader, reader.uint32(), options, message.directory);
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -838,9 +965,9 @@ class ChangeDirectoryRequest$Type extends MessageType<ChangeDirectoryRequest> {
         /* bareos.restore.RestoreSession session = 1; */
         if (message.session)
             RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* bareos.restore.Path directory = 2; */
+        /* bareos.restore.FileId directory = 2; */
         if (message.directory)
-            Path.internalBinaryWrite(message.directory, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+            FileId.internalBinaryWrite(message.directory, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1042,7 +1169,8 @@ export const ChangeMarkedResponse = new ChangeMarkedResponse$Type();
 class ListFilesRequest$Type extends MessageType<ListFilesRequest> {
     constructor() {
         super("bareos.restore.ListFilesRequest", [
-            { no: 1, name: "session", kind: "message", T: () => RestoreSession }
+            { no: 1, name: "session", kind: "message", T: () => RestoreSession },
+            { no: 2, name: "root", kind: "message", T: () => FileId }
         ]);
     }
     create(value?: PartialMessage<ListFilesRequest>): ListFilesRequest {
@@ -1059,6 +1187,9 @@ class ListFilesRequest$Type extends MessageType<ListFilesRequest> {
                 case /* bareos.restore.RestoreSession session */ 1:
                     message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
                     break;
+                case /* optional bareos.restore.FileId root */ 2:
+                    message.root = FileId.internalBinaryRead(reader, reader.uint32(), options, message.root);
+                    break;
                 default:
                     let u = options.readUnknownField;
                     if (u === "throw")
@@ -1074,6 +1205,9 @@ class ListFilesRequest$Type extends MessageType<ListFilesRequest> {
         /* bareos.restore.RestoreSession session = 1; */
         if (message.session)
             RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* optional bareos.restore.FileId root = 2; */
+        if (message.root)
+            FileId.internalBinaryWrite(message.root, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1210,6 +1344,7 @@ export const Restore = new ServiceType("bareos.restore.Restore", [
     { name: "ListFiles", serverStreaming: true, options: {}, I: ListFilesRequest, O: File },
     { name: "ChangeDirectory", options: {}, I: ChangeDirectoryRequest, O: ChangeDirectoryResponse },
     { name: "ChangeMarkedStatus", options: {}, I: ChangeMarkedRequest, O: ChangeMarkedResponse },
+    { name: "PathToFile", options: {}, I: PathToFileRequest, O: PathToFileResponse },
     { name: "Run", options: {}, I: RunRequest, O: RunResponse },
     { name: "Cancel", options: {}, I: CancelRequest, O: CancelResponse }
 ]);

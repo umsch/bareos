@@ -83,7 +83,13 @@ typedef bool(MarkUnmark_t)(struct restore_session_handle*,
                            size_t index,
                            bool mark,
                            bool recursive);
-typedef const char*(CurrentDirectory_t)(struct restore_session_handle*);
+
+typedef bool(PathSegmentsOf_t)(struct restore_session_handle*,
+                               size_t file_id,
+                               file_callback* cb,
+                               void* user);
+typedef bool(CurrentDirectory_t)(struct restore_session_handle*,
+                                 size_t* file_id);
 
 typedef bool(key_value_handler)(void* user, const char* key, const char* value);
 
@@ -101,6 +107,7 @@ struct restore_capability {
   MarkUnmark_t* mark_unmark;
   ErrorString_t* error_string;
   CurrentDirectory_t* current_directory;
+  PathSegmentsOf_t* path_segments_of;
 
   CreateRestoreSession_t* create_restore_session;
   StartFromJobIds_t* start_from_jobids;

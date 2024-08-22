@@ -87,9 +87,17 @@ CURRENT_ID=$(jq -e '.f.id | if has("value") then .value else 0 end' "$log_home/r
 FILE_ID=$(jq -e '.f.id.value' "$log_home/restore.fileid.file")
 DIR_ID=$(jq -e '.f.id.value' "$log_home/restore.fileid.dir")
 
+# currently CurrentDirectory and ChangeDirectory return the same thing
 grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $CURRENT_ID } }" | tee "$log_home/restore.cd.relative"
+grpc bareos.restore.Restore/CurrentDirectory "{ \"session\" : $SESSION }" | tee "$log_home/restore.cwd.relative"
+diff "$log_home/restore.cwd.relative" "$log_home/restore.cd.relative"
+
 grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $FILE_ID } }" | tee "$log_home/restore.cd.bad" || :
+
 grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $DIR_ID } }" | tee "$log_home/restore.cd.absolute"
+grpc bareos.restore.Restore/CurrentDirectory "{ \"session\" : $SESSION }" | tee "$log_home/restore.cwd.absolute"
+diff "$log_home/restore.cwd.absolute" "$log_home/restore.cd.absolute"
+
 grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
 FID=$(jq -s ".[0].id.value" "$log_home/restore.ls.1")
 echo ">>>> FID = $FID"

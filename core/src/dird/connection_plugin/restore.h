@@ -74,10 +74,11 @@ typedef bool(StartFromJobIds_t)(struct restore_session_handle* handle,
                                 bool select_parents);
 typedef bool(file_callback)(void* user, struct file_status status);
 typedef bool(ListFiles_t)(struct restore_session_handle*,
+                          size_t* root_id,
                           file_callback* cb,
                           void* user);
 typedef bool(ChangeDirectory_t)(struct restore_session_handle*,
-                                const char* dir);
+                                size_t directory_id);
 typedef bool(MarkUnmark_t)(struct restore_session_handle*,
                            size_t index,
                            bool mark,
@@ -90,6 +91,10 @@ typedef bool(CreateRestoreJob_t)(struct restore_session_handle*,
                                  struct restore_options,
                                  job_started_info* info);
 
+typedef bool(PathToFile_t)(struct restore_session_handle*,
+                           const char* path,
+                           struct file_status* status);
+
 struct restore_capability {
   ListFiles_t* list_files;
   ChangeDirectory_t* change_directory;
@@ -101,6 +106,8 @@ struct restore_capability {
   StartFromJobIds_t* start_from_jobids;
   FinishRestoreSession_t* finish_restore_session;
   CreateRestoreJob_t* create_restore_job;
+
+  PathToFile_t* path_to_file;
 };
 
 #ifdef __cplusplus

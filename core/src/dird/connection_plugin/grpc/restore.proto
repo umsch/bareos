@@ -14,11 +14,13 @@ service Restore {
   rpc Begin (BeginRequest) returns (BeginResponse);
 
   // these functions will only work once the tree is created
-  // how do plugin files work
+  // todo: how do plugin files work
   rpc ListFiles (ListFilesRequest) returns (stream File);
 
   rpc ChangeDirectory (ChangeDirectoryRequest) returns (ChangeDirectoryResponse);
   rpc ChangeMarkedStatus (ChangeMarkedRequest) returns (ChangeMarkedResponse);
+
+  rpc PathToFile (PathToFileRequest) returns (PathToFileResponse);
 
   // maybe list marked files as function
 
@@ -80,10 +82,19 @@ message Path {
   string path = 1;
 };
 
+message PathToFileRequest {
+  RestoreSession session = 1;
+  Path p = 2;
+}
+
+message PathToFileResponse {
+  File f = 1;
+}
+
 message ChangeDirectoryRequest {
   RestoreSession session = 1;
   // this path can be relative
-  Path directory = 2;
+  FileId directory = 2;
 }
 
 message ChangeDirectoryResponse {
@@ -116,6 +127,9 @@ message ChangeMarkedResponse {
 
 message ListFilesRequest {
   RestoreSession session = 1;
+
+  // if root is not set, then the current directory is used
+  optional FileId root = 2;
 }
 
 enum FileType {

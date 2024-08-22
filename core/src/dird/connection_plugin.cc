@@ -475,7 +475,19 @@ bareos_file_type file_type(unsigned int node_type)
   ASSERT(!"Unknown node type");
 }
 
+file_status FileOfNode(TREE_ROOT* root, TREE_NODE* node)
+{
+  file_status status = {
+      .id = NodeIndex(root, node),
+      .name = node->fname ? node->fname : "",
+      .type = file_type(static_cast<FILETYPES>(node->type)),
+      .marked = node->extract || node->extract_dir,
+  };
+  return status;
+}
+
 bool PluginListFiles(restore_session_handle* handle,
+                     size_t* root,
                      file_callback* cb,
                      void* user)
 {
@@ -485,15 +497,20 @@ bool PluginListFiles(restore_session_handle* handle,
     return false;
   }
 
+  TREE_NODE* parent = state->current;
+  if (root) {
+    parent = NodeWithIndex(state->root, *root);
+    if (!parent) {
+      handle->error = "No node with supplied index";
+      return false;
+    }
+    // should we error when given a file, or just return nothing ?
+  }
+
   TREE_NODE* child = nullptr;
 
-  while ((child = (TREE_NODE*)state->current->child.next(child))) {
-    file_status status = {
-        .id = NodeIndex(state->root, child),
-        .name = child->fname,
-        .type = file_type(static_cast<FILETYPES>(child->type)),
-        .marked = child->extract || child->extract_dir,
-    };
+  while ((child = (TREE_NODE*)parent->child.next(child))) {
+    file_status status = FileOfNode(state->root, child);
     if (!(*cb)(user, status)) {
       handle->error = "user error";
       return false;
@@ -503,7 +520,7 @@ bool PluginListFiles(restore_session_handle* handle,
   return true;
 }
 
-bool PluginChangeDirectory(restore_session_handle* handle, const char* dir)
+bool PluginChangeDirectory(restore_session_handle* handle, size_t dir_id)
 {
   auto* state = std::get_if<select_tree_state>(&handle->state);
   if (!state) {
@@ -511,11 +528,15 @@ bool PluginChangeDirectory(restore_session_handle* handle, const char* dir)
     return false;
   }
 
-  std::string path{dir};
-  auto* node = tree_cwd(path.data(), state->root, state->current);
+  TREE_NODE* node = NodeWithIndex(state->root, dir_id);
 
   if (!node) {
-    handle->error = "Could not change dir";
+    handle->error = "Could not change dir: bad file id";
+    return false;
+  }
+
+  if (node->type == TN_FILE) {
+    handle->error = "Could not change dir: id does not belong to a directory";
     return false;
   }
 
@@ -641,19 +662,83 @@ void PluginFinishRestoreSession(restore_session_handle* handle)
   delete handle;
 }
 
-// static std::pair<std::string, std::string> split_path_into_dir_file(
-//     std::string_view path)
-// {
-//   auto pos = path.find_last_of('/');
-//   if (pos == path.npos) {
-//     return std::make_pair(std::string{}, std::string{path});
-//   } else if (pos == path.size()) {
-//     return std::make_pair(std::string{path}, std::string{});
-//   }
+static std::pair<std::string, std::string> split_path_into_dir_file(
+    std::string_view path)
+{
+  auto pos = path.find_last_of('/');
+  if (pos == path.npos) {
+    return std::make_pair(std::string{}, std::string{path});
+  } else if (pos == path.size()) {
+    return std::make_pair(std::string{path}, std::string{});
+  }
+  return std::make_pair(std::string{path.substr(0, pos + 1)},
+                        std::string{path.substr(pos + 1)});
+}
 
-//   return std::make_pair(std::string{path.substr(0, pos + 1)},
-//                         std::string{path.substr(pos + 1)});
-// }
+bool PluginPathToFile(restore_session_handle* handle,
+                      const char* path,
+                      file_status* status)
+{
+  auto* state = std::get_if<select_tree_state>(&handle->state);
+  if (!state) {
+    handle->error = "Wrong state";
+    return false;
+  }
+
+  auto [dir, file] = split_path_into_dir_file(path);
+
+  if (dir.size() + file.size() == 0) {
+    handle->error = "bad path";
+    return false;
+  }
+
+  TREE_NODE* directory = state->current;
+
+  if (dir.size()) {
+    directory = tree_cwd(dir.data(), state->root, state->current);
+    if (!directory) {
+      handle->error = "bad path: unknown directory";
+      return false;
+    }
+  } else {
+    // 'x' could be meant as either "file x" or "directory x", but we always
+    // parse it as a file.
+    // This means that we should also try to look up the file part if
+    // the directory part does not exist.
+    // Otherwise we would have to reimplement the behaviour of the special
+    // files '.', '..', etc.
+
+    TREE_NODE* tmp = tree_cwd(file.data(), state->root, state->current);
+    if (tmp) {
+      std::swap(file, dir);
+      directory = tmp;
+    }
+  }
+
+  TREE_NODE* node = nullptr;
+
+  if (file.size()) {
+    TREE_NODE* child = nullptr;
+    while ((child = static_cast<TREE_NODE*>(directory->child.next(child)))) {
+      if (file == child->fname) {
+        node = child;
+        break;
+      }
+    }
+
+    if (!node) {
+      handle->error = "bad path: unknown file";
+      return false;
+    }
+
+  } else {
+    node = directory;
+  }
+
+  *status = FileOfNode(state->root, node);
+
+  return true;
+}
 
 bool can_recurse(TREE_NODE* node)
 {
@@ -665,16 +750,16 @@ bool can_recurse(TREE_NODE* node)
 
 void UpdateMarkStatusRecursively(TREE_NODE* node, bool mark)
 {
-  std::vector<TREE_NODE*> stack;
   if (!can_recurse(node)) { return; }
 
+  std::vector<TREE_NODE*> stack;
   stack.push_back(node);
 
   while (!stack.empty()) {
     TREE_NODE* parent = stack.back();
     stack.pop_back();
     TREE_NODE* child = nullptr;
-    while ((child = static_cast<TREE_NODE*>(node->child.next(child)))) {
+    while ((child = static_cast<TREE_NODE*>(parent->child.next(child)))) {
       child->extract = mark;
 
       if (can_recurse(child)) { stack.push_back(child); }
@@ -898,6 +983,7 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .start_from_jobids = &PluginStartFromJobIds,
             .finish_restore_session = &PluginFinishRestoreSession,
             .create_restore_job = &PluginCreateRestoreJob,
+            .path_to_file = &PluginPathToFile,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

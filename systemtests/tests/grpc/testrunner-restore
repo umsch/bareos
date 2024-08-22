@@ -40,6 +40,14 @@ JobName=backup-bareos-fd
 #shellcheck source=functions
 . functions
 
+get_id()
+{
+    local log=$1
+    local file=$2
+
+    jq -e -s "map(select(.name == \"$file\")) | .[0].id.value" "$log"
+}
+
 start_test
 
 CATALOG=$(grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/restore.list" | jq -c '.catalogs | .[0] | .id')
@@ -69,17 +77,34 @@ SESSION=$(jq -c ".session" "$log_home/restore.begin")
 
 
 grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.0"
-grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \".\" } }" | tee "$log_home/restore.cd.relative"
-grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"${tmp}/data/build/src/tests/Makefile\" } }" | tee "$log_home/restore.cd.bad" || :
-grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"path\" : \"${tmp}/data/build/src/tests\" } }" | tee "$log_home/restore.cd.absolute"
+HOME_ID=$(get_id "$log_home/restore.ls.0" "home")
+echo "HOME_ID = ${HOME_ID}"
+
+grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \".\" } }" | tee "$log_home/restore.fileid.relative"
+grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \"${tmp}/data/build/src/tests/Makefile\" } }" | tee "$log_home/restore.fileid.file"
+grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \"${tmp}/data/build/src/tests\" } }" | tee "$log_home/restore.fileid.dir"
+CURRENT_ID=$(jq -e '.f.id | if has("value") then .value else 0 end' "$log_home/restore.fileid.relative")
+FILE_ID=$(jq -e '.f.id.value' "$log_home/restore.fileid.file")
+DIR_ID=$(jq -e '.f.id.value' "$log_home/restore.fileid.dir")
+
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $CURRENT_ID } }" | tee "$log_home/restore.cd.relative"
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $FILE_ID } }" | tee "$log_home/restore.cd.bad" || :
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $DIR_ID } }" | tee "$log_home/restore.cd.absolute"
 grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
 FID=$(jq -s ".[0].id.value" "$log_home/restore.ls.1")
 echo ">>>> FID = $FID"
-grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $FID }, \"action\" : \"MARK\" }" | tee "$log_home/restore.cd.absolute"
+grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $FID }, \"action\" : \"MARK\" }" | tee "$log_home/restore.mark.single"
 grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.2"
 # -e tells jq to treat output=false/null as error
 jq -e -s "map(select(.id.value == $FID)) | all(.marked)" "$log_home/restore.ls.2"
 
+# FileId = 0 means root directory
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION, \"root\" : { \"value\" : \"0\" } }" | tee "$log_home/restore.ls.by_id"
+# both methods should return the same thing
+diff "$log_home/restore.ls.by_id" "$log_home/restore.ls.0"
+
+
+grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $HOME_ID }, \"action\" : \"MARK\", \"recursive\" : true }" | tee "$log_home/restore.mark.recursive"
 RESTOREOPTIONS="{
         \"restore_location\" : \"tmp/bareos-restores\",
         \"restore_job\" : $RESTOREJOB,

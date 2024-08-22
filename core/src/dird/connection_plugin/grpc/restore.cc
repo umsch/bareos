@@ -257,65 +257,6 @@ class RestoreImpl : public Restore::Service {
     return sessions.Take(sess.token());
   }
 
-  // bool push_session(const RestoreSession& sess, restore_session&& restore)
-  // {
-  //   auto sessmap = sessions.lock();
-
-  //   auto [_, inserted] = sessmap->try_emplace(sess.token(), restore);
-
-  //   return inserted;
-  // }
-
-  // auto pop_session(const RestoreSession& sess)
-  // {
-  //   std::optional optsessmap =
-  //   sessions.try_lock(std::chrono::milliseconds(5));
-
-  //   if (!optsessmap) {
-  //     throw grpc_error(grpc::StatusCode::UNAVAILABLE,
-  //                      "Too much concurrent use.");
-  //   }
-
-  //   auto& sessmap = optsessmap.value().get();
-
-  //   auto found = sessmap.find(sess.token());
-  //   if (found == sessmap.end()) {
-  //     throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
-  //                      "No session with that key or session already in
-  //                      use.");
-  //   }
-
-  //   auto session = std::move(found->second);
-
-  //   sessmap.erase(found);
-
-  //   return session;
-  // }
-
-  // RestoreSession new_id()
-  // {
-  //   std::optional all_sess
-  //       = all_sessions.try_lock(std::chrono::milliseconds(5));
-
-  //   if (!all_sess) {
-  //     throw grpc_error(grpc::StatusCode::UNAVAILABLE, "Please try again.");
-  //   }
-  //   RestoreSession id;
-  //   id.set_token("0");  // todo: make this random
-  //   return id;
-  // }
-
-  // void delete_id(const RestoreSession& id)
-  // {
-  //   (void)id;
-  //   std::optional all_sess
-  //       = all_sessions.try_lock(std::chrono::milliseconds(5));
-
-  //   if (!all_sess) {
-  //     throw grpc_error(grpc::StatusCode::UNAVAILABLE, "Please try again.");
-  //   }
-  // }
-
   Status ListSessions(ServerContext*,
                       const ListSessionsRequest*,
                       ListSessionsResponse* response) override
@@ -447,6 +388,30 @@ class RestoreImpl : public Restore::Service {
     return Status::OK;
   }
 
+  Status PathToFile(ServerContext*,
+                    const PathToFileRequest* request,
+                    PathToFileResponse* response) override
+  {
+    try {
+      auto handle = get_session(request->session());
+
+      file_status status;
+      plugin_call(cap.path_to_file, handle.Bareos(),
+                  request->p().path().c_str(), &status);
+
+      File f;
+      f.mutable_id()->set_value(status.id);
+      f.set_name(status.name);
+      f.set_marked(status.marked);
+      f.set_type(bareos_to_grpc_ft(status.type));
+      *response->mutable_f() = f;
+
+      return Status::OK;
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+  }
+
   Status ChangeDirectory(ServerContext*,
                          const ChangeDirectoryRequest* request,
                          ChangeDirectoryResponse* response) override
@@ -455,7 +420,7 @@ class RestoreImpl : public Restore::Service {
       auto handle = get_session(request->session());
 
       plugin_call(cap.change_directory, handle.Bareos(),
-                  request->directory().path().c_str());
+                  request->directory().value());
 
       auto* current_dir = plugin_call(cap.current_directory, handle.Bareos());
 
@@ -473,6 +438,15 @@ class RestoreImpl : public Restore::Service {
                    const ListFilesRequest* request,
                    grpc::ServerWriter<File>* response) override
   {
+    size_t root;
+    size_t* root_ptr{nullptr};
+
+    if (request->has_root()) {
+      root = request->root().value();
+      root_ptr = &root;
+    }
+
+
     try {
       auto handle = get_session(request->session());
 
@@ -486,8 +460,8 @@ class RestoreImpl : public Restore::Service {
         return true;
       };
 
-      if (!cap.list_files(handle.Bareos(), c_callback<decltype(lambda)>,
-                          &lambda)) {
+      if (!cap.list_files(handle.Bareos(), root_ptr,
+                          c_callback<decltype(lambda)>, &lambda)) {
         const char* error = cap.error_string(handle.Bareos());
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          error ? error : "Internal error.");

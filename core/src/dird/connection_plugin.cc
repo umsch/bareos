@@ -752,17 +752,36 @@ void UpdateMarkStatusRecursively(TREE_NODE* node, bool mark)
 {
   if (!can_recurse(node)) { return; }
 
-  std::vector<TREE_NODE*> stack;
-  stack.push_back(node);
 
+  struct dir_state {
+    TREE_NODE* last{nullptr};
+    rblist* children{nullptr};
+
+    TREE_NODE* next()
+    {
+      last = static_cast<TREE_NODE*>(children->next(last));
+      return last;
+    }
+
+    dir_state() = default;
+    dir_state(TREE_NODE* parent) : children{&parent->child} {}
+  };
+
+  std::vector<dir_state> stack{node};
+
+  // traverse the file tree in a depth-first way.  This is because there might
+  // be a lot of files, but the file tree has comparatively very few levels,
+  // which means that dfs should only take very little memory.
   while (!stack.empty()) {
-    TREE_NODE* parent = stack.back();
-    stack.pop_back();
-    TREE_NODE* child = nullptr;
-    while ((child = static_cast<TREE_NODE*>(parent->child.next(child)))) {
+    auto* child = stack.back().next();
+
+    if (child) {
       child->extract = mark;
 
-      if (can_recurse(child)) { stack.push_back(child); }
+      if (can_recurse(child)) { stack.emplace_back(child); }
+    } else {
+      // if there was no child, then we are done. Return for now.
+      stack.pop_back();
     }
   }
 }

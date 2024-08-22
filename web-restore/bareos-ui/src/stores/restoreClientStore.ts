@@ -126,10 +126,14 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return files
   }
 
-  const changeDirectory = async (session: RestoreSession, path: string) => {
+  const changeDirectory = async (session: RestoreSession, path: File) => {
+    if (path.type !== FileType.DIRECTORY && path.type !== FileType.DIRECTORY_NOT_BACKED_UP) {
+      throw new Error('Invalid file type. File type must be a directory')
+    }
+
     const response = await restoreClient.value?.changeDirectory({
       session: session,
-      directory: { path: path }
+      directory: path.id
     })
     return response?.response.currentDirectory?.path
   }

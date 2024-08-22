@@ -5,25 +5,6 @@ import { OCheckbox, OTableColumn } from '@oruga-ui/oruga-next'
 import { FileType, File } from '@/generated/restore'
 
 const wizard = useWizardStore()
-const columns = ref([
-  {
-    field: 'marked',
-    label: 'Marked',
-    width: '1%',
-    type: 'checkbox'
-  },
-  {
-    field: 'type',
-    label: 'Type',
-    width: '1%'
-  },
-  {
-    field: 'name',
-    label: 'Name',
-    searchable: true
-  }
-])
-
 const checkedFiles = ref([])
 
 const getIcon = (type: FileType) => {
@@ -63,7 +44,7 @@ const breadcrumbs = computed(() => {
   return splitPath(wizard.cwd || '')
 })
 
-const changeDirectory = (name: string) => {
+const changeDirectory = (name: File) => {
   console.debug('changeDirectory:', name)
   wizard.changeDirectory(name)
 }
@@ -76,9 +57,13 @@ const isRowSelectable = (row: any) => {
 
 const selected = ref<File>()
 
-watch(selected, (value) => {
-  console.debug('selected:', value)
-  wizard.changeDirectory(value?.name ?? '')
+watch(selected, (file : File | undefined) => {
+  console.debug('selected:', file)
+  if (!file) {
+    console.info('file is undefined')
+    return
+  }
+  wizard.changeDirectory(file)
 })
 
 const updateMarkedStatus = async (value: boolean, file: File) => {

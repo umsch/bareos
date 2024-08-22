@@ -131,7 +131,7 @@ export const useWizardStore = defineStore('wizard', () => {
     }
   })
 
-  const changeDirectory = async (path: string) => {
+  const changeDirectory = async (path: File) => {
     if (!selectedSession.value) {
       throw new Error('No session selected')
     }

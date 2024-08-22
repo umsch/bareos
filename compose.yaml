@@ -11,12 +11,13 @@ services:
     privileged: true
     ports:
       - "30036:30036"
+      - "13343:13343"
     networks:
       - envoy_network
     volumes:
       - .:/source:Z
       - ./build:/build:Z
-    command: /source/grpc_build.sh
+    command: /bin/bash +x /source/grpc_build.sh
 
   envoy:
     image: envoyproxy/envoy:v1.31-latest

@@ -39,57 +39,26 @@ const updateSessions = async () => {
 <template>
   <section class="section">
     <div class="columns">
-      <div class="column">
-        <div class="card">
-          <div class="card-header">
-            <p class="card-header-title">start new restore session</p>
-          </div>
-          <div class="card-content">
-            <Catalogs />
-
-            <JobsTable v-if="wizardStore.selectedCatalog" :catalog_id="wizardStore.selectedCatalog?.id" @update:selectedJob="setJob" />
-          </div>
-          <footer class="card-footer">
-            <o-button
-              class="card-footer-item"
-              :disabled="!wizardStore.selectedJob"
-              variant="primary"
-              :label="
+      <div class="column is-narrow">
+        <Catalogs />
+        <JobsTable v-if="wizardStore.selectedCatalog" :catalog_id="wizardStore.selectedCatalog?.id"
+                   @update:selectedJob="setJob" />
+        <o-button
+          :disabled="!wizardStore.selectedJob"
+          variant="primary"
+          :label="
                 'start new restore session' +
                 (wizardStore.selectedJob ? ' for job ' + wizardStore.selectedJob.jobid : '')
               "
-              @click="wizardStore.createRestoreSession"
-            />
-          </footer>
-        </div>
-      </div>
-
-      <div class="column">
-        <div class="card">
-          <div class="card-header">
-            <p class="card-header-title">select existing restore session</p>
-          </div>
-          <div class="card-content">
-            <RestoreSessions />
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="card">
-      <div class="card-header">
-        <p class="card-header-title">restore session</p>
-      </div>
-      <div class="card-content">
-        <FilesBrowser />
-      </div>
-      <div class="card-footer">
+          @click="wizardStore.createRestoreSession"
+        />
+        <RestoreSessions />
         <Clients />
+      </div>
+      <div class="column">
+        <FilesBrowser />
         <o-button
           variant="primary"
-          class="card-footer-item"
           :disabled="!wizardStore.selectedClient"
           @click="wizardStore.runRestoreSession"
         >
@@ -98,4 +67,5 @@ const updateSessions = async () => {
       </div>
     </div>
   </section>
-</template>
+
+ </template>

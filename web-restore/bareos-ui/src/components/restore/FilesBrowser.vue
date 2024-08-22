@@ -3,6 +3,7 @@ import { useWizardStore } from '@/stores/wizardStore'
 import { computed, ref, watch } from 'vue'
 import { OCheckbox, OTableColumn } from '@oruga-ui/oruga-next'
 import { FileType, File } from '@/generated/restore'
+import {reverse} from "lodash";
 
 const wizard = useWizardStore()
 const checkedFiles = ref([])
@@ -20,28 +21,10 @@ const getIcon = (type: FileType) => {
   }
 }
 
-function splitPath(dirPath: string): Array<{ name: string; path: string }> {
-  if (!dirPath || dirPath.length === 0) {
-    return []
-  }
-
-  const parts = dirPath.split('/').filter(Boolean)
-  let currentPath = ''
-
-  const result = parts.map((part, index) => {
-    currentPath += '/' + part
-    return {
-      name: index === 0 ? 'root' : part,
-      path: index === 0 ? '/' : currentPath
-    }
-  })
-
-  return [{ name: 'root', path: '/' }, ...result.slice(1)]
-}
 
 const breadcrumbs = computed(() => {
-  console.debug('wizard.cwd:', wizard.cwd)
-  return splitPath(wizard.cwd || '')
+  console.debug("breadcrumbs", wizard.cwd)
+  return wizard.cwd
 })
 
 const changeDirectory = (name: File) => {
@@ -77,7 +60,7 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
     <ul>
       <template v-for="(breadcrumb, index) in breadcrumbs" :key="index">
         <li :class="{ 'is-active': index === breadcrumbs!.length - 1 }">
-          <a href="#" @click="changeDirectory(breadcrumb.path)">{{ breadcrumb.name }}</a>
+          <a href="#" @click="changeDirectory(breadcrumb)">{{ breadcrumb.name }}</a>
         </li>
       </template>
     </ul>

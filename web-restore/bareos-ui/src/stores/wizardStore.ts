@@ -4,7 +4,7 @@ import { onMounted, ref, watch } from 'vue'
 import type { Client, Job } from '@/generated/common'
 import type { RestoreSession, File } from '@/generated/restore'
 import { useRestoreClientStore } from '@/stores/restoreClientStore'
-import { first, isEmpty } from 'lodash'
+import {first, isEmpty, reverse} from 'lodash'
 
 export const useWizardStore = defineStore('wizard', () => {
   const restoreClient = useRestoreClientStore()
@@ -117,13 +117,14 @@ export const useWizardStore = defineStore('wizard', () => {
   }
 
   const files = ref<File[]>([])
-  const cwd = ref<string | undefined>('')
+  const cwd = ref<File[] | undefined>([])
 
   watch(selectedSession, async (session) => {
     console.debug('selected session changed', session)
 
     if (session) {
-      cwd.value = await restoreClient.changeDirectory(session, '.')
+      const currentPath = await restoreClient.currentDirectory(session)
+      cwd.value = reverse(currentPath!)
       files.value = await restoreClient.fetchFiles(session)
     } else {
       cwd.value = undefined
@@ -136,7 +137,8 @@ export const useWizardStore = defineStore('wizard', () => {
       throw new Error('No session selected')
     }
 
-    cwd.value = await restoreClient.changeDirectory(selectedSession.value, path)
+    const currentPath = await restoreClient.changeDirectory(selectedSession.value, path)
+    cwd.value = reverse(currentPath!)
     files.value = await restoreClient.fetchFiles(selectedSession.value)
   }
 

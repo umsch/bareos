@@ -24,6 +24,7 @@
     "@oruga-ui/oruga-next": "^0.8.12",
     "@oruga-ui/theme-bulma": "^0.3.0",
     "@protobuf-ts/grpcweb-transport": "^2.9.4",
+    "@protobuf-ts/plugin": "^2.9.4",
     "grpc-web": "^1.5.0",
     "lodash": "^4.17.21",
     "pinia": "^2.1.7",

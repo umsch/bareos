@@ -55,8 +55,6 @@ struct select_tree_state {
   TREE_NODE* current{nullptr};
   std::string jobids;
 
-  std::string path;
-
   select_tree_state(TREE_ROOT* tree, size_t tree_count, std::string&& jobids_)
       : root{tree}
       , count{tree_count}
@@ -520,6 +518,36 @@ bool PluginListFiles(restore_session_handle* handle,
   return true;
 }
 
+bool PluginPathSegmentsOf(restore_session_handle* handle,
+                          size_t file_id,
+                          file_callback* cb,
+                          void* user)
+{
+  auto* state = std::get_if<select_tree_state>(&handle->state);
+  if (!state) {
+    handle->error = "Wrong state";
+    return false;
+  }
+
+  TREE_NODE* node = NodeWithIndex(state->root, file_id);
+
+  if (!node) {
+    handle->error = "Could not segmentate: bad file id";
+    return false;
+  }
+
+  while (node) {
+    auto file = FileOfNode(state->root, node);
+    if (!cb(user, file)) {
+      handle->error = "Fehler";
+      return false;
+    }
+    node = node->parent;
+  }
+
+  return true;
+}
+
 bool PluginChangeDirectory(restore_session_handle* handle, size_t dir_id)
 {
   auto* state = std::get_if<select_tree_state>(&handle->state);
@@ -545,28 +573,17 @@ bool PluginChangeDirectory(restore_session_handle* handle, size_t dir_id)
   return true;
 }
 
-const char* PluginCurrentDirectory(restore_session_handle* handle)
+bool PluginCurrentDirectory(restore_session_handle* handle, size_t* file_id)
 {
   auto* state = std::get_if<select_tree_state>(&handle->state);
   if (!state) {
     handle->error = "Wrong state";
-    return nullptr;
+    return false;
   }
 
-  {
-    POOLMEM* path = tree_getpath(state->current);
+  *file_id = NodeIndex(state->root, state->current);
 
-    if (!path) {
-      handle->error = "Internal error";
-      return nullptr;
-    }
-
-    state->path.assign(path);
-
-    FreeMemory(path);
-  }
-
-  return state->path.c_str();
+  return true;
 }
 
 bool PluginSetRestoreClient(restore_session_handle* handle,
@@ -752,17 +769,36 @@ void UpdateMarkStatusRecursively(TREE_NODE* node, bool mark)
 {
   if (!can_recurse(node)) { return; }
 
-  std::vector<TREE_NODE*> stack;
-  stack.push_back(node);
 
+  struct dir_state {
+    TREE_NODE* last{nullptr};
+    rblist* children{nullptr};
+
+    TREE_NODE* next()
+    {
+      last = static_cast<TREE_NODE*>(children->next(last));
+      return last;
+    }
+
+    dir_state() = default;
+    dir_state(TREE_NODE* parent) : children{&parent->child} {}
+  };
+
+  std::vector<dir_state> stack{node};
+
+  // traverse the file tree in a depth-first way.  This is because there might
+  // be a lot of files, but the file tree has comparatively very few levels,
+  // which means that dfs should only take very little memory.
   while (!stack.empty()) {
-    TREE_NODE* parent = stack.back();
-    stack.pop_back();
-    TREE_NODE* child = nullptr;
-    while ((child = static_cast<TREE_NODE*>(parent->child.next(child)))) {
+    auto* child = stack.back().next();
+
+    if (child) {
       child->extract = mark;
 
-      if (can_recurse(child)) { stack.push_back(child); }
+      if (can_recurse(child)) { stack.emplace_back(child); }
+    } else {
+      // if there was no child, then we are done. Return for now.
+      stack.pop_back();
     }
   }
 }
@@ -979,6 +1015,7 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .mark_unmark = &PluginMarkUnmark,
             .error_string = &PluginErrorString,
             .current_directory = &PluginCurrentDirectory,
+            .path_segments_of = &PluginPathSegmentsOf,
             .create_restore_session = &PluginCreateRestoreSession,
             .start_from_jobids = &PluginStartFromJobIds,
             .finish_restore_session = &PluginFinishRestoreSession,

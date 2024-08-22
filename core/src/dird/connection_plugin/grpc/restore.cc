@@ -422,11 +422,59 @@ class RestoreImpl : public Restore::Service {
       plugin_call(cap.change_directory, handle.Bareos(),
                   request->directory().value());
 
-      auto* current_dir = plugin_call(cap.current_directory, handle.Bareos());
+      auto* segments = response->mutable_current_dir()->mutable_segments();
 
-      Path curdir;
-      *curdir.mutable_path() = std::move(current_dir);
-      *response->mutable_current_directory() = std::move(curdir);
+      auto lambda = [segments](file_status status) -> bool {
+        File f;
+        f.mutable_id()->set_value(status.id);
+        f.set_name(status.name);
+        f.set_marked(status.marked);
+        f.set_type(bareos_to_grpc_ft(status.type));
+        segments->Add(std::move(f));
+        return true;
+      };
+
+      if (!cap.path_segments_of(handle.Bareos(), request->directory().value(),
+                                c_callback<decltype(lambda)>, &lambda)) {
+        const char* error = cap.error_string(handle.Bareos());
+        throw grpc_error(grpc::StatusCode::UNKNOWN,
+                         error ? error : "Internal error.");
+      }
+
+      return Status::OK;
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+  }
+
+  Status CurrentDirectory(ServerContext*,
+                          const CurrentDirectoryRequest* request,
+                          CurrentDirectoryResponse* response) override
+  {
+    try {
+      auto handle = get_session(request->session());
+
+      auto* segments = response->mutable_current_dir()->mutable_segments();
+
+      size_t current_id = std::numeric_limits<size_t>::max();
+      plugin_call(cap.current_directory, handle.Bareos(), &current_id);
+
+      auto lambda = [segments](file_status status) -> bool {
+        File f;
+        f.mutable_id()->set_value(status.id);
+        f.set_name(status.name);
+        f.set_marked(status.marked);
+        f.set_type(bareos_to_grpc_ft(status.type));
+        segments->Add(std::move(f));
+        return true;
+      };
+
+      if (!cap.path_segments_of(handle.Bareos(), current_id,
+                                c_callback<decltype(lambda)>, &lambda)) {
+        const char* error = cap.error_string(handle.Bareos());
+        throw grpc_error(grpc::StatusCode::UNKNOWN,
+                         error ? error : "Internal error.");
+      }
 
       return Status::OK;
     } catch (const grpc_error& err) {

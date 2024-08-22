@@ -22,6 +22,8 @@ service Restore {
 
   rpc PathToFile (PathToFileRequest) returns (PathToFileResponse);
 
+  rpc CurrentDirectory (CurrentDirectoryRequest) returns (CurrentDirectoryResponse);
+
   // maybe list marked files as function
 
   rpc Run (RunRequest) returns (RunResponse);
@@ -91,6 +93,20 @@ message PathToFileResponse {
   File f = 1;
 }
 
+message PathSegments {
+  // 0 -> leaf
+  // last -> root
+  repeated File segments = 1;
+};
+
+message CurrentDirectoryRequest {
+  RestoreSession session = 1;
+};
+
+message CurrentDirectoryResponse {
+  PathSegments current_dir = 1;
+};
+
 message ChangeDirectoryRequest {
   RestoreSession session = 1;
   // this path can be relative
@@ -98,7 +114,7 @@ message ChangeDirectoryRequest {
 }
 
 message ChangeDirectoryResponse {
-  Path current_directory = 1;
+  PathSegments current_dir = 1;
 }
 
 enum MarkAction {

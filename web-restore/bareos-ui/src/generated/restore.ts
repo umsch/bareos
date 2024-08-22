@@ -152,6 +152,36 @@ export interface PathToFileResponse {
     f?: File;
 }
 /**
+ * @generated from protobuf message bareos.restore.PathSegments
+ */
+export interface PathSegments {
+    /**
+     * 0 -> leaf
+     * last -> root
+     *
+     * @generated from protobuf field: repeated bareos.restore.File segments = 1;
+     */
+    segments: File[];
+}
+/**
+ * @generated from protobuf message bareos.restore.CurrentDirectoryRequest
+ */
+export interface CurrentDirectoryRequest {
+    /**
+     * @generated from protobuf field: bareos.restore.RestoreSession session = 1;
+     */
+    session?: RestoreSession;
+}
+/**
+ * @generated from protobuf message bareos.restore.CurrentDirectoryResponse
+ */
+export interface CurrentDirectoryResponse {
+    /**
+     * @generated from protobuf field: bareos.restore.PathSegments current_dir = 1;
+     */
+    currentDir?: PathSegments;
+}
+/**
  * @generated from protobuf message bareos.restore.ChangeDirectoryRequest
  */
 export interface ChangeDirectoryRequest {
@@ -171,9 +201,9 @@ export interface ChangeDirectoryRequest {
  */
 export interface ChangeDirectoryResponse {
     /**
-     * @generated from protobuf field: bareos.restore.Path current_directory = 1;
+     * @generated from protobuf field: bareos.restore.PathSegments current_dir = 1;
      */
-    currentDirectory?: Path;
+    currentDir?: PathSegments;
 }
 /**
  * @generated from protobuf message bareos.restore.Regex
@@ -926,6 +956,145 @@ class PathToFileResponse$Type extends MessageType<PathToFileResponse> {
  */
 export const PathToFileResponse = new PathToFileResponse$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class PathSegments$Type extends MessageType<PathSegments> {
+    constructor() {
+        super("bareos.restore.PathSegments", [
+            { no: 1, name: "segments", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => File }
+        ]);
+    }
+    create(value?: PartialMessage<PathSegments>): PathSegments {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.segments = [];
+        if (value !== undefined)
+            reflectionMergePartial<PathSegments>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: PathSegments): PathSegments {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated bareos.restore.File segments */ 1:
+                    message.segments.push(File.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: PathSegments, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated bareos.restore.File segments = 1; */
+        for (let i = 0; i < message.segments.length; i++)
+            File.internalBinaryWrite(message.segments[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.restore.PathSegments
+ */
+export const PathSegments = new PathSegments$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class CurrentDirectoryRequest$Type extends MessageType<CurrentDirectoryRequest> {
+    constructor() {
+        super("bareos.restore.CurrentDirectoryRequest", [
+            { no: 1, name: "session", kind: "message", T: () => RestoreSession }
+        ]);
+    }
+    create(value?: PartialMessage<CurrentDirectoryRequest>): CurrentDirectoryRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<CurrentDirectoryRequest>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: CurrentDirectoryRequest): CurrentDirectoryRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.restore.RestoreSession session */ 1:
+                    message.session = RestoreSession.internalBinaryRead(reader, reader.uint32(), options, message.session);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: CurrentDirectoryRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.restore.RestoreSession session = 1; */
+        if (message.session)
+            RestoreSession.internalBinaryWrite(message.session, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.restore.CurrentDirectoryRequest
+ */
+export const CurrentDirectoryRequest = new CurrentDirectoryRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class CurrentDirectoryResponse$Type extends MessageType<CurrentDirectoryResponse> {
+    constructor() {
+        super("bareos.restore.CurrentDirectoryResponse", [
+            { no: 1, name: "current_dir", kind: "message", T: () => PathSegments }
+        ]);
+    }
+    create(value?: PartialMessage<CurrentDirectoryResponse>): CurrentDirectoryResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<CurrentDirectoryResponse>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: CurrentDirectoryResponse): CurrentDirectoryResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.restore.PathSegments current_dir */ 1:
+                    message.currentDir = PathSegments.internalBinaryRead(reader, reader.uint32(), options, message.currentDir);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: CurrentDirectoryResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.restore.PathSegments current_dir = 1; */
+        if (message.currentDir)
+            PathSegments.internalBinaryWrite(message.currentDir, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.restore.CurrentDirectoryResponse
+ */
+export const CurrentDirectoryResponse = new CurrentDirectoryResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ChangeDirectoryRequest$Type extends MessageType<ChangeDirectoryRequest> {
     constructor() {
         super("bareos.restore.ChangeDirectoryRequest", [
@@ -982,7 +1151,7 @@ export const ChangeDirectoryRequest = new ChangeDirectoryRequest$Type();
 class ChangeDirectoryResponse$Type extends MessageType<ChangeDirectoryResponse> {
     constructor() {
         super("bareos.restore.ChangeDirectoryResponse", [
-            { no: 1, name: "current_directory", kind: "message", T: () => Path }
+            { no: 1, name: "current_dir", kind: "message", T: () => PathSegments }
         ]);
     }
     create(value?: PartialMessage<ChangeDirectoryResponse>): ChangeDirectoryResponse {
@@ -996,8 +1165,8 @@ class ChangeDirectoryResponse$Type extends MessageType<ChangeDirectoryResponse> 
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.restore.Path current_directory */ 1:
-                    message.currentDirectory = Path.internalBinaryRead(reader, reader.uint32(), options, message.currentDirectory);
+                case /* bareos.restore.PathSegments current_dir */ 1:
+                    message.currentDir = PathSegments.internalBinaryRead(reader, reader.uint32(), options, message.currentDir);
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1011,9 +1180,9 @@ class ChangeDirectoryResponse$Type extends MessageType<ChangeDirectoryResponse> 
         return message;
     }
     internalBinaryWrite(message: ChangeDirectoryResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.restore.Path current_directory = 1; */
-        if (message.currentDirectory)
-            Path.internalBinaryWrite(message.currentDirectory, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.restore.PathSegments current_dir = 1; */
+        if (message.currentDir)
+            PathSegments.internalBinaryWrite(message.currentDir, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1345,6 +1514,7 @@ export const Restore = new ServiceType("bareos.restore.Restore", [
     { name: "ChangeDirectory", options: {}, I: ChangeDirectoryRequest, O: ChangeDirectoryResponse },
     { name: "ChangeMarkedStatus", options: {}, I: ChangeMarkedRequest, O: ChangeMarkedResponse },
     { name: "PathToFile", options: {}, I: PathToFileRequest, O: PathToFileResponse },
+    { name: "CurrentDirectory", options: {}, I: CurrentDirectoryRequest, O: CurrentDirectoryResponse },
     { name: "Run", options: {}, I: RunRequest, O: RunResponse },
     { name: "Cancel", options: {}, I: CancelRequest, O: CancelResponse }
 ]);

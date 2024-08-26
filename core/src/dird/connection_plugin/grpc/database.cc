@@ -198,6 +198,8 @@ class DatabaseImpl final : public Database::Service {
             }
           } else if (strcasecmp(fields[i], "name") == 0) {
             resp.set_name(cols[i]);
+          } else if (strcasecmp(fields[i], "client") == 0) {
+            resp.mutable_client()->set_name(cols[i]);
           }
         }
 

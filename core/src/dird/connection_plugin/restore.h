@@ -101,7 +101,6 @@ typedef bool(CurrentDirectory_t)(struct restore_session_handle*,
 typedef bool(key_value_handler)(void* user, const char* key, const char* value);
 
 typedef bool(CreateRestoreJob_t)(struct restore_session_handle*,
-                                 struct restore_options,
                                  job_started_info* info);
 
 typedef bool(PathToFile_t)(struct restore_session_handle*,

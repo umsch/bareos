@@ -95,7 +95,6 @@ message RestoreOptions {
 
 message RunRequest {
   RestoreSession session = 1;
-  RestoreOptions restore_options = 2;
 };
 
 message RunResponse {

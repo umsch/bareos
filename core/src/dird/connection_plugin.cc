@@ -53,22 +53,26 @@ struct select_tree_state {
   TREE_ROOT* root{nullptr};
   size_t count{0};
   TREE_NODE* current{nullptr};
+  std::vector<uint64_t> selected_jobids{};
 
   // immutable options
-  directordaemon::CatalogResource* catalog{nullptr};
   std::string jobids;
 
   // mutable options
   std::optional<directordaemon::ClientResource*> restore_client{};
-  std::optional<directordaemon::JobResource*> restore_job{};
+  directordaemon::JobResource* restore_job{};
   std::optional<std::string> restore_location{};
   std::optional<replace_option> replace{};
 
-  select_tree_state(TREE_ROOT* tree, size_t tree_count, std::string&& jobids_)
+  select_tree_state(TREE_ROOT* tree,
+                    size_t tree_count,
+                    std::string&& jobids_,
+                    directordaemon::JobResource* restore_job)
       : root{tree}
       , count{tree_count}
       , current{(TREE_NODE*)tree}
       , jobids{std::move(jobids_)}
+      , restore_job{restore_job}
   {
   }
 
@@ -126,10 +130,16 @@ struct job_started_state {
 };
 
 struct restore_session_handle {
-  std::string error;
-  JobControlRecord* jcr;
-  BareosDb* db;
-  directordaemon::RestoreOptions opts;
+  std::string error{};
+  JobControlRecord* jcr{};
+  BareosDb* db{};
+  directordaemon::CatalogResource* catalog{};
+  directordaemon::JobResource* default_restore_job{};
+
+  const ConfigResourcesContainer& config() const
+  {
+    return *jcr->dir_impl->job_config_resources_container_.get();
+  }
 
   std::variant<select_start_state,
                build_restore_tree_state,
@@ -160,12 +170,8 @@ void Log(log_severity severity, const char* str)
   Dmsg2(500, "%d: %s\n", severity, str);
 }
 
-static BareosDb* OpenDb(JobControlRecord* jcr)
+static BareosDb* OpenDb(JobControlRecord* jcr, CatalogResource* catalog)
 {
-  ResLocker _{my_config};
-  auto* catalog = reinterpret_cast<CatalogResource*>(
-      my_config->GetNextRes(R_CATALOG, NULL));
-  if (!catalog) { return nullptr; }
   return DbSqlGetPooledConnection(
       jcr, catalog->db_driver, catalog->db_name, catalog->db_user,
       catalog->db_password.value, catalog->db_address, catalog->db_port,
@@ -175,20 +181,52 @@ static BareosDb* OpenDb(JobControlRecord* jcr)
       /* private */ true);
 }
 
+directordaemon::JobResource* DefaultRestoreJob(
+    const ConfigResourcesContainer& cfg)
+{
+  auto* job = dynamic_cast<JobResource*>(GetDefaultRes(cfg, R_JOB));
+
+  while (job) {
+    if (job->JobType == JT_RESTORE) { return job; }
+    job = dynamic_cast<JobResource*>(job->next_);
+  }
+
+  return nullptr;
+}
 
 restore_session_handle* PluginCreateRestoreSession(void)
 {
-  auto* jcr = NewDirectorJcr(DirdFreeJcr);
-  if (!jcr) { return nullptr; }
-  auto* db = OpenDb(jcr);
-  if (!db) {
-    FreeJcr(jcr);
-    return nullptr;
-  }
   auto* handle = new restore_session_handle{};
 
+  auto* jcr = NewDirectorJcr(DirdFreeJcr);
+  if (!jcr) { return nullptr; }
   handle->jcr = jcr;
+
+  handle->catalog = reinterpret_cast<CatalogResource*>(
+      GetDefaultRes(handle->config(), R_CATALOG));
+  if (!handle->catalog) {
+    handle->error
+        = "Cannot begin restore session as no catalog resource exists";
+    delete handle;
+    return nullptr;
+  }
+
+  auto* db = OpenDb(jcr, handle->catalog);
+  if (!db) {
+    handle->error
+        = "Cannot begin restore session as no database connection could be "
+          "established";
+    delete handle;
+    return nullptr;
+  }
   handle->db = db;
+
+  handle->default_restore_job = DefaultRestoreJob(handle->config());
+  if (!handle->default_restore_job) {
+    handle->error = "Cannot start restore session as no restore job exists";
+    delete handle;
+    return nullptr;
+  }
 
   return handle;
 }
@@ -240,7 +278,8 @@ bool PluginStartFromJobIds(restore_session_handle* handle,
 
   auto* root = ctx.root;
   auto size = ctx.TotalCount;
-  handle->state.emplace<select_tree_state>(root, size, std::move(jobid_string));
+  handle->state.emplace<select_tree_state>(root, size, std::move(jobid_string),
+                                           handle->default_restore_job);
   ctx.release();
 
   return true;
@@ -279,7 +318,6 @@ std::unique_ptr<RestoreBootstrapRecord> MakeBsr(restore_session_handle* handle,
 }
 
 bool PluginCreateRestoreJob(restore_session_handle* handle,
-                            restore_options Options,
                             job_started_info* info)
 {
   auto* state = std::get_if<select_tree_state>(&handle->state);
@@ -290,78 +328,28 @@ bool PluginCreateRestoreJob(restore_session_handle* handle,
 
   RestoreOptions opts{};
 
-  ResLocker _{my_config};
-
-  JobResource* restore_job = nullptr;
-  if (Options.restore_job) {
-    restore_job = (JobResource*)my_config->GetResWithName(
-        R_JOB, Options.restore_job, false);
-    if (!restore_job) {
-      handle->error = std::string{"Job not found: "} + Options.restore_job;
-      return false;
-    }
-  } else {
-    handle->error = std::string{"No restore job set."};
-    return false;
-  }
-  opts.job = restore_job;
-
-  ClientResource* restore_client{nullptr};
-  if (Options.restore_client) {
-    restore_client = (ClientResource*)my_config->GetResWithName(
-        R_CLIENT, Options.restore_client, false);
-    if (!restore_client) {
-      handle->error
-          = std::string{"Client not found: "} + Options.restore_client;
-      return false;
-    }
-  } else {
-    handle->error = std::string{"No restore client set."};
-    return false;
+  if (state->restore_client) {
+    opts.restore_client = state->restore_client.value();
   }
 
-  opts.restore_client = restore_client;
-
-  switch (Options.replace) {
-    case REPLACE_FILE_ALWAYS: {
-      opts.replace = replace_option::Always;
-    } break;
-
-    case REPLACE_FILE_IFNEWER: {
-      opts.replace = replace_option::IfNewer;
-    } break;
-    case REPLACE_FILE_IFOLDER: {
-      opts.replace = replace_option::IfOlder;
-    } break;
-    case REPLACE_FILE_NEVER: {
-      opts.replace = replace_option::Never;
-    } break;
-    case REPLACE_FILE_DEFAULT: {
-      opts.replace = std::nullopt;
-    } break;
+  if (state->restore_client) {
+    opts.restore_client = state->restore_client.value();
   }
 
-  auto* catalog = restore_job->catalog;
-  if (!catalog) { catalog = restore_client->catalog; }
-  if (!catalog) {
-    catalog = static_cast<CatalogResource*>(
-        my_config->GetNextRes(R_CATALOG, nullptr));
+  if (state->restore_location) {
+    opts.location
+        = RestoreOptions::where{std::move(state->restore_location).value()};
   }
-  if (!catalog) {
-    handle->error = "Could not select a catalog.";
-    return false;
-  }
+
+  opts.job = state->restore_job;
+  opts.replace = state->replace;
+  opts.catalog = handle->catalog;
 
   opts.jobids = state->jobids;
 
-  opts.catalog = catalog;
+  opts.catalog = handle->catalog;
 
-  if (Options.restore_location) {
-    opts.location = RestoreOptions::where{Options.restore_location};
-  }
-
-
-  if (restore_job->Protocol != PT_NATIVE) {
+  if (state->restore_job->Protocol != PT_NATIVE) {
     handle->error = "ndmp support not yet available.";
     return false;
   } else {
@@ -623,7 +611,7 @@ bool PluginUpdateRestoreState(restore_session_handle* handle,
 
   if (opts->restore_job) {
     auto* res = dynamic_cast<JobResource*>(
-        my_config->GetResWithName(R_JOB, opts->restore_job, false));
+        GetResWithName(handle->config(), R_JOB, opts->restore_job));
     if (!res) {
       handle->error = std::string{"Job not found: "} + opts->restore_job;
       return false;
@@ -634,7 +622,7 @@ bool PluginUpdateRestoreState(restore_session_handle* handle,
 
   if (opts->restore_client) {
     auto* res = dynamic_cast<ClientResource*>(
-        my_config->GetResWithName(R_CLIENT, opts->restore_client, false));
+        GetResWithName(handle->config(), R_CLIENT, opts->restore_client));
     if (!res) {
       handle->error = std::string{"Client not found: "} + opts->restore_client;
       return false;
@@ -662,7 +650,7 @@ bool PluginUpdateRestoreState(restore_session_handle* handle,
     } break;
   }
 
-  state->restore_job = std::move(restore_job);
+  state->restore_job = restore_job.value_or(handle->default_restore_job);
   state->restore_client = std::move(restore_client);
   state->restore_location = std::move(restore_location);
   state->replace = std::move(replace);
@@ -679,14 +667,12 @@ bool PluginCurrentSessionState(restore_session_handle* handle,
     return false;
   }
 
-  bss->catalog_name = state->catalog->resource_name_;
+  bss->catalog_name = handle->catalog->resource_name_;
   bss->can_restore = false;  // = HasFilesMarked()
   if (state->restore_client) {
     bss->options.restore_client = state->restore_client.value()->resource_name_;
   }
-  if (state->restore_job) {
-    bss->options.restore_job = state->restore_job.value()->resource_name_;
-  }
+  bss->options.restore_job = state->restore_job->resource_name_;
   if (state->restore_location) {
     bss->options.restore_location = state->restore_location->c_str();
   }
@@ -1076,7 +1062,6 @@ bool LoadConnectionPlugins(const char* directory,
   };
 
   ResLocker _{my_config};
-
 
   auto* p = dynamic_cast<GrpcResource*>(my_config->GetNextRes(R_GRPC, nullptr));
 

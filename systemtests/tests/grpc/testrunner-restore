@@ -120,7 +120,11 @@ RESTOREOPTIONS="{
         \"replace\" : \"NEVER\"
 }"
 
-grpc bareos.restore.Restore/Run "{\"session\" : $SESSION, \"restore_options\" : $RESTOREOPTIONS }" | tee "$log_home/restore.run"
+grpc bareos.restore.Restore/GetState "{ \"session\" : $SESSION }" | tee "$log_home/restore.state.pre"
+grpc bareos.restore.Restore/UpdateState "{ \"session\" : $SESSION, \"new_options\" : $RESTOREOPTIONS }" | tee "$log_home/restore.state.update"
+grpc bareos.restore.Restore/GetState "{ \"session\" : $SESSION }" | tee "$log_home/restore.state.post"
+
+grpc bareos.restore.Restore/Run "{\"session\" : $SESSION }" | tee "$log_home/restore.run"
 
 # check that the job actually exists in the database
 JOBID=$(jq ".jobid | .jobid" "$log_home/restore.run")

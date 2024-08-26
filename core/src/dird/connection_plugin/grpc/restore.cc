@@ -83,8 +83,34 @@ void to_bareos(restore_options* bareos, const RestoreOptions* grpc)
 
 void to_grpc(RestoreOptions* grpc, const restore_options* bareos)
 {
-  (void)bareos;
-  (void)grpc;
+  switch (bareos->replace) {
+    case REPLACE_FILE_DEFAULT: {
+    } break;
+    case REPLACE_FILE_ALWAYS: {
+      grpc->set_replace(ReplaceType::ALWAYS);
+    } break;
+    case REPLACE_FILE_IFNEWER: {
+      grpc->set_replace(ReplaceType::IF_NEWER);
+    } break;
+    case REPLACE_FILE_IFOLDER: {
+      grpc->set_replace(ReplaceType::IF_OLDER);
+    } break;
+    case REPLACE_FILE_NEVER: {
+      grpc->set_replace(ReplaceType::NEVER);
+    } break;
+  }
+
+  if (bareos->restore_job) {
+    grpc->mutable_restore_job()->set_name(bareos->restore_job);
+  }
+
+  if (bareos->restore_client) {
+    grpc->mutable_restore_client()->set_name(bareos->restore_client);
+  }
+
+  if (bareos->restore_location) {
+    grpc->set_restore_location(bareos->restore_location);
+  }
 }
 };  // namespace restore_opts_util
 
@@ -361,46 +387,9 @@ class RestoreImpl : public Restore::Service {
     try {
       auto handle = get_session(request->session());
 
-      restore_options options = {};
-
-      const RestoreOptions& opts = request->restore_options();
-
-      if (opts.has_replace()) {
-        switch (opts.replace()) {
-          case ReplaceType::ALWAYS: {
-            options.replace = REPLACE_FILE_ALWAYS;
-          } break;
-          case ReplaceType::NEVER: {
-            options.replace = REPLACE_FILE_NEVER;
-          } break;
-          case ReplaceType::IF_OLDER: {
-            options.replace = REPLACE_FILE_IFOLDER;
-          } break;
-          case ReplaceType::IF_NEWER: {
-            options.replace = REPLACE_FILE_IFNEWER;
-          } break;
-          default: {
-            throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
-                             "bad replace option.");
-          } break;
-        }
-      }
-
-      if (opts.has_restore_job()) {
-        options.restore_job = opts.restore_job().name().c_str();
-      }
-
-      if (opts.has_restore_client()) {
-        options.restore_client = opts.restore_client().name().c_str();
-      }
-
-      if (opts.has_restore_location()) {
-        options.restore_location = opts.restore_location().c_str();
-      }
-
       job_started_info info;
 
-      if (!cap.create_restore_job(handle.Bareos(), options, &info)) {
+      if (!cap.create_restore_job(handle.Bareos(), &info)) {
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          "Could not start restore job.");
       }

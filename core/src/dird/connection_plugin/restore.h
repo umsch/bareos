@@ -65,20 +65,28 @@ struct restore_options {
   const char* restore_client;
 };
 
+struct jobid_start_options {
+  size_t count;
+  const int64_t* jobids;
+
+  bool select_parents;
+  bool merge_filesets;
+};
+
 struct bareos_session_state {
   const char* catalog_name;
-  int64_t backup_id;
+  struct jobid_start_options start;
+
   int64_t marked_count;
   restore_options options;
 };
 
 typedef const char*(ErrorString_t)(struct restore_session_handle*);
 typedef void(FinishRestoreSession_t)(struct restore_session_handle*);
-typedef struct restore_session_handle*(CreateRestoreSession_t)(void);
+typedef struct restore_session_handle*(
+    CreateRestoreSession_t)(const char* catalog_name);
 typedef bool(StartFromJobIds_t)(struct restore_session_handle* handle,
-                                size_t count,
-                                const int64_t jobids[],
-                                bool select_parents);
+                                struct jobid_start_options opts);
 typedef bool(file_callback)(void* user, struct file_status status);
 typedef bool(ListFiles_t)(struct restore_session_handle*,
                           size_t* root_id,

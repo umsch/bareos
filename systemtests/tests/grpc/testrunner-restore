@@ -71,7 +71,14 @@ do
     grpc bareos.restore.Restore/Cancel "{ \"session\" : $session }"
 done
 
-grpc bareos.restore.Restore/Begin "{ \"backup_job\" : $JOB, \"find_job_chain\" : false }" | tee "$log_home/begin"
+START="{
+       \"backup_job\" : $JOB,
+       \"find_job_chain\" : false,
+       \"merge_filesets\" : false,
+       \"catalog\" : $CATALOG
+}"
+
+grpc bareos.restore.Restore/Begin "{ \"start\" : $START }" | tee "$log_home/begin"
 
 SESSION=$(jq -c ".session" "$log_home/begin")
 

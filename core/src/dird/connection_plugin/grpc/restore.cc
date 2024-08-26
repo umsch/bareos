@@ -114,6 +114,23 @@ void to_grpc(RestoreOptions* grpc, const restore_options* bareos)
 }
 };  // namespace restore_opts_util
 
+namespace session_state_util {
+void to_grpc(SessionState* grpc, bareos_session_state* bareos)
+{
+  RestoreOptions opts;
+  restore_opts_util::to_grpc(&opts, &bareos->options);
+
+  grpc->set_files_marked_count(bareos->marked_count);
+  auto* start = grpc->mutable_start();
+  start->mutable_catalog()->set_name(bareos->catalog_name);
+  start->mutable_backup_job()->set_jobid(bareos->start.jobids[0]);
+  start->set_find_job_chain(bareos->start.select_parents);
+  start->set_merge_filesets(bareos->start.merge_filesets);
+  *grpc->mutable_restore_options() = std::move(opts);
+}
+
+};  // namespace session_state_util
+
 class session_manager {
  public:
   session_manager(restore_capability* restore) : cap{restore} {}
@@ -194,7 +211,7 @@ class session_manager {
     return v;
   }
 
-  handle Make()
+  handle Make(const char* catalog_name)
   {
     std::optional locked = sessions.try_lock(lock_interval);
 
@@ -216,7 +233,7 @@ class session_manager {
                        "Could not create session (bad id).");
     }
 
-    auto* bareos_handle = cap->create_restore_session();
+    auto* bareos_handle = cap->create_restore_session(catalog_name);
 
     if (!bareos_handle) {
       map->erase(iter);
@@ -320,7 +337,10 @@ class RestoreImpl : public Restore::Service {
     return res;
   }
 
-  session_manager::handle new_session() { return sessions.Make(); }
+  session_manager::handle new_session(const char* catalog_name)
+  {
+    return sessions.Make(catalog_name);
+  }
 
   session_manager::handle get_session(const RestoreSession& sess)
   {
@@ -349,22 +369,33 @@ class RestoreImpl : public Restore::Service {
                BeginResponse* response) override
   {
     try {
-      if (request->find_job_chain()) {
+      if (request->start().find_job_chain()) {
         throw grpc_error(grpc::StatusCode::UNIMPLEMENTED,
-                         "This option is currently not implemented.");
+                         "find_job_chain is currently not implemented.");
       }
 
-      auto jobid = request->backup_job().jobid();
+      if (request->start().merge_filesets()) {
+        throw grpc_error(grpc::StatusCode::UNIMPLEMENTED,
+                         "merge_filesets is currently not implemented.");
+      }
 
-      auto handle = new_session();
+      auto jobid = request->start().backup_job().jobid();
+
+      auto handle = new_session(request->start().catalog().name().c_str());
 
       if (!handle) {
         throw grpc_error(grpc::StatusCode::INTERNAL,
                          "Could not create restore session.");
       }
 
-      if (!cap.start_from_jobids(handle.Bareos(), 1, &jobid,
-                                 request->find_job_chain())) {
+      jobid_start_options opts = {
+          .count = 1,
+          .jobids = &jobid,
+          .select_parents = request->start().find_job_chain(),
+          .merge_filesets = request->start().merge_filesets(),
+      };
+
+      if (!cap.start_from_jobids(handle.Bareos(), opts)) {
         const char* error = cap.error_string(handle.Bareos());
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          error ? error : "Internal error.");
@@ -600,14 +631,9 @@ class RestoreImpl : public Restore::Service {
       bareos_session_state s{};
       plugin_call(cap.current_session_state, handle.Bareos(), &s);
 
-      RestoreOptions opts;
-      restore_opts_util::to_grpc(&opts, &s.options);
-
       auto* state = response->mutable_state();
-      state->set_files_marked_count(s.marked_count);
-      state->mutable_catalog()->set_name(s.catalog_name);
-      state->mutable_backup_job()->set_jobid(s.backup_id);
-      *state->mutable_restore_options() = std::move(opts);
+
+      session_state_util::to_grpc(state, &s);
 
       return Status::OK;
     } catch (const grpc_error& err) {
@@ -631,14 +657,8 @@ class RestoreImpl : public Restore::Service {
 
       plugin_call(cap.current_session_state, handle.Bareos(), &s);
 
-      RestoreOptions opts;
-      restore_opts_util::to_grpc(&opts, &s.options);
-
       auto* state = response->mutable_state();
-      state->set_files_marked_count(s.marked_count);
-      state->mutable_catalog()->set_name(s.catalog_name);
-      state->mutable_backup_job()->set_jobid(s.backup_id);
-      *state->mutable_restore_options() = std::move(opts);
+      session_state_util::to_grpc(state, &s);
 
       return Status::OK;
     } catch (const grpc_error& err) {

@@ -136,6 +136,13 @@ struct restore_session_handle {
   directordaemon::CatalogResource* catalog{};
   directordaemon::JobResource* default_restore_job{};
 
+  struct {
+    // TODO: think about how to convert this to JobId_t
+    std::vector<int64_t> jobids;
+    bool select_parents;
+    bool merge_filesets;
+  } start;
+
   const ConfigResourcesContainer& config() const
   {
     return *jcr->dir_impl->job_config_resources_container_.get();
@@ -194,7 +201,7 @@ directordaemon::JobResource* DefaultRestoreJob(
   return nullptr;
 }
 
-restore_session_handle* PluginCreateRestoreSession(void)
+restore_session_handle* PluginCreateRestoreSession(const char* catalog_name)
 {
   auto* handle = new restore_session_handle{};
 
@@ -203,7 +210,7 @@ restore_session_handle* PluginCreateRestoreSession(void)
   handle->jcr = jcr;
 
   handle->catalog = reinterpret_cast<CatalogResource*>(
-      GetDefaultRes(handle->config(), R_CATALOG));
+      GetResWithName(handle->config(), R_CATALOG, catalog_name));
   if (!handle->catalog) {
     handle->error
         = "Cannot begin restore session as no catalog resource exists";
@@ -237,14 +244,12 @@ const char* PluginErrorString(restore_session_handle* handle)
 }
 
 bool PluginStartFromJobIds(restore_session_handle* handle,
-                           size_t count,
-                           const int64_t jobids[],
-                           bool select_parents)
+                           jobid_start_options opts)
 {
   auto* state = std::get_if<select_start_state>(&handle->state);
   if (!state) { return false; }
 
-  if (select_parents) {
+  if (opts.select_parents) {
     handle->error = "Not Implemented Yet";
     return false;
   }
@@ -253,18 +258,20 @@ bool PluginStartFromJobIds(restore_session_handle* handle,
   args.initial_selection = TreeArgs::selection::None;
   bool first = true;
   std::string jobid_string{};
-  for (size_t i = 0; i < count; ++i) {
-    auto [_, inserted] = args.jobids.insert(jobids[i]);
+  for (size_t i = 0; i < opts.count; ++i) {
+    auto [_, inserted] = args.jobids.insert(opts.jobids[i]);
     if (inserted) {
       if (!first) {
         jobid_string += ",";
       } else {
         first = false;
       }
-      jobid_string += std::to_string(jobids[i]);
+      jobid_string += std::to_string(opts.jobids[i]);
     }
   }
   args.estimated_size = 500;  // TODO: fix this
+
+  for (auto id : args.jobids) { handle->start.jobids.push_back(id); }
 
   auto& build_state = handle->state.emplace<build_restore_tree_state>(
       build_restore_tree_state(static_cast<std::size_t>(args.estimated_size),
@@ -273,6 +280,7 @@ bool PluginStartFromJobIds(restore_session_handle* handle,
   auto ctx = build_state.wait_and_get();
   if (ctx.error) {
     handle->error = "Tree creation error: ERR=" + ctx.error.value();
+    handle->start.jobids.clear();
     return false;
   }
 
@@ -280,6 +288,10 @@ bool PluginStartFromJobIds(restore_session_handle* handle,
   auto size = ctx.TotalCount;
   handle->state.emplace<select_tree_state>(root, size, std::move(jobid_string),
                                            handle->default_restore_job);
+
+  handle->start.select_parents = opts.select_parents;
+  handle->start.merge_filesets = opts.merge_filesets;
+
   ctx.release();
 
   return true;
@@ -711,6 +723,13 @@ bool PluginCurrentSessionState(restore_session_handle* handle,
   } else {
     bss->options.replace = REPLACE_FILE_DEFAULT;
   }
+
+  bss->start = {
+      .count = handle->start.jobids.size(),
+      .jobids = handle->start.jobids.data(),
+      .select_parents = handle->start.select_parents,
+      .merge_filesets = handle->start.merge_filesets,
+  };
 
   return true;
 }

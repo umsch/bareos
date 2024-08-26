@@ -33,9 +33,15 @@ service Restore {
   rpc Cancel (CancelRequest) returns (CancelResponse);
 }
 
+message StartSelection {
+  bareos.common.Job backup_job = 1;
+  bool find_job_chain = 2;
+  bool merge_filesets = 3;
+  bareos.config.CatalogId catalog = 4;
+};
+
 message SessionState {
-  bareos.config.CatalogId catalog = 1;
-  bareos.common.Job backup_job = 2;
+  StartSelection start = 1;
   uint64 files_marked_count = 3;
 
   RestoreOptions restore_options = 4;
@@ -66,8 +72,7 @@ message ListSessionsResponse {
 };
 
 message BeginRequest {
-  bareos.common.Job backup_job = 1;
-  bool find_job_chain = 2;
+  StartSelection start = 1;
 };
 
 message RestoreSession {

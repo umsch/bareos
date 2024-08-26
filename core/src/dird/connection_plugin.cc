@@ -660,6 +660,21 @@ bool PluginUpdateRestoreState(restore_session_handle* handle,
   return true;
 }
 
+static uint64_t NumFilesMarked(select_tree_state* st)
+{
+  // TODO: there has to be a smarter way than this.
+  //       the tree should maybe keep track of how many files are marked
+  uint64_t files_marked = 0;
+  for (auto* node : st->root->alloc) {
+    // technically extract/extract_dir already imply in_use, but lets
+    // leave it like this for now
+    if (node->in_use && (node->extract || node->extract_dir)) {
+      files_marked += 1;
+    }
+  }
+  return files_marked;
+}
+
 bool PluginCurrentSessionState(restore_session_handle* handle,
                                bareos_session_state* bss)
 {
@@ -670,7 +685,7 @@ bool PluginCurrentSessionState(restore_session_handle* handle,
   }
 
   bss->catalog_name = handle->catalog->resource_name_;
-  bss->can_restore = false;  // = HasFilesMarked()
+  bss->marked_count = NumFilesMarked(state);
   if (state->restore_client) {
     bss->options.restore_client = state->restore_client.value()->resource_name_;
   }

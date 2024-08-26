@@ -597,14 +597,14 @@ class RestoreImpl : public Restore::Service {
     try {
       auto handle = get_session(request->session());
 
-      bareos_session_state s;
+      bareos_session_state s{};
       plugin_call(cap.current_session_state, handle.Bareos(), &s);
 
       RestoreOptions opts;
       restore_opts_util::to_grpc(&opts, &s.options);
 
       auto* state = response->mutable_state();
-      state->set_can_run(s.can_restore);
+      state->set_files_marked_count(s.marked_count);
       state->mutable_catalog()->set_name(s.catalog_name);
       state->mutable_backup_job()->set_jobid(s.backup_id);
       *state->mutable_restore_options() = std::move(opts);
@@ -635,7 +635,7 @@ class RestoreImpl : public Restore::Service {
       restore_opts_util::to_grpc(&opts, &s.options);
 
       auto* state = response->mutable_state();
-      state->set_can_run(s.can_restore);
+      state->set_files_marked_count(s.marked_count);
       state->mutable_catalog()->set_name(s.catalog_name);
       state->mutable_backup_job()->set_jobid(s.backup_id);
       *state->mutable_restore_options() = std::move(opts);

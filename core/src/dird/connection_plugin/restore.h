@@ -68,7 +68,7 @@ struct restore_options {
 struct bareos_session_state {
   const char* catalog_name;
   int64_t backup_id;
-  bool can_restore;
+  int64_t marked_count;
   restore_options options;
 };
 

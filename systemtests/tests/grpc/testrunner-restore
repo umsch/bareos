@@ -50,7 +50,7 @@ get_id()
 
 start_test
 
-CATALOG=$(grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/restore.list" | jq -c '.catalogs | .[0] | .id')
+CATALOG=$(grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/list" | jq -c '.catalogs | .[0] | .id')
 grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list"
 grpc bareos.config.Config/ListJobs "{ \"filters\" : [ { \"type\" : { \"select\" : \"RESTORE\" }}]}" | tee "$log_home/restore_jobs.list"
 grpc bareos.config.Config/ListClients "{}" | tee "$log_home/restore_clients.list"
@@ -71,64 +71,81 @@ do
     grpc bareos.restore.Restore/Cancel "{ \"session\" : $session }"
 done
 
-grpc bareos.restore.Restore/Begin "{ \"backup_job\" : $JOB, \"find_job_chain\" : false }" | tee "$log_home/restore.begin"
+grpc bareos.restore.Restore/Begin "{ \"backup_job\" : $JOB, \"find_job_chain\" : false }" | tee "$log_home/begin"
 
-SESSION=$(jq -c ".session" "$log_home/restore.begin")
+SESSION=$(jq -c ".session" "$log_home/begin")
 
 
-grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.0"
-HOME_ID=$(get_id "$log_home/restore.ls.0" "home")
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/ls.0"
+HOME_ID=$(get_id "$log_home/ls.0" "home")
 echo "HOME_ID = ${HOME_ID}"
 
-grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \".\" } }" | tee "$log_home/restore.fileid.relative"
-grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \"${tmp}/data/build/src/tests/Makefile\" } }" | tee "$log_home/restore.fileid.file"
-grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \"${tmp}/data/build/src/tests\" } }" | tee "$log_home/restore.fileid.dir"
-CURRENT_ID=$(jq -e '.f.id | if has("value") then .value else 0 end' "$log_home/restore.fileid.relative")
-FILE_ID=$(jq -e '.f.id.value' "$log_home/restore.fileid.file")
-DIR_ID=$(jq -e '.f.id.value' "$log_home/restore.fileid.dir")
+grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \".\" } }" | tee "$log_home/fileid.relative"
+grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \"${tmp}/data/build/src/tests/Makefile\" } }" | tee "$log_home/fileid.file"
+grpc bareos.restore.Restore/PathToFile "{ \"session\" : $SESSION , \"p\" : { \"path\" : \"${tmp}/data/build/src/tests\" } }" | tee "$log_home/fileid.dir"
+CURRENT_ID=$(jq -e '.f.id | if has("value") then .value else 0 end' "$log_home/fileid.relative")
+FILE_ID=$(jq -e '.f.id.value' "$log_home/fileid.file")
+DIR_ID=$(jq -e '.f.id.value' "$log_home/fileid.dir")
 
 # currently CurrentDirectory and ChangeDirectory return the same thing
-grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $CURRENT_ID } }" | tee "$log_home/restore.cd.relative"
-grpc bareos.restore.Restore/CurrentDirectory "{ \"session\" : $SESSION }" | tee "$log_home/restore.cwd.relative"
-diff "$log_home/restore.cwd.relative" "$log_home/restore.cd.relative"
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $CURRENT_ID } }" | tee "$log_home/cd.relative"
+grpc bareos.restore.Restore/CurrentDirectory "{ \"session\" : $SESSION }" | tee "$log_home/cwd.relative"
+diff "$log_home/cwd.relative" "$log_home/cd.relative"
 
-grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $FILE_ID } }" | tee "$log_home/restore.cd.bad" || :
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $FILE_ID } }" | tee "$log_home/cd.bad" || :
 
-grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $DIR_ID } }" | tee "$log_home/restore.cd.absolute"
-grpc bareos.restore.Restore/CurrentDirectory "{ \"session\" : $SESSION }" | tee "$log_home/restore.cwd.absolute"
-diff "$log_home/restore.cwd.absolute" "$log_home/restore.cd.absolute"
+grpc bareos.restore.Restore/ChangeDirectory "{ \"session\" : $SESSION , \"directory\" : { \"value\" : $DIR_ID } }" | tee "$log_home/cd.absolute"
+grpc bareos.restore.Restore/CurrentDirectory "{ \"session\" : $SESSION }" | tee "$log_home/cwd.absolute"
+diff "$log_home/cwd.absolute" "$log_home/cd.absolute"
 
-grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.1"
-FID=$(jq -s ".[0].id.value" "$log_home/restore.ls.1")
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/ls.1"
+FID=$(jq -s ".[0].id.value" "$log_home/ls.1")
 echo ">>>> FID = $FID"
-grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $FID }, \"action\" : \"MARK\" }" | tee "$log_home/restore.mark.single"
-grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/restore.ls.2"
+grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $FID }, \"action\" : \"MARK\" }" | tee "$log_home/mark.single"
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION }" | tee "$log_home/ls.2"
 # -e tells jq to treat output=false/null as error
-jq -e -s "map(select(.id.value == $FID)) | all(.marked)" "$log_home/restore.ls.2"
+jq -e -s "map(select(.id.value == $FID)) | all(.marked)" "$log_home/ls.2"
 
 # FileId = 0 means root directory
-grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION, \"root\" : { \"value\" : \"0\" } }" | tee "$log_home/restore.ls.by_id"
+grpc bareos.restore.Restore/ListFiles "{\"session\" : $SESSION, \"root\" : { \"value\" : \"0\" } }" | tee "$log_home/ls.by_id"
 # both methods should return the same thing
-diff "$log_home/restore.ls.by_id" "$log_home/restore.ls.0"
+diff "$log_home/ls.by_id" "$log_home/ls.0"
 
 
-grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $HOME_ID }, \"action\" : \"MARK\", \"recursive\" : true }" | tee "$log_home/restore.mark.recursive"
+grpc bareos.restore.Restore/ChangeMarkedStatus "{ \"session\" : $SESSION , \"affected_id\" : { \"value\" : $HOME_ID }, \"action\" : \"MARK\", \"recursive\" : true }" | tee "$log_home/mark.recursive"
 RESTOREOPTIONS="{
-        \"restore_location\" : \"tmp/bareos-restores\",
+        \"restore_location\" : \"${RestoreDirectory}\",
         \"restore_job\" : $RESTOREJOB,
-        \"restore_client\" : $RESTORECLIENT,
-        \"replace\" : \"NEVER\"
+        \"restore_client\" : $RESTORECLIENT
 }"
 
-grpc bareos.restore.Restore/GetState "{ \"session\" : $SESSION }" | tee "$log_home/restore.state.pre"
-grpc bareos.restore.Restore/UpdateState "{ \"session\" : $SESSION, \"new_options\" : $RESTOREOPTIONS }" | tee "$log_home/restore.state.update"
-grpc bareos.restore.Restore/GetState "{ \"session\" : $SESSION }" | tee "$log_home/restore.state.post"
+grpc bareos.restore.Restore/GetState "{ \"session\" : $SESSION }" | tee "$log_home/state.pre"
+grpc bareos.restore.Restore/UpdateState "{ \"session\" : $SESSION, \"new_options\" : $RESTOREOPTIONS }" | tee "$log_home/state.update"
+grpc bareos.restore.Restore/GetState "{ \"session\" : $SESSION }" | tee "$log_home/state.post"
 
-grpc bareos.restore.Restore/Run "{\"session\" : $SESSION }" | tee "$log_home/restore.run"
+grpc bareos.restore.Restore/Run "{\"session\" : $SESSION }" | tee "$log_home/run"
 
 # check that the job actually exists in the database
-JOBID=$(jq ".jobid | .jobid" "$log_home/restore.run")
+JOBID=$(jq ".jobid | .jobid" "$log_home/run")
 grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list.after"
 jq -s "map(.job.jobid) | any(. == $JOBID)" "$log_home/jobs.list.after"
+
+bin/bconsole <<EOF
+@$out ${log_home}/messages
+wait jobid=$(echo "${JOBID}" | tr -d '"')
+messages
+EOF
+
+check_for_zombie_jobs storage=File
+
+expect_grep "Start Restore Job" \
+            "$log_home/messages" \
+            "Required restore job was not started."
+
+expect_grep "Restore OK" \
+            "$log_home/messages" \
+            "Restore job was not successful"
+
+check_restore_diff
 
 end_test

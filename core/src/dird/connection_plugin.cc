@@ -53,7 +53,16 @@ struct select_tree_state {
   TREE_ROOT* root{nullptr};
   size_t count{0};
   TREE_NODE* current{nullptr};
+
+  // immutable options
+  directordaemon::CatalogResource* catalog{nullptr};
   std::string jobids;
+
+  // mutable options
+  std::optional<directordaemon::ClientResource*> restore_client{};
+  std::optional<directordaemon::JobResource*> restore_job{};
+  std::optional<std::string> restore_location{};
+  std::optional<replace_option> replace{};
 
   select_tree_state(TREE_ROOT* tree, size_t tree_count, std::string&& jobids_)
       : root{tree}
@@ -112,21 +121,6 @@ struct build_restore_tree_state {
   }
 };
 
-struct select_restore_option_state {
-  directordaemon::JobResource* job{nullptr};
-  directordaemon::ClientResource* restore_client{nullptr};
-  directordaemon::CatalogResource* catalog{nullptr};
-
-  std::string bsr;
-  bool unlink_bsr;
-  size_t count;
-
-  ~select_restore_option_state()
-  {
-    if (bsr.size()) { ::unlink(bsr.c_str()); }
-  }
-};
-
 struct job_started_state {
   JobId_t jobid;
 };
@@ -140,10 +134,8 @@ struct restore_session_handle {
   std::variant<select_start_state,
                build_restore_tree_state,
                select_tree_state,
-               select_restore_option_state,
                job_started_state>
       state;
-
 
   ~restore_session_handle()
   {
@@ -264,65 +256,6 @@ bool WriteFile(const char* name, std::string_view content)
   } catch (...) {
     return false;
   }
-}
-
-bool PluginFinishSelection(restore_session_handle* handle,
-                           const char* bootstrap)
-{
-  auto* state = std::get_if<select_tree_state>(&handle->state);
-  if (!state) {
-    handle->error = "Wrong state";
-    return false;
-  }
-
-  TREE_ROOT* root = state->root;
-
-  std::unique_ptr bsr = BsrFromTree(root);
-
-  if (!bsr) {
-    handle->error = "No files selected to be restored.";
-    return false;
-  }
-
-  std::optional error
-      = AddVolumeInformationToBsr(handle->db, handle->jcr, bsr.get());
-  if (error) {
-    handle->error = "Could not finalize bsr: ERR=" + error.value();
-    return false;
-  }
-
-  auto serialized = SerializeBsr(bsr.get());
-
-  std::string bsr_path{};
-  if (bootstrap) {
-    bsr_path = bootstrap;
-  } else {
-    bsr_path = MakeUniqueBootstrapPath();
-    bootstrap = bsr_path.c_str();
-  }
-
-  if (!WriteFile(bsr_path.c_str(), serialized.serialized)) {
-    handle->error = "Could not write bootstrap to file: " + bsr_path;
-    return false;
-  }
-
-  auto& newstate = handle->state.emplace<select_restore_option_state>();
-  newstate.bsr = std::move(bsr_path);
-  newstate.count = serialized.expected_count;
-  newstate.unlink_bsr = (bootstrap == nullptr);
-
-  return true;
-}
-
-const char* PluginGetBootstrapPath(restore_session_handle* handle)
-{
-  auto* state = std::get_if<select_restore_option_state>(&handle->state);
-  if (!state) {
-    handle->error = "Wrong state";
-    return nullptr;
-  }
-
-  return state->bsr.c_str();
 }
 
 std::unique_ptr<RestoreBootstrapRecord> MakeBsr(restore_session_handle* handle,
@@ -586,89 +519,6 @@ bool PluginCurrentDirectory(restore_session_handle* handle, size_t* file_id)
   return true;
 }
 
-bool PluginSetRestoreClient(restore_session_handle* handle,
-                            const char* clientname)
-{
-  auto* state = std::get_if<select_restore_option_state>(&handle->state);
-  if (!state) {
-    handle->error = "Handle in wrong state.";
-    return false;
-  }
-  bool lock = false;
-
-  auto* client
-      = (ClientResource*)my_config->GetResWithName(R_CLIENT, clientname, lock);
-  if (!client) {
-    handle->error = std::string{"Client not found: "} + clientname;
-    return false;
-  }
-
-  state->restore_client = client;
-  return true;
-}
-bool PluginSetRestoreJob(restore_session_handle* handle, const char* jobname)
-{
-  auto* state = std::get_if<select_restore_option_state>(&handle->state);
-  if (!state) {
-    handle->error = "Handle in wrong state.";
-    return false;
-  }
-  bool lock = false;
-  auto* job = (JobResource*)my_config->GetResWithName(R_JOB, jobname, lock);
-  if (!job) {
-    handle->error = std::string{"Job not found: "} + jobname;
-    return false;
-  }
-
-  state->job = job;
-  return true;
-}
-bool PluginSetCatalog(restore_session_handle* handle, const char* catalogname)
-{
-  auto* state = std::get_if<select_restore_option_state>(&handle->state);
-  if (!state) {
-    handle->error = "Handle in wrong state.";
-    return false;
-  }
-  bool lock = false;
-  auto* catalog = (CatalogResource*)my_config->GetResWithName(
-      R_CATALOG, catalogname, lock);
-  if (!catalog) {
-    handle->error = std::string{"Catalog not found: "} + catalogname;
-    return false;
-  }
-
-  state->catalog = catalog;
-  return true;
-}
-bool PluginEnumerateOptions(restore_session_handle* handle,
-                            key_value_handler* handler,
-                            void* user)
-{
-  auto* state = std::get_if<select_restore_option_state>(&handle->state);
-  if (!state) {
-    handle->error = "Handle in wrong state.";
-    return false;
-  }
-
-  if (!(*handler)(user, "job",
-                  state->job ? state->job->resource_name_ : "UNSET")) {
-    return false;
-  }
-  if (!(*handler)(user, "client",
-                  state->restore_client ? state->restore_client->resource_name_
-                                        : "UNSET")) {
-    return false;
-  }
-  if (!(*handler)(user, "catalog",
-                  state->catalog ? state->catalog->resource_name_ : "UNSET")) {
-    return false;
-  }
-  if (!(*handler)(user, "bsr", state->bsr.c_str())) { return false; }
-
-  return true;
-}
-
 void PluginAbortRestoreSession(restore_session_handle* handle)
 {
   delete handle;
@@ -753,6 +603,111 @@ bool PluginPathToFile(restore_session_handle* handle,
   }
 
   *status = FileOfNode(state->root, node);
+
+  return true;
+}
+
+bool PluginUpdateRestoreState(restore_session_handle* handle,
+                              const restore_options* opts)
+{
+  auto* state = std::get_if<select_tree_state>(&handle->state);
+  if (!state) {
+    handle->error = "Wrong state";
+    return false;
+  }
+
+  std::optional<JobResource*> restore_job{};
+  std::optional<ClientResource*> restore_client{};
+  std::optional<replace_option> replace{};
+  std::optional<std::string> restore_location{};
+
+  if (opts->restore_job) {
+    auto* res = dynamic_cast<JobResource*>(
+        my_config->GetResWithName(R_JOB, opts->restore_job, false));
+    if (!res) {
+      handle->error = std::string{"Job not found: "} + opts->restore_job;
+      return false;
+    } else {
+      restore_job = res;
+    }
+  }
+
+  if (opts->restore_client) {
+    auto* res = dynamic_cast<ClientResource*>(
+        my_config->GetResWithName(R_CLIENT, opts->restore_client, false));
+    if (!res) {
+      handle->error = std::string{"Client not found: "} + opts->restore_client;
+      return false;
+    } else {
+      restore_client = res;
+    }
+  }
+
+  if (opts->restore_location) { restore_location = opts->restore_location; }
+
+  switch (opts->replace) {
+    case REPLACE_FILE_DEFAULT: {
+    } break;
+    case REPLACE_FILE_ALWAYS: {
+      replace = replace_option::Always;
+    } break;
+    case REPLACE_FILE_IFNEWER: {
+      replace = replace_option::IfNewer;
+    } break;
+    case REPLACE_FILE_IFOLDER: {
+      replace = replace_option::IfOlder;
+    } break;
+    case REPLACE_FILE_NEVER: {
+      replace = replace_option::Never;
+    } break;
+  }
+
+  state->restore_job = std::move(restore_job);
+  state->restore_client = std::move(restore_client);
+  state->restore_location = std::move(restore_location);
+  state->replace = std::move(replace);
+
+  return true;
+}
+
+bool PluginCurrentSessionState(restore_session_handle* handle,
+                               bareos_session_state* bss)
+{
+  auto* state = std::get_if<select_tree_state>(&handle->state);
+  if (!state) {
+    handle->error = "Wrong state";
+    return false;
+  }
+
+  bss->catalog_name = state->catalog->resource_name_;
+  bss->can_restore = false;  // = HasFilesMarked()
+  if (state->restore_client) {
+    bss->options.restore_client = state->restore_client.value()->resource_name_;
+  }
+  if (state->restore_job) {
+    bss->options.restore_job = state->restore_job.value()->resource_name_;
+  }
+  if (state->restore_location) {
+    bss->options.restore_location = state->restore_location->c_str();
+  }
+  if (state->replace) {
+    switch (*state->replace) {
+      case replace_option::Always: {
+        bss->options.replace = REPLACE_FILE_ALWAYS;
+      } break;
+      case replace_option::IfNewer: {
+        bss->options.replace = REPLACE_FILE_IFNEWER;
+      } break;
+      case replace_option::Never: {
+        bss->options.replace = REPLACE_FILE_NEVER;
+      } break;
+      case replace_option::IfOlder: {
+        bss->options.replace = REPLACE_FILE_IFOLDER;
+      } break;
+    }
+  } else {
+    bss->options.replace = REPLACE_FILE_DEFAULT;
+  }
 
   return true;
 }
@@ -1021,6 +976,9 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
             .finish_restore_session = &PluginFinishRestoreSession,
             .create_restore_job = &PluginCreateRestoreJob,
             .path_to_file = &PluginPathToFile,
+
+            .update_restore_state = &PluginUpdateRestoreState,
+            .current_session_state = &PluginCurrentSessionState,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

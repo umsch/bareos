@@ -44,6 +44,50 @@ FileType bareos_to_grpc_ft(bareos_file_type bft)
   throw grpc_error(grpc::StatusCode::UNKNOWN, "Unknown bareos file type.");
 }
 
+namespace restore_opts_util {
+void to_bareos(restore_options* bareos, const RestoreOptions* grpc)
+{
+  if (grpc->has_replace()) {
+    switch (grpc->replace()) {
+      case ReplaceType::ALWAYS: {
+        bareos->replace = REPLACE_FILE_ALWAYS;
+      } break;
+      case ReplaceType::NEVER: {
+        bareos->replace = REPLACE_FILE_NEVER;
+      } break;
+      case ReplaceType::IF_OLDER: {
+        bareos->replace = REPLACE_FILE_IFOLDER;
+      } break;
+      case ReplaceType::IF_NEWER: {
+        bareos->replace = REPLACE_FILE_IFNEWER;
+      } break;
+      default: {
+        throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+                         "bad replace option.");
+      } break;
+    }
+  }
+
+  if (grpc->has_restore_job()) {
+    bareos->restore_job = grpc->restore_job().name().c_str();
+  }
+
+  if (grpc->has_restore_client()) {
+    bareos->restore_client = grpc->restore_client().name().c_str();
+  }
+
+  if (grpc->has_restore_location()) {
+    bareos->restore_location = grpc->restore_location().c_str();
+  }
+}
+
+void to_grpc(RestoreOptions* grpc, const restore_options* bareos)
+{
+  (void)bareos;
+  (void)grpc;
+}
+};  // namespace restore_opts_util
+
 class session_manager {
  public:
   session_manager(restore_capability* restore) : cap{restore} {}
@@ -551,6 +595,62 @@ class RestoreImpl : public Restore::Service {
       }
 
       (void)response;
+      return Status::OK;
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+  }
+
+  Status GetState(ServerContext*,
+                  const GetStateRequest* request,
+                  GetStateResponse* response) override
+  {
+    try {
+      auto handle = get_session(request->session());
+
+      bareos_session_state s;
+      plugin_call(cap.current_session_state, handle.Bareos(), &s);
+
+      RestoreOptions opts;
+      restore_opts_util::to_grpc(&opts, &s.options);
+
+      auto* state = response->mutable_state();
+      state->set_can_run(s.can_restore);
+      state->mutable_catalog()->set_name(s.catalog_name);
+      state->mutable_backup_job()->set_jobid(s.backup_id);
+      *state->mutable_restore_options() = std::move(opts);
+
+      return Status::OK;
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+  }
+
+  Status UpdateState(ServerContext*,
+                     const UpdateStateRequest* request,
+                     UpdateStateResponse* response) override
+  {
+    try {
+      auto handle = get_session(request->session());
+
+      restore_options options{};
+      restore_opts_util::to_bareos(&options, &request->new_options());
+
+      plugin_call(cap.update_restore_state, handle.Bareos(), &options);
+
+      bareos_session_state s{};
+
+      plugin_call(cap.current_session_state, handle.Bareos(), &s);
+
+      RestoreOptions opts;
+      restore_opts_util::to_grpc(&opts, &s.options);
+
+      auto* state = response->mutable_state();
+      state->set_can_run(s.can_restore);
+      state->mutable_catalog()->set_name(s.catalog_name);
+      state->mutable_backup_job()->set_jobid(s.backup_id);
+      *state->mutable_restore_options() = std::move(opts);
+
       return Status::OK;
     } catch (const grpc_error& err) {
       return err.status;

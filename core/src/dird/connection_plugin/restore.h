@@ -65,6 +65,13 @@ struct restore_options {
   const char* restore_client;
 };
 
+struct bareos_session_state {
+  const char* catalog_name;
+  int64_t backup_id;
+  bool can_restore;
+  restore_options options;
+};
+
 typedef const char*(ErrorString_t)(struct restore_session_handle*);
 typedef void(FinishRestoreSession_t)(struct restore_session_handle*);
 typedef struct restore_session_handle*(CreateRestoreSession_t)(void);
@@ -101,6 +108,12 @@ typedef bool(PathToFile_t)(struct restore_session_handle*,
                            const char* path,
                            struct file_status* status);
 
+typedef bool(UpdateRestoreState_t)(struct restore_session_handle*,
+                                   const struct restore_options* opts);
+
+typedef bool(CurrentSessionState_t)(struct restore_session_handle*,
+                                    struct bareos_session_state* bss);
+
 struct restore_capability {
   ListFiles_t* list_files;
   ChangeDirectory_t* change_directory;
@@ -115,6 +128,9 @@ struct restore_capability {
   CreateRestoreJob_t* create_restore_job;
 
   PathToFile_t* path_to_file;
+
+  UpdateRestoreState_t* update_restore_state;
+  CurrentSessionState_t* current_session_state;
 };
 
 #ifdef __cplusplus

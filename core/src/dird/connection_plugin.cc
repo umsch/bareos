@@ -371,6 +371,8 @@ bool PluginCreateRestoreJob(restore_session_handle* handle,
     return false;
   }
 
+  FreeJcr(jcr);
+
   info->jobid = jobid;
 
   handle->state = job_started_state{jobid};

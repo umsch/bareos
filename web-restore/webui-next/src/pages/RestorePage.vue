@@ -1,24 +1,32 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-
-const catalog = ref('');
+import CatalogSelector from 'components/restore/CatalogSelector.vue';
+import JobSelector from 'components/restore/JobSelector.vue';
+import ClientSelector from 'components/restore/ClientSelector.vue';
+import FilesBrowser from 'components/restore/FilesBrowser.vue';
 </script>
 
 <template>
   <div class="row">
-    <div class="bg-amber">
-      <q-card>
+    <div>
+      <q-card class="q-ma-sm">
         <q-card-section>
-          <q-form class="q-gutter-md">
-            <q-input filled v-model="catalog" hint="select your catalog">
-            </q-input>
-          </q-form>
+          <catalog-selector />
         </q-card-section>
-
-        <q-card-section class="q-pt-none"> Text </q-card-section>
+        <q-card-section>
+          <job-selector />
+        </q-card-section>
+        <q-card-section>
+          <client-selector />
+        </q-card-section>
       </q-card>
     </div>
-    <div class="col-grow bg-blue-3">rechts</div>
+    <div class="col-grow q-ma-sm">
+      <q-card>
+        <q-card-section>
+          <files-browser />
+        </q-card-section>
+      </q-card>
+    </div>
   </div>
 </template>
 

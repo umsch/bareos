@@ -146,6 +146,7 @@ export const useWizardStore = defineStore('wizard', () => {
 
   watch(selectedSession, async (session) => {
     console.debug('selected session changed', session);
+    console.debug('updating path and files');
 
     if (session) {
       const currentPath = await restoreClient.currentDirectory(session);

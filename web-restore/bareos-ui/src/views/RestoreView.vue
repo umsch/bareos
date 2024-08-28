@@ -21,11 +21,6 @@ onMounted(async () => {
   await updateSessions()
 })
 
-const setJob = async (job: Job) => {
-  wizardStore.selectedJob = job
-  console.log('selectedJob', job.jobid)
-}
-
 const updateSessions = async () => {
   try {
     isSessionsLoading.value = true

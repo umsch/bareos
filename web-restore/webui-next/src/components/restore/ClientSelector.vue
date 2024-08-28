@@ -1,47 +1,65 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, ref } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { useWizardStore } from 'src/stores/wizardStore';
 
-import { isEmpty } from 'lodash';
-import type { Catalog } from 'src/generated/config';
+import { QSelect } from 'quasar';
 
 const wizard = useWizardStore();
 
-const noClients = computed(() => isEmpty(wizard.clients));
-
 const searchString = ref<string>();
-const filteredData = computed(() =>
-  wizard.clients.filter(
-    (option) =>
-      option.name
-        .toString()
-        .toLowerCase()
-        .indexOf(String(searchString.value ?? '').toLowerCase()) >= 0
-  )
-);
+const options = ref(wizard.clients);
+
+const filter = (
+  val: string,
+  update: (fn: () => void, ref?: (ref: QSelect) => void) => void
+) => {
+  if (val === '') {
+    update(() => {
+      options.value = wizard.clients;
+    });
+  } else {
+    setTimeout(() => {
+      update(
+        () => {
+          console.debug('value', val);
+          const needle = val.toLowerCase();
+          options.value = wizard.clients.filter(
+            (v) => v.name.toLowerCase().indexOf(needle) > -1
+          );
+        },
+        (ref) => {
+          if (ref.options || (val !== '' && ref.options!.length > 0)) {
+            ref.setOptionIndex(-1); // reset optionIndex in case there is something selected
+            ref.moveOptionSelection(1, true); // focus the first selectable option and do not update the input-value
+          }
+        }
+      );
+    }, 300);
+  }
+};
 
 onBeforeMount(() => {
   searchString.value = wizard.selectedClient?.name;
 });
 </script>
 <template>
-  <o-field
-    label="Target Client"
-    :variant="!noClients ? 'primary' : 'warning'"
-    :message="!noClients ? undefined : 'select catalog first'"
+  <q-select
+    filled
+    v-model="searchString"
+    clearable
+    use-input
+    hide-selected
+    fill-input
+    input-debounce="0"
+    label="Client"
+    :options="wizard.clients"
+    option-label="name"
+    @filter="filter"
   >
-    <o-autocomplete
-      v-model="searchString"
-      field="name"
-      placeholder="Select a client"
-      expanded
-      clearable
-      open-on-focus
-      keep-first
-      :data="filteredData"
-      @select="(option: Catalog) => (wizard.selectedClient = option)"
-    >
-      <template #empty>No catalogs found</template>
-    </o-autocomplete>
-  </o-field>
+    <template v-slot:no-option>
+      <q-item>
+        <q-item-section class="text-grey"> No results </q-item-section>
+      </q-item>
+    </template>
+  </q-select>
 </template>

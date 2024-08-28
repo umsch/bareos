@@ -1,48 +1,64 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { useWizardStore } from 'src/stores/wizardStore';
-
-import type { Catalog } from 'src/generated/config';
+import { QSelect } from 'quasar';
 
 const wizard = useWizardStore();
 
 const searchString = ref<string>();
-const filteredData = computed(() =>
-  wizard.catalogs.filter(
-    (option) =>
-      option.name
-        .toString()
-        .toLowerCase()
-        .indexOf(String(searchString.value ?? '').toLowerCase()) >= 0
-  )
-);
+const options = ref(wizard.catalogs);
 
-// watch on selectedCatalog is used for initial catalog selection
-watch(
-  () => wizard.selectedCatalog,
-  (selected) => {
-    searchString.value = selected?.name;
+const filter = (
+  val: string,
+  update: (fn: () => void, ref?: (ref: QSelect) => void) => void
+) => {
+  if (val === '') {
+    update(() => {
+      options.value = wizard.catalogs;
+    });
+  } else {
+    setTimeout(() => {
+      update(
+        () => {
+          console.debug('value', val);
+          const needle = val.toLowerCase();
+          options.value = wizard.catalogs.filter(
+            (v) => v.name.toLowerCase().indexOf(needle) > -1
+          );
+        },
+        (ref) => {
+          if (ref.options || (val !== '' && ref.options!.length > 0)) {
+            ref.setOptionIndex(-1); // reset optionIndex in case there is something selected
+            ref.moveOptionSelection(1, true); // focus the first selectable option and do not update the input-value
+          }
+        }
+      );
+    }, 300);
   }
-);
+};
 
 onBeforeMount(() => {
   searchString.value = wizard.selectedCatalog?.name;
 });
 </script>
 <template>
-  <o-field label="Catalog:">
-    <o-autocomplete
-      v-model="searchString"
-      field="name"
-      placeholder="Select a catalog"
-      expanded
-      clearable
-      open-on-focus
-      keep-first
-      :data="filteredData"
-      @select="(option: Catalog) => (wizard.selectedCatalog = option)"
-    >
-      <template #empty>No catalogs found</template>
-    </o-autocomplete>
-  </o-field>
+  <q-select
+    filled
+    v-model="searchString"
+    clearable
+    use-input
+    hide-selected
+    fill-input
+    input-debounce="0"
+    label="Catalog"
+    :options="wizard.catalogs"
+    option-label="name"
+    @filter="filter"
+  >
+    <template v-slot:no-option>
+      <q-item>
+        <q-item-section class="text-grey"> No results </q-item-section>
+      </q-item>
+    </template>
+  </q-select>
 </template>

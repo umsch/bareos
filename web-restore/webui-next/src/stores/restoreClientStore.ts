@@ -1,20 +1,23 @@
 import { defineStore } from 'pinia';
 import { onBeforeMount, ref } from 'vue';
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport';
-import { ConfigClient, type IConfigClient } from '@/generated/config.client';
-import type { Catalog, CatalogId } from '@/generated/config';
+import { ConfigClient, type IConfigClient } from 'src/generated/config.client';
+import type { Catalog, CatalogId } from 'src/generated/config';
 import {
   DatabaseClient,
   type IDatabaseClient,
-} from '@/generated/database.client';
-import type { Client, Job } from '@/generated/common';
-import { type IRestoreClient, RestoreClient } from '@/generated/restore.client';
+} from 'src/generated/database.client';
+import type { Client, Job } from 'src/generated/common';
+import {
+  type IRestoreClient,
+  RestoreClient,
+} from 'src/generated/restore.client';
 import {
   type File,
   FileType,
   MarkAction,
   type RestoreSession,
-} from '@/generated/restore';
+} from 'src/generated/restore';
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
   const transport = ref(
@@ -101,7 +104,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
 
   const fetchSessions = async () => {
     const response = await restoreClient.value?.listSessions({});
-    return response?.response.sessions!;
+    return response!.response.sessions!;
   };
 
   const createSession = async (job: Job) => {

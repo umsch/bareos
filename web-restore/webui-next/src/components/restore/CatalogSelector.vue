@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref, watch } from 'vue';
-import { useWizardStore } from '@/stores/wizardStore';
+import { useWizardStore } from 'src/stores/wizardStore';
 
-import { OField } from '@oruga-ui/oruga-next';
-import type { Catalog } from '@/generated/config';
+import type { Catalog } from 'src/generated/config';
 
 const wizard = useWizardStore();
 

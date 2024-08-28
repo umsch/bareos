@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeMount, ref } from 'vue';
 
-import { useWizardStore } from '@/stores/wizardStore';
-import type { Job } from '@/generated/common';
+import { useWizardStore } from 'src/stores/wizardStore';
+import type { Job } from 'src/generated/common';
 
 const wizard = useWizardStore();
 

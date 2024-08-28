@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { useWizardStore } from '@/stores/wizardStore';
-import { computed, onBeforeMount, ref, watch } from 'vue';
-import { OCheckbox, OIcon, OTableColumn } from '@oruga-ui/oruga-next';
-import { FileType, File } from '@/generated/restore';
-import { reverse } from 'lodash';
+import { useWizardStore } from 'src/stores/wizardStore';
+import { computed, ref, watch } from 'vue';
+import { FileType, File } from 'src/generated/restore';
 
 const wizard = useWizardStore();
 const checkedFiles = ref([]);
@@ -32,7 +30,7 @@ const changeDirectory = (name: File, event: Event) => {
   wizard.changeDirectory(name);
 };
 
-const isRowSelectable = (row: any) => {
+const isRowSelectable = (row: File) => {
   console.debug('isRowSelectable:', row);
   console.debug('isRowSelectable:', row.type !== FileType.FILE);
   return row.type !== FileType.FILE;
@@ -86,7 +84,7 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
     <o-table-column field="marked" label="Marked" width="40" v-slot="props">
       <o-checkbox
         v-model="props.row.marked"
-        @update:modelValue="(value) => updateMarkedStatus(value as boolean, props.row)"
+        @update:modelValue="(value: boolean) => updateMarkedStatus(value as boolean, props.row)"
         size="normal"
       />
     </o-table-column>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useWizardStore } from '@/stores/wizardStore';
-import { OButton, ODropdown, OField } from '@oruga-ui/oruga-next';
+import { useWizardStore } from 'src/stores/wizardStore';
 import { isEmpty } from 'lodash';
 import { computed } from 'vue';
 

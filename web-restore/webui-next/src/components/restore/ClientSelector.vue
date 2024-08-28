@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue';
-import { useWizardStore } from '@/stores/wizardStore';
+import { useWizardStore } from 'src/stores/wizardStore';
 
-import { OField } from '@oruga-ui/oruga-next';
 import { isEmpty } from 'lodash';
-import type { Catalog } from '@/generated/config';
+import type { Catalog } from 'src/generated/config';
 
 const wizard = useWizardStore();
 
 const noClients = computed(() => isEmpty(wizard.clients));
-const noClientSelected = computed(() => !wizard.selectedClient);
 
 const searchString = ref<string>();
 const filteredData = computed(() =>

@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
-import type { Catalog, CatalogId } from '@/generated/config';
+import type { Catalog, CatalogId } from 'src/generated/config';
 import { onMounted, ref, watch } from 'vue';
-import type { Client, Job } from '@/generated/common';
-import type { RestoreSession, File } from '@/generated/restore';
-import { useRestoreClientStore } from '@/stores/restoreClientStore';
+import type { Client, Job } from 'src/generated/common';
+import type { RestoreSession, File } from 'src/generated/restore';
+import { useRestoreClientStore } from 'src/stores/restoreClientStore';
 import { first, isEmpty, reverse } from 'lodash';
 
 export const useWizardStore = defineStore('wizard', () => {
@@ -86,7 +86,7 @@ export const useWizardStore = defineStore('wizard', () => {
     }
   });
 
-  watch(selectedJob, async (job) => {
+  watch(selectedJob, async () => {
     await cleanUpSessions();
     await createRestoreSession();
     await updateSessions();

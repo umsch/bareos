@@ -134,9 +134,12 @@ th.stretch {
   max-width: 100%;
 }
 
-td.text-flow {
+.overflow-hidden {
+  overflow-x: hidden;
+}
+
+.text-flow {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis ellipsis;
+  text-overflow: ellipsis;
 }
 </style>

@@ -6,27 +6,23 @@ import FilesBrowser from 'components/restore/FilesBrowser.vue'
 </script>
 
 <template>
-  <div class="row">
-    <div>
-      <q-card class="q-ma-sm">
-        <q-card-section>
-          <catalog-selector />
-        </q-card-section>
-        <q-card-section>
-          <job-selector />
-        </q-card-section>
-        <q-card-section>
-          <client-selector />
-        </q-card-section>
-      </q-card>
-    </div>
-    <div class="col-grow q-ma-sm">
-      <q-card>
-        <q-card-section>
-          <files-browser />
-        </q-card-section>
-      </q-card>
-    </div>
+  <div class="q-pa-md row items-start q-gutter-md">
+    <q-card class="col-shrink">
+      <q-card-section>
+        <catalog-selector />
+      </q-card-section>
+      <q-card-section>
+        <job-selector />
+      </q-card-section>
+      <q-card-section>
+        <client-selector />
+      </q-card-section>
+    </q-card>
+    <q-card class="col-grow">
+      <q-card-section>
+        <files-browser />
+      </q-card-section>
+    </q-card>
   </div>
 </template>
 

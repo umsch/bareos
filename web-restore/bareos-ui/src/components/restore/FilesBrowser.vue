@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useWizardStore } from '@/stores/wizardStore'
-import { computed, ref, watch } from 'vue'
-import { OCheckbox, OTableColumn } from '@oruga-ui/oruga-next'
-import { FileType, File } from '@/generated/restore'
+import {useWizardStore} from '@/stores/wizardStore'
+import {computed, onBeforeMount, ref, watch} from 'vue'
+import {OCheckbox, OIcon, OTableColumn} from '@oruga-ui/oruga-next'
+import {FileType, File} from '@/generated/restore'
 import {reverse} from "lodash";
 
 const wizard = useWizardStore()
@@ -27,7 +27,8 @@ const breadcrumbs = computed(() => {
   return wizard.cwd
 })
 
-const changeDirectory = (name: File) => {
+const changeDirectory = (name: File, event: Event) => {
+  event.preventDefault()
   console.debug('changeDirectory:', name)
   wizard.changeDirectory(name)
 }
@@ -40,7 +41,7 @@ const isRowSelectable = (row: any) => {
 
 const selected = ref<File>()
 
-watch(selected, (file : File | undefined) => {
+watch(selected, (file: File | undefined) => {
   console.debug('selected:', file)
   if (!file) {
     console.info('file is undefined')
@@ -53,6 +54,7 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
   console.log('updateMarking:', value, file)
   await wizard.updateMarkedStatus(file)
 }
+
 </script>
 
 <template>
@@ -60,26 +62,34 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
     <ul>
       <template v-for="(breadcrumb, index) in breadcrumbs" :key="index">
         <li :class="{ 'is-active': index === breadcrumbs!.length - 1 }">
-          <a href="#" @click="changeDirectory(breadcrumb)">{{ breadcrumb.name }}</a>
+          <a href="#" @click="(event) => changeDirectory(breadcrumb, event)">
+            <template v-if="breadcrumb.id?.value != 0n">
+              {{ breadcrumb.name }}
+            </template>
+            <template v-else>
+              <o-icon icon="house"/>
+            </template>
+          </a>
         </li>
       </template>
     </ul>
   </nav>
 
   <o-table
-    :data="wizard.files"
-    v-model:checked-rows="checkedFiles"
-    paginated
-    per-page="20"
-    :isRowSelectable="isRowSelectable"
-    v-model:selected="selected"
-    narrowed
+      :data="wizard.files"
+      v-model:checked-rows="checkedFiles"
+      paginated
+      per-page="20"
+      :isRowSelectable="isRowSelectable"
+      v-model:selected="selected"
+      narrowed
+      pagination-position="top"
   >
     <o-table-column field="marked" label="Marked" width="40" v-slot="props">
       <o-checkbox
-        v-model="props.row.marked"
-        @update:modelValue="(value) => updateMarkedStatus(value as boolean, props.row)"
-        size="normal"
+          v-model="props.row.marked"
+          @update:modelValue="(value) => updateMarkedStatus(value as boolean, props.row)"
+          size="normal"
       />
     </o-table-column>
     <o-table-column field="type" label="Type" width="40" v-slot="props">

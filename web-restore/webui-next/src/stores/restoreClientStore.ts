@@ -1,185 +1,206 @@
-import {defineStore} from 'pinia'
-import {onBeforeMount, ref} from 'vue'
-import {GrpcWebFetchTransport} from '@protobuf-ts/grpcweb-transport'
-import {ConfigClient, type IConfigClient} from '@/generated/config.client'
-import type {Catalog, CatalogId} from '@/generated/config'
-import {DatabaseClient, type IDatabaseClient} from '@/generated/database.client'
-import type {Client, Job} from '@/generated/common'
-import {type IRestoreClient, RestoreClient} from '@/generated/restore.client'
-import {type File, FileType, MarkAction, type RestoreSession} from '@/generated/restore'
+import { defineStore } from 'pinia';
+import { onBeforeMount, ref } from 'vue';
+import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport';
+import { ConfigClient, type IConfigClient } from '@/generated/config.client';
+import type { Catalog, CatalogId } from '@/generated/config';
+import {
+  DatabaseClient,
+  type IDatabaseClient,
+} from '@/generated/database.client';
+import type { Client, Job } from '@/generated/common';
+import { type IRestoreClient, RestoreClient } from '@/generated/restore.client';
+import {
+  type File,
+  FileType,
+  MarkAction,
+  type RestoreSession,
+} from '@/generated/restore';
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
-    const transport = ref(new GrpcWebFetchTransport({
-        baseUrl: 'http://127.0.0.1:9090',
-        format: 'binary'
-
-    }))
-
-    const configClient = ref<IConfigClient | null>(null)
-    const databaseClient = ref<IDatabaseClient | null>(null)
-    const restoreClient = ref<IRestoreClient | null>(null)
-
-    const catalogs = ref<Catalog[]>([])
-
-    onBeforeMount(async () => {
-        console.log('Initializing clients')
-        await initializeClient()
+  const transport = ref(
+    new GrpcWebFetchTransport({
+      baseUrl: 'http://127.0.0.1:9090',
+      format: 'binary',
     })
+  );
 
-    const initializeClient = async () => {
-        if (!configClient.value) {
-            configClient.value = new ConfigClient(transport.value)
-        }
+  const configClient = ref<IConfigClient | null>(null);
+  const databaseClient = ref<IDatabaseClient | null>(null);
+  const restoreClient = ref<IRestoreClient | null>(null);
 
-        if (!databaseClient.value) {
-            databaseClient.value = new DatabaseClient(transport.value)
-        }
+  const catalogs = ref<Catalog[]>([]);
 
-        if (!restoreClient.value) {
-            restoreClient.value = new RestoreClient(transport.value)
-        }
+  onBeforeMount(async () => {
+    console.log('Initializing clients');
+    await initializeClient();
+  });
 
-        console.log('Clients initialized')
+  const initializeClient = async () => {
+    if (!configClient.value) {
+      configClient.value = new ConfigClient(transport.value);
     }
 
-    const fetchCatalogs = async () => {
-        if (!configClient.value) {
-            console.error('configClient not initialized')
-            return []
-        }
-
-        const response = await configClient.value.listCatalogs({})
-        return response.response.catalogs
+    if (!databaseClient.value) {
+      databaseClient.value = new DatabaseClient(transport.value);
     }
 
-    const fetchClients = async (catalog: Catalog) => {
-        if (!configClient.value) {
-            console.error('configClient not initialized')
-            return []
-        }
-
-        const clients: Client[] = []
-
-        const call = databaseClient.value?.listClients({catalog: catalog.id})
-        if (!call) {
-            return clients
-        }
-
-        for await (const client of call.responses!) {
-            clients.push(client.client!)
-        }
-
-        return clients
+    if (!restoreClient.value) {
+      restoreClient.value = new RestoreClient(transport.value);
     }
 
-    const fetchJobs = async (catalog_id: CatalogId) => {
-        if (!configClient.value) {
-            console.error('configClient not initialized')
-            return []
-        }
+    console.log('Clients initialized');
+  };
 
-        const jobs: Job[] = []
-        const call = databaseClient.value?.listJobs({catalog: catalog_id})
-        if (!call) {
-            return jobs
-        }
-        for await (const job of call.responses!) {
-            jobs.push(job.job!)
-        }
-
-        return jobs
+  const fetchCatalogs = async () => {
+    if (!configClient.value) {
+      console.error('configClient not initialized');
+      return [];
     }
 
-    const fetchSessions = async () => {
-        const response = await restoreClient.value?.listSessions({})
-        return response?.response.sessions!
+    const response = await configClient.value.listCatalogs({});
+    return response.response.catalogs;
+  };
+
+  const fetchClients = async (catalog: Catalog) => {
+    if (!configClient.value) {
+      console.error('configClient not initialized');
+      return [];
     }
 
-    const createSession = async (job: Job) => {
-        const response = await restoreClient.value?.begin({backupJob: job, findJobChain: false})
-        return response?.response.session
+    const clients: Client[] = [];
+
+    const call = databaseClient.value?.listClients({ catalog: catalog.id });
+    if (!call) {
+      return clients;
     }
 
-    const deleteSession = async (session: RestoreSession) => {
-        await restoreClient.value?.cancel({session})
+    for await (const client of call.responses!) {
+      clients.push(client.client!);
     }
 
-    const runSession = async (session: RestoreSession, client: Client) => {
-        console.debug("running session:", session, client)
-        try {
-            await restoreClient.value?.run({
-                session,
-                restoreOptions: {
-                    restoreClient: client
-                }
-            })
-        } catch (e) {
-            console.error(e)
-        }
+    return clients;
+  };
 
-        console.debug("session end")
+  const fetchJobs = async (catalog_id: CatalogId) => {
+    if (!configClient.value) {
+      console.error('configClient not initialized');
+      return [];
     }
 
-    const fetchFiles = async (session: RestoreSession) => {
-        console.debug('fetching files for session', session)
-        const files: File[] = []
-        try {
-            const call = restoreClient.value?.listFiles({session: session})
-            if (!call?.responses) {
-                return files
-            }
-            console.debug('call', call)
-            for await (const file of call.responses) {
-                console.debug('file', file)
-                files.push(file)
-            }
-        } catch (e) {
-            console.error(e)
-        }
-        return files
+    const jobs: Job[] = [];
+    const call = databaseClient.value?.listJobs({ catalog: catalog_id });
+    if (!call) {
+      return jobs;
+    }
+    for await (const job of call.responses!) {
+      jobs.push(job.job!);
     }
 
-    const currentDirectory = async (session: RestoreSession) => {
-        const response = await restoreClient.value?.currentDirectory({session})
-        return response?.response.currentDir?.segments
+    return jobs;
+  };
+
+  const fetchSessions = async () => {
+    const response = await restoreClient.value?.listSessions({});
+    return response?.response.sessions!;
+  };
+
+  const createSession = async (job: Job) => {
+    const response = await restoreClient.value?.begin({
+      backupJob: job,
+      findJobChain: false,
+    });
+    return response?.response.session;
+  };
+
+  const deleteSession = async (session: RestoreSession) => {
+    await restoreClient.value?.cancel({ session });
+  };
+
+  const runSession = async (session: RestoreSession, client: Client) => {
+    console.debug('running session:', session, client);
+    try {
+      await restoreClient.value?.run({
+        session,
+        restoreOptions: {
+          restoreClient: client,
+        },
+      });
+    } catch (e) {
+      console.error(e);
     }
 
-    const changeDirectory = async (session: RestoreSession, path: File) => {
-        if (path.type !== FileType.DIRECTORY && path.type !== FileType.DIRECTORY_NOT_BACKED_UP) {
-            throw new Error('Invalid file type. File type must be a directory')
-        }
+    console.debug('session end');
+  };
 
-        const response = await restoreClient.value?.changeDirectory({
-            session: session,
-            directory: path.id
-        })
-        return response?.response.currentDir?.segments
+  const fetchFiles = async (session: RestoreSession) => {
+    console.debug('fetching files for session', session);
+    const files: File[] = [];
+    try {
+      const call = restoreClient.value?.listFiles({ session: session });
+      if (!call?.responses) {
+        return files;
+      }
+      console.debug('call', call);
+      for await (const file of call.responses) {
+        console.debug('file', file);
+        files.push(file);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return files;
+  };
+
+  const currentDirectory = async (session: RestoreSession) => {
+    const response = await restoreClient.value?.currentDirectory({ session });
+    return response?.response.currentDir?.segments;
+  };
+
+  const changeDirectory = async (session: RestoreSession, path: File) => {
+    if (
+      path.type !== FileType.DIRECTORY &&
+      path.type !== FileType.DIRECTORY_NOT_BACKED_UP
+    ) {
+      throw new Error('Invalid file type. File type must be a directory');
     }
 
-    const changeMarkedStatus = async (session: RestoreSession, file: File, mark: boolean) => {
-        console.debug('changing marked status: ', file, mark)
+    const response = await restoreClient.value?.changeDirectory({
+      session: session,
+      directory: path.id,
+    });
+    return response?.response.currentDir?.segments;
+  };
 
-        await restoreClient.value?.changeMarkedStatus({
-            session: session,
-            action: mark ? MarkAction.MARK : MarkAction.UNMARK,
-            affectedId: file.id!,
-            recursive: file.type === FileType.DIRECTORY || file.type === FileType.DIRECTORY_NOT_BACKED_UP
-        })
-    }
+  const changeMarkedStatus = async (
+    session: RestoreSession,
+    file: File,
+    mark: boolean
+  ) => {
+    console.debug('changing marked status: ', file, mark);
 
-    return {
-        transport,
-        catalogs,
-        fetchCatalogs,
-        fetchClients,
-        fetchJobs,
-        fetchSessions,
-        createSession,
-        deleteSession,
-        runSession,
-        fetchFiles,
-        currentDirectory,
-        changeDirectory,
-        changeMarkedStatus
-    }
-})
+    await restoreClient.value?.changeMarkedStatus({
+      session: session,
+      action: mark ? MarkAction.MARK : MarkAction.UNMARK,
+      affectedId: file.id!,
+      recursive:
+        file.type === FileType.DIRECTORY ||
+        file.type === FileType.DIRECTORY_NOT_BACKED_UP,
+    });
+  };
+
+  return {
+    transport,
+    catalogs,
+    fetchCatalogs,
+    fetchClients,
+    fetchJobs,
+    fetchSessions,
+    createSession,
+    deleteSession,
+    runSession,
+    fetchFiles,
+    currentDirectory,
+    changeDirectory,
+    changeMarkedStatus,
+  };
+});

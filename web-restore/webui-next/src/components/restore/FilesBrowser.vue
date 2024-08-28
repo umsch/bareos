@@ -1,60 +1,58 @@
 <script setup lang="ts">
-import {useWizardStore} from '@/stores/wizardStore'
-import {computed, onBeforeMount, ref, watch} from 'vue'
-import {OCheckbox, OIcon, OTableColumn} from '@oruga-ui/oruga-next'
-import {FileType, File} from '@/generated/restore'
-import {reverse} from "lodash";
+import { useWizardStore } from '@/stores/wizardStore';
+import { computed, onBeforeMount, ref, watch } from 'vue';
+import { OCheckbox, OIcon, OTableColumn } from '@oruga-ui/oruga-next';
+import { FileType, File } from '@/generated/restore';
+import { reverse } from 'lodash';
 
-const wizard = useWizardStore()
-const checkedFiles = ref([])
+const wizard = useWizardStore();
+const checkedFiles = ref([]);
 
 const getIcon = (type: FileType) => {
   switch (type) {
     case FileType.DIRECTORY:
-      return 'folder'
+      return 'folder';
     case FileType.FILE:
-      return 'file'
+      return 'file';
     case FileType.DIRECTORY_NOT_BACKED_UP:
-      return 'folder'
+      return 'folder';
     default:
-      return 'square-question'
+      return 'square-question';
   }
-}
-
+};
 
 const breadcrumbs = computed(() => {
-  console.debug("breadcrumbs", wizard.cwd)
-  return wizard.cwd
-})
+  console.debug('breadcrumbs', wizard.cwd);
+  return wizard.cwd;
+});
 
 const changeDirectory = (name: File, event: Event) => {
-  event.preventDefault()
-  console.debug('changeDirectory:', name)
-  wizard.changeDirectory(name)
-}
+  event.preventDefault();
+  console.debug('changeDirectory:', name);
+  wizard.changeDirectory(name);
+};
 
 const isRowSelectable = (row: any) => {
-  console.debug('isRowSelectable:', row)
-  console.debug('isRowSelectable:', row.type !== FileType.FILE)
-  return row.type !== FileType.FILE
-}
+  console.debug('isRowSelectable:', row);
+  console.debug('isRowSelectable:', row.type !== FileType.FILE);
+  return row.type !== FileType.FILE;
+};
 
-const selected = ref<File>()
+const selected = ref<File>();
 
 watch(selected, (file: File | undefined) => {
-  console.debug('selected:', file)
+  console.debug('selected:', file);
   if (!file) {
-    console.info('file is undefined')
-    return
+    console.info('file is undefined');
+    return;
   }
-  wizard.changeDirectory(file)
-})
+  wizard.changeDirectory(file);
+});
 
 const updateMarkedStatus = async (value: boolean, file: File) => {
-  console.log('updateMarking:', value, file)
-  await wizard.updateMarkedStatus(file)
-}
-
+  console.log('updateMarking:', value, file);
+  await wizard.updateMarkedStatus(file);
+};
 </script>
 
 <template>
@@ -67,7 +65,7 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
               {{ breadcrumb.name }}
             </template>
             <template v-else>
-              <o-icon icon="house"/>
+              <o-icon icon="house" />
             </template>
           </a>
         </li>
@@ -76,20 +74,20 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
   </nav>
 
   <o-table
-      :data="wizard.files"
-      v-model:checked-rows="checkedFiles"
-      paginated
-      per-page="20"
-      :isRowSelectable="isRowSelectable"
-      v-model:selected="selected"
-      narrowed
-      pagination-position="top"
+    :data="wizard.files"
+    v-model:checked-rows="checkedFiles"
+    paginated
+    per-page="20"
+    :isRowSelectable="isRowSelectable"
+    v-model:selected="selected"
+    narrowed
+    pagination-position="top"
   >
     <o-table-column field="marked" label="Marked" width="40" v-slot="props">
       <o-checkbox
-          v-model="props.row.marked"
-          @update:modelValue="(value) => updateMarkedStatus(value as boolean, props.row)"
-          size="normal"
+        v-model="props.row.marked"
+        @update:modelValue="(value) => updateMarkedStatus(value as boolean, props.row)"
+        size="normal"
       />
     </o-table-column>
     <o-table-column field="type" label="Type" width="40" v-slot="props">

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useWizardStore } from '@/stores/wizardStore'
-import { OButton, ODropdown, OField } from '@oruga-ui/oruga-next'
-import { isEmpty } from 'lodash'
-import { computed } from 'vue'
+import { useWizardStore } from '@/stores/wizardStore';
+import { OButton, ODropdown, OField } from '@oruga-ui/oruga-next';
+import { isEmpty } from 'lodash';
+import { computed } from 'vue';
 
-const wizardStore = useWizardStore()
+const wizardStore = useWizardStore();
 
-const noSessions = computed(() => isEmpty(wizardStore.sessions))
+const noSessions = computed(() => isEmpty(wizardStore.sessions));
 </script>
 
 <template>

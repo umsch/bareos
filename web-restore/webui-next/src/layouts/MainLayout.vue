@@ -36,14 +36,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import EssentialLink, {
-  EssentialLinkProps,
-} from 'components/EssentialLink.vue';
+import { ref } from 'vue'
+import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue'
 
 defineOptions({
   name: 'MainLayout',
-});
+})
 
 const linksList: EssentialLinkProps[] = [
   {
@@ -58,11 +56,11 @@ const linksList: EssentialLinkProps[] = [
     icon: 'restore',
     link: '/restore',
   },
-];
+]
 
-const leftDrawerOpen = ref(false);
+const leftDrawerOpen = ref(false)
 
 function toggleLeftDrawer() {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
+  leftDrawerOpen.value = !leftDrawerOpen.value
 }
 </script>

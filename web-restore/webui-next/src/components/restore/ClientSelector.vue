@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue';
-import { useWizardStore } from 'src/stores/wizardStore';
+import { onBeforeMount, ref } from 'vue'
+import { useWizardStore } from 'src/stores/wizardStore'
 
-import { QSelect } from 'quasar';
+import { QSelect } from 'quasar'
 
-const wizard = useWizardStore();
+const wizard = useWizardStore()
 
-const searchString = ref<string>();
-const options = ref(wizard.clients);
+const searchString = ref<string>()
+const options = ref(wizard.clients)
 
 const filter = (
   val: string,
@@ -15,32 +15,32 @@ const filter = (
 ) => {
   if (val === '') {
     update(() => {
-      options.value = wizard.clients;
-    });
+      options.value = wizard.clients
+    })
   } else {
     setTimeout(() => {
       update(
         () => {
-          console.debug('value', val);
-          const needle = val.toLowerCase();
+          console.debug('value', val)
+          const needle = val.toLowerCase()
           options.value = wizard.clients.filter(
             (v) => v.name.toLowerCase().indexOf(needle) > -1
-          );
+          )
         },
         (ref) => {
           if (ref.options || (val !== '' && ref.options!.length > 0)) {
-            ref.setOptionIndex(-1); // reset optionIndex in case there is something selected
-            ref.moveOptionSelection(1, true); // focus the first selectable option and do not update the input-value
+            ref.setOptionIndex(-1) // reset optionIndex in case there is something selected
+            ref.moveOptionSelection(1, true) // focus the first selectable option and do not update the input-value
           }
         }
-      );
-    }, 300);
+      )
+    }, 300)
   }
-};
+}
 
 onBeforeMount(() => {
-  searchString.value = wizard.selectedClient?.name;
-});
+  searchString.value = wizard.selectedClient?.name
+})
 </script>
 <template>
   <q-select

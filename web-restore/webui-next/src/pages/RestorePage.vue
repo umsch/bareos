@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import CatalogSelector from 'components/restore/CatalogSelector.vue';
-import JobSelector from 'components/restore/JobSelector.vue';
-import ClientSelector from 'components/restore/ClientSelector.vue';
-import FilesBrowser from 'components/restore/FilesBrowser.vue';
+import CatalogSelector from 'components/restore/CatalogSelector.vue'
+import JobSelector from 'components/restore/JobSelector.vue'
+import ClientSelector from 'components/restore/ClientSelector.vue'
+import FilesBrowser from 'components/restore/FilesBrowser.vue'
 </script>
 
 <template>

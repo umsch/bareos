@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useWizardStore } from 'src/stores/wizardStore';
-import { isEmpty } from 'lodash';
-import { computed } from 'vue';
+import { useWizardStore } from 'src/stores/wizardStore'
+import { isEmpty } from 'lodash'
+import { computed } from 'vue'
 
-const wizardStore = useWizardStore();
+const wizardStore = useWizardStore()
 
-const noSessions = computed(() => isEmpty(wizardStore.sessions));
+const noSessions = computed(() => isEmpty(wizardStore.sessions))
 </script>
 
 <template>

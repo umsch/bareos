@@ -124,22 +124,27 @@ watch(selected, (file: File | undefined) => {
   </div>
 </template>
 
-<style scoped lang="scss">
-table {
-  width: 100%;
-}
+<style scoped lang="sass">
+.thead-sticky tr > *,
+.tfoot-sticky tr > *
+  position: sticky
+  opacity: 1
+  z-index: 1
+  background: black
+  color: white
 
-th.stretch {
-  width: 100%;
-  max-width: 100%;
-}
+.thead-sticky tr:last-child > *
+  top: 0
 
-.overflow-hidden {
-  overflow-x: hidden;
-}
+.tfoot-sticky tr:first-child > *
+  bottom: 0
 
-.text-flow {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
+th.stretch
+  width: 100%
+  max-width: 100%
+
+
+td.text-flow
+  word-wrap: break-word
+  white-space: normal
 </style>

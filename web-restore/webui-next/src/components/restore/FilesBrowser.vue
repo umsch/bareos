@@ -50,10 +50,10 @@ watch(selected, (file: File | undefined) => {
   wizard.changeDirectory(file)
 })
 
-// const updateMarkedStatus = async (value: boolean, file: File) => {
-//   console.log('updateMarking:', value, file);
-//   await wizard.updateMarkedStatus(file);
-// };
+const updateMarkedStatus = async (value: boolean, file: File) => {
+  console.log('updateMarking:', value, file)
+  await wizard.updateMarkedStatus(file)
+}
 </script>
 
 <template>
@@ -96,27 +96,32 @@ watch(selected, (file: File | undefined) => {
           </tr>
         </thead>
       </template>
-      <template v-slot="{ item: row, index }">
+      <template v-slot="{ item: file, index }">
         <tr :key="index">
           <td>
-            <q-checkbox v-model="row.marked" />
+            <q-checkbox
+              v-model="file.marked"
+              @update:modelValue="
+                (value, event) => updateMarkedStatus(value, file)
+              "
+            />
           </td>
           <td>
             <q-btn
-              v-if="isDirectory(row)"
-              @click="(event) => changeDirectory(row, event)"
-              :icon="getIcon(row.type)"
+              v-if="isDirectory(file)"
+              @click="(event) => changeDirectory(file, event)"
+              :icon="getIcon(file.type)"
               flat
             />
             <q-btn
               v-else
               @click="(event) => event.preventDefault()"
-              :icon="getIcon(row.type)"
+              :icon="getIcon(file.type)"
               flat
             />
           </td>
           <td class="text-flow">
-            {{ row.name }}
+            {{ file.name }}
           </td>
         </tr>
       </template>

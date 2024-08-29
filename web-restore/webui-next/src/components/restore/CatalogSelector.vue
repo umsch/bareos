@@ -2,11 +2,12 @@
 import { onBeforeMount, ref } from 'vue'
 import { useWizardStore } from 'src/stores/wizardStore'
 import { QSelect } from 'quasar'
+import { Catalog } from 'src/generated/config'
 
 const wizard = useWizardStore()
 
-const searchString = ref<string>()
-const options = ref(wizard.catalogs)
+const searchString = ref<Catalog | null>()
+const options = ref<Catalog[]>(wizard.catalogs)
 
 const filter = (
   val: string,
@@ -38,7 +39,7 @@ const filter = (
 }
 
 onBeforeMount(() => {
-  searchString.value = wizard.selectedCatalog?.name
+  searchString.value = wizard.selectedCatalog
 })
 </script>
 <template>

@@ -2232,3 +2232,23 @@ const char* DatatypeToDescription(int type)
 
   return NULL;
 }
+
+BareosResource* GetDefaultRes(const ConfigResourcesContainer& container,
+                              int rindex)
+{
+  return container.configuration_resources_[rindex];
+}
+
+BareosResource* GetResWithName(const ConfigResourcesContainer& container,
+                               int rindex,
+                               const char* name)
+{
+  auto* res = GetDefaultRes(container, rindex);
+
+  while (res) {
+    if (bstrcmp(res->resource_name_, name)) { break; }
+    res = res->next_;
+  }
+
+  return res;
+}

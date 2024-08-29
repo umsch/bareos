@@ -13,6 +13,9 @@ service Restore {
   rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
   rpc Begin (BeginRequest) returns (BeginResponse);
 
+  rpc GetState(GetStateRequest) returns (GetStateResponse);
+  rpc UpdateState(UpdateStateRequest) returns (UpdateStateResponse);
+
   // these functions will only work once the tree is created
   // todo: how do plugin files work
   rpc ListFiles (ListFilesRequest) returns (stream File);
@@ -30,6 +33,37 @@ service Restore {
   rpc Cancel (CancelRequest) returns (CancelResponse);
 }
 
+message StartSelection {
+  bareos.common.Job backup_job = 1;
+  bool find_job_chain = 2;
+  bool merge_filesets = 3;
+  bareos.config.CatalogId catalog = 4;
+};
+
+message SessionState {
+  StartSelection start = 1;
+  uint64 files_marked_count = 3;
+
+  RestoreOptions restore_options = 4;
+};
+
+message GetStateRequest {
+  RestoreSession session = 1;
+};
+
+message GetStateResponse {
+  SessionState state = 1;
+};
+
+message UpdateStateRequest {
+  RestoreSession session = 1;
+  RestoreOptions new_options = 2;
+};
+
+message UpdateStateResponse {
+  SessionState state = 1;
+};
+
 message ListSessionsRequest {
 };
 
@@ -38,8 +72,7 @@ message ListSessionsResponse {
 };
 
 message BeginRequest {
-  bareos.common.Job backup_job = 1;
-  bool find_job_chain = 2;
+  StartSelection start = 1;
 };
 
 message RestoreSession {
@@ -67,7 +100,6 @@ message RestoreOptions {
 
 message RunRequest {
   RestoreSession session = 1;
-  RestoreOptions restore_options = 2;
 };
 
 message RunResponse {

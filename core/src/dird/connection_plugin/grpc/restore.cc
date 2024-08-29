@@ -44,6 +44,93 @@ FileType bareos_to_grpc_ft(bareos_file_type bft)
   throw grpc_error(grpc::StatusCode::UNKNOWN, "Unknown bareos file type.");
 }
 
+namespace restore_opts_util {
+void to_bareos(restore_options* bareos, const RestoreOptions* grpc)
+{
+  if (grpc->has_replace()) {
+    switch (grpc->replace()) {
+      case ReplaceType::ALWAYS: {
+        bareos->replace = REPLACE_FILE_ALWAYS;
+      } break;
+      case ReplaceType::NEVER: {
+        bareos->replace = REPLACE_FILE_NEVER;
+      } break;
+      case ReplaceType::IF_OLDER: {
+        bareos->replace = REPLACE_FILE_IFOLDER;
+      } break;
+      case ReplaceType::IF_NEWER: {
+        bareos->replace = REPLACE_FILE_IFNEWER;
+      } break;
+      default: {
+        throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+                         "bad replace option.");
+      } break;
+    }
+  }
+
+  if (grpc->has_restore_job()) {
+    bareos->restore_job = grpc->restore_job().name().c_str();
+  }
+
+  if (grpc->has_restore_client()) {
+    bareos->restore_client = grpc->restore_client().name().c_str();
+  }
+
+  if (grpc->has_restore_location()) {
+    bareos->restore_location = grpc->restore_location().c_str();
+  }
+}
+
+void to_grpc(RestoreOptions* grpc, const restore_options* bareos)
+{
+  switch (bareos->replace) {
+    case REPLACE_FILE_DEFAULT: {
+    } break;
+    case REPLACE_FILE_ALWAYS: {
+      grpc->set_replace(ReplaceType::ALWAYS);
+    } break;
+    case REPLACE_FILE_IFNEWER: {
+      grpc->set_replace(ReplaceType::IF_NEWER);
+    } break;
+    case REPLACE_FILE_IFOLDER: {
+      grpc->set_replace(ReplaceType::IF_OLDER);
+    } break;
+    case REPLACE_FILE_NEVER: {
+      grpc->set_replace(ReplaceType::NEVER);
+    } break;
+  }
+
+  if (bareos->restore_job) {
+    grpc->mutable_restore_job()->set_name(bareos->restore_job);
+  }
+
+  if (bareos->restore_client) {
+    grpc->mutable_restore_client()->set_name(bareos->restore_client);
+  }
+
+  if (bareos->restore_location) {
+    grpc->set_restore_location(bareos->restore_location);
+  }
+}
+};  // namespace restore_opts_util
+
+namespace session_state_util {
+void to_grpc(SessionState* grpc, bareos_session_state* bareos)
+{
+  RestoreOptions opts;
+  restore_opts_util::to_grpc(&opts, &bareos->options);
+
+  grpc->set_files_marked_count(bareos->marked_count);
+  auto* start = grpc->mutable_start();
+  start->mutable_catalog()->set_name(bareos->catalog_name);
+  start->mutable_backup_job()->set_jobid(bareos->start.jobids[0]);
+  start->set_find_job_chain(bareos->start.select_parents);
+  start->set_merge_filesets(bareos->start.merge_filesets);
+  *grpc->mutable_restore_options() = std::move(opts);
+}
+
+};  // namespace session_state_util
+
 class session_manager {
  public:
   session_manager(restore_capability* restore) : cap{restore} {}
@@ -124,7 +211,7 @@ class session_manager {
     return v;
   }
 
-  handle Make()
+  handle Make(const char* catalog_name)
   {
     std::optional locked = sessions.try_lock(lock_interval);
 
@@ -146,7 +233,7 @@ class session_manager {
                        "Could not create session (bad id).");
     }
 
-    auto* bareos_handle = cap->create_restore_session();
+    auto* bareos_handle = cap->create_restore_session(catalog_name);
 
     if (!bareos_handle) {
       map->erase(iter);
@@ -250,7 +337,10 @@ class RestoreImpl : public Restore::Service {
     return res;
   }
 
-  session_manager::handle new_session() { return sessions.Make(); }
+  session_manager::handle new_session(const char* catalog_name)
+  {
+    return sessions.Make(catalog_name);
+  }
 
   session_manager::handle get_session(const RestoreSession& sess)
   {
@@ -279,22 +369,33 @@ class RestoreImpl : public Restore::Service {
                BeginResponse* response) override
   {
     try {
-      if (request->find_job_chain()) {
+      if (request->start().find_job_chain()) {
         throw grpc_error(grpc::StatusCode::UNIMPLEMENTED,
-                         "This option is currently not implemented.");
+                         "find_job_chain is currently not implemented.");
       }
 
-      auto jobid = request->backup_job().jobid();
+      if (request->start().merge_filesets()) {
+        throw grpc_error(grpc::StatusCode::UNIMPLEMENTED,
+                         "merge_filesets is currently not implemented.");
+      }
 
-      auto handle = new_session();
+      auto jobid = request->start().backup_job().jobid();
+
+      auto handle = new_session(request->start().catalog().name().c_str());
 
       if (!handle) {
         throw grpc_error(grpc::StatusCode::INTERNAL,
                          "Could not create restore session.");
       }
 
-      if (!cap.start_from_jobids(handle.Bareos(), 1, &jobid,
-                                 request->find_job_chain())) {
+      jobid_start_options opts = {
+          .count = 1,
+          .jobids = &jobid,
+          .select_parents = request->start().find_job_chain(),
+          .merge_filesets = request->start().merge_filesets(),
+      };
+
+      if (!cap.start_from_jobids(handle.Bareos(), opts)) {
         const char* error = cap.error_string(handle.Bareos());
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          error ? error : "Internal error.");
@@ -317,46 +418,9 @@ class RestoreImpl : public Restore::Service {
     try {
       auto handle = get_session(request->session());
 
-      restore_options options = {};
-
-      const RestoreOptions& opts = request->restore_options();
-
-      if (opts.has_replace()) {
-        switch (opts.replace()) {
-          case ReplaceType::ALWAYS: {
-            options.replace = REPLACE_FILE_ALWAYS;
-          } break;
-          case ReplaceType::NEVER: {
-            options.replace = REPLACE_FILE_NEVER;
-          } break;
-          case ReplaceType::IF_OLDER: {
-            options.replace = REPLACE_FILE_IFOLDER;
-          } break;
-          case ReplaceType::IF_NEWER: {
-            options.replace = REPLACE_FILE_IFNEWER;
-          } break;
-          default: {
-            throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
-                             "bad replace option.");
-          } break;
-        }
-      }
-
-      if (opts.has_restore_job()) {
-        options.restore_job = opts.restore_job().name().c_str();
-      }
-
-      if (opts.has_restore_client()) {
-        options.restore_client = opts.restore_client().name().c_str();
-      }
-
-      if (opts.has_restore_location()) {
-        options.restore_location = opts.restore_location().c_str();
-      }
-
       job_started_info info;
 
-      if (!cap.create_restore_job(handle.Bareos(), options, &info)) {
+      if (!cap.create_restore_job(handle.Bareos(), &info)) {
         throw grpc_error(grpc::StatusCode::UNKNOWN,
                          "Could not start restore job.");
       }
@@ -551,6 +615,51 @@ class RestoreImpl : public Restore::Service {
       }
 
       (void)response;
+      return Status::OK;
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+  }
+
+  Status GetState(ServerContext*,
+                  const GetStateRequest* request,
+                  GetStateResponse* response) override
+  {
+    try {
+      auto handle = get_session(request->session());
+
+      bareos_session_state s{};
+      plugin_call(cap.current_session_state, handle.Bareos(), &s);
+
+      auto* state = response->mutable_state();
+
+      session_state_util::to_grpc(state, &s);
+
+      return Status::OK;
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+  }
+
+  Status UpdateState(ServerContext*,
+                     const UpdateStateRequest* request,
+                     UpdateStateResponse* response) override
+  {
+    try {
+      auto handle = get_session(request->session());
+
+      restore_options options{};
+      restore_opts_util::to_bareos(&options, &request->new_options());
+
+      plugin_call(cap.update_restore_state, handle.Bareos(), &options);
+
+      bareos_session_state s{};
+
+      plugin_call(cap.current_session_state, handle.Bareos(), &s);
+
+      auto* state = response->mutable_state();
+      session_state_util::to_grpc(state, &s);
+
       return Status::OK;
     } catch (const grpc_error& err) {
       return err.status;

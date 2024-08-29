@@ -119,10 +119,48 @@ struct node_allocator {
   size_t indexof(s_tree_node* n);
   s_tree_node* get(size_t index);
 
+  struct iter {
+    size_t page_index{};
+    size_t node_index{};
+    node_allocator* base{};
+
+    TREE_NODE* operator*() const
+    {
+      return &base->pages[page_index][node_index];
+    }
+    iter& operator++()
+    {
+      node_index += 1;
+      if (node_index == page_size(page_index)) {
+        page_index += 1;
+        node_index = 0;
+      }
+      return *this;
+    }
+
+    bool operator!=(const iter& other) const
+    {
+      return other.page_index != page_index || other.node_index != node_index
+             || other.base != base;
+    }
+  };
+
+  iter begin() { return iter{.page_index = 0, .node_index = 0, .base = this}; }
+
+  iter end()
+  {
+    return iter{
+        .page_index = pages.size() - 1, .node_index = next_slot, .base = this};
+  }
+
  private:
   s_tree_node* freelist;
 
   static constexpr size_t start_count = 1024;
+
+  static_assert(start_count > 0, "The logic will not work if this is 0.");
+  static_assert((start_count & (start_count - 1)) == 0,
+                "The logic will not work if this is not a power of 2.");
 
   // this is an index into the current array
   size_t next_slot{0};

@@ -507,4 +507,10 @@ class ResLocker {
   ResLocker& operator=(ResLocker&&) = delete;
 };
 
+BareosResource* GetDefaultRes(const ConfigResourcesContainer& container,
+                              int rcode);
+BareosResource* GetResWithName(const ConfigResourcesContainer& container,
+                               int rcode,
+                               const char* name);
+
 #endif  // BAREOS_LIB_PARSE_CONF_H_

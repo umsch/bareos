@@ -924,6 +924,7 @@ class BareosDb : public BareosDbQueryEnum {
                     const bool verbose,
                     const CollapseMode collapse = CollapseMode::NoCollapse);
 
+  const char* ListClientQuery();
   bool ListClientRecords(JobControlRecord* jcr,
                          char* clientname,
                          OutputFormatter* sendit,

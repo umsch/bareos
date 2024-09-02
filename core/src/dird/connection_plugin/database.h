@@ -41,7 +41,11 @@ typedef void(DB_CloseDatabase_t)(struct database_session*);
 typedef const char*(DB_ErrorString_t)(struct database_session*);
 typedef bool(DB_ListClients_t)(struct database_session*,
                                DB_result_callback* cb,
-                               void* user);
+                               void* user,
+                               /* outer query should contain one %s.
+                                * It is formatted with the query to select all
+                                * clients as single argument.*/
+                               const char* outer);
 typedef bool(DB_ListJobs_t)(struct database_session*,
                             DB_result_callback* cb,
                             void* user);

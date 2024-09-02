@@ -6,10 +6,21 @@ syntax = "proto3";
 
 package bareos.common;
 
-message Client {
-  string name = 1;
-}
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  RESTORE = 1;
+  BACKUP = 2;
+  COPY = 3;
+  VERIFY = 4;
+  ADMIN = 5;
+  ARCHIVE = 6;
+  MIGRATE = 7;
+  CONSOLIDATE = 8;
+};
 
-message Job {
-  int64 jobid = 1;
+enum JobLevel {
+  JOB_LEVEL_UNSPECIFIED = 0;
+  FULL = 1;
+  DIFFERENTIAL = 2;
+  INCREMENTAL = 3;
 };

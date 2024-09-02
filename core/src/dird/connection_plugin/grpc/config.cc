@@ -58,8 +58,9 @@ bool job_filter(const ::google::protobuf::RepeatedPtrField<
   return accept;
 }
 
-std::optional<JobType> bareos_to_grpc_type(bareos_job_type type)
+std::optional<bareos::common::JobType> bareos_to_grpc_type(bareos_job_type type)
 {
+  using namespace bareos::common;
   switch (type) {
     case BJT_BACKUP:
       return BACKUP;

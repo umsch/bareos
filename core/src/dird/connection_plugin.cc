@@ -1077,7 +1077,10 @@ struct sql_result_handler : public list_result_handler {
   std::vector<char*> fields;
 };
 
-bool ListClients(database_session* sess, DB_result_callback* cb, void* user)
+bool ListClients(database_session* sess,
+                 DB_result_callback* cb,
+                 void* user,
+                 const char* outer)
 {
   if (!sess) { return false; }
 
@@ -1085,10 +1088,27 @@ bool ListClients(database_session* sess, DB_result_callback* cb, void* user)
 
   sql_result_handler handler(cb, user);
 
-  if (!sess->ptr->ListClientRecords(nullptr, nullptr, false, &handler)) {
+  DbLocker _{sess->ptr};
+
+  auto* inner = sess->ptr->ListClientQuery();
+
+  PoolMem query;
+  if (outer) {
+    Mmsg(query, outer, inner);
+  } else {
+    PmStrcpy(query, inner);
+  }
+
+  if (!sess->ptr->SqlQuery(query.c_str())) {
     sess->error = sess->ptr->strerror();
     return false;
   }
+
+  if (sess->ptr->ListResult(&handler) < 0) {
+    sess->error = sess->ptr->strerror();
+    return false;
+  }
+
   return true;
 }
 

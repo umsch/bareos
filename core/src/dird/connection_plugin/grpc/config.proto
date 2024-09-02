@@ -16,7 +16,7 @@ message ListClientsRequest {
 };
 
 message ClientId {
-  string name = 1;
+  bytes name = 1;
 };
 message Client {
   ClientId id = 1;
@@ -48,7 +48,7 @@ enum JobLevel {
 };
 
 message JobId {
-  string name = 1;
+  bytes name = 1;
 };
 
 message Job {
@@ -80,7 +80,7 @@ message ListJobsResponse {
 };
 
 message CatalogId {
-  string name = 1;
+  bytes name = 1;
 };
 message Catalog {
   CatalogId id = 1;

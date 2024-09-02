@@ -95,7 +95,7 @@ message RestoreOptions {
   optional ReplaceType replace = 1;
   optional bareos.config.JobId restore_job = 3;
   optional string restore_location = 4;
-  optional bareos.common.Client restore_client = 5;
+  optional bareos.config.ClientId restore_client = 5;
 };
 
 message RunRequest {

@@ -10,6 +10,9 @@ service Config {
   rpc ListClients (ListClientsRequest) returns (ListClientsResponse);
   rpc ListJobs (ListJobsRequest) returns (ListJobsResponse);
   rpc ListCatalogs (ListCatalogsRequest) returns (ListCatalogsResponse);
+
+
+  rpc GetDefinition (GetDefinitionRequest) returns (GetDefinitionResponse);
 };
 
 message ListClientsRequest {
@@ -55,7 +58,8 @@ message Job {
   JobId id = 1;
   string name = 2;
   JobType type = 3;
-  optional JobLevel default_level = 4;
+
+  string description = 4;
 };
 
 message JobTypeFilter {
@@ -93,4 +97,16 @@ message ListCatalogsRequest {
 
 message ListCatalogsResponse {
   repeated Catalog catalogs = 1;
+};
+
+message GetDefinitionRequest {
+  oneof config_type {
+    ClientId client = 1;
+    CatalogId catalog = 2;
+    JobId job = 3;
+  };
+};
+
+message GetDefinitionResponse {
+  map<string, string> set_options = 1;
 };

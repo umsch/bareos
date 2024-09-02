@@ -59,4 +59,13 @@ done
 
 grpc bareos.config.Config/ListClients "{}" | tee "$log_home/client.list"
 
+# protobufs json encoding for bytes is base64, so we need to base64 encode
+# the names here
+
+grpc bareos.config.Config/GetDefinition "{ \"client\" : { \"name\" : \"$(echo -n "bareos-fd" | base64)\" } }" | tee "$log_home/client.def"
+
+grpc bareos.config.Config/GetDefinition "{ \"job\" : { \"name\" : \"$(echo -n "backup-bareos-fd" | base64)\" } }" | tee "$log_home/job.def"
+
+grpc bareos.config.Config/GetDefinition "{ \"catalog\" : { \"name\" : \"$(echo -n "MyCatalog" | base64)\" } }" | tee "$log_home/catalog.def"
+
 end_test

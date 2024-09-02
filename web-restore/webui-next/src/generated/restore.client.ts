@@ -23,6 +23,10 @@ import type { ChangeDirectoryRequest } from "./restore";
 import type { File } from "./restore";
 import type { ListFilesRequest } from "./restore";
 import type { ServerStreamingCall } from "@protobuf-ts/runtime-rpc";
+import type { UpdateStateResponse } from "./restore";
+import type { UpdateStateRequest } from "./restore";
+import type { GetStateResponse } from "./restore";
+import type { GetStateRequest } from "./restore";
 import type { BeginResponse } from "./restore";
 import type { BeginRequest } from "./restore";
 import { stackIntercept } from "@protobuf-ts/runtime-rpc";
@@ -42,6 +46,14 @@ export interface IRestoreClient {
      * @generated from protobuf rpc: Begin(bareos.restore.BeginRequest) returns (bareos.restore.BeginResponse);
      */
     begin(input: BeginRequest, options?: RpcOptions): UnaryCall<BeginRequest, BeginResponse>;
+    /**
+     * @generated from protobuf rpc: GetState(bareos.restore.GetStateRequest) returns (bareos.restore.GetStateResponse);
+     */
+    getState(input: GetStateRequest, options?: RpcOptions): UnaryCall<GetStateRequest, GetStateResponse>;
+    /**
+     * @generated from protobuf rpc: UpdateState(bareos.restore.UpdateStateRequest) returns (bareos.restore.UpdateStateResponse);
+     */
+    updateState(input: UpdateStateRequest, options?: RpcOptions): UnaryCall<UpdateStateRequest, UpdateStateResponse>;
     /**
      * these functions will only work once the tree is created
      * todo: how do plugin files work
@@ -100,41 +112,55 @@ export class RestoreClient implements IRestoreClient, ServiceInfo {
         return stackIntercept<BeginRequest, BeginResponse>("unary", this._transport, method, opt, input);
     }
     /**
+     * @generated from protobuf rpc: GetState(bareos.restore.GetStateRequest) returns (bareos.restore.GetStateResponse);
+     */
+    getState(input: GetStateRequest, options?: RpcOptions): UnaryCall<GetStateRequest, GetStateResponse> {
+        const method = this.methods[2], opt = this._transport.mergeOptions(options);
+        return stackIntercept<GetStateRequest, GetStateResponse>("unary", this._transport, method, opt, input);
+    }
+    /**
+     * @generated from protobuf rpc: UpdateState(bareos.restore.UpdateStateRequest) returns (bareos.restore.UpdateStateResponse);
+     */
+    updateState(input: UpdateStateRequest, options?: RpcOptions): UnaryCall<UpdateStateRequest, UpdateStateResponse> {
+        const method = this.methods[3], opt = this._transport.mergeOptions(options);
+        return stackIntercept<UpdateStateRequest, UpdateStateResponse>("unary", this._transport, method, opt, input);
+    }
+    /**
      * these functions will only work once the tree is created
      * todo: how do plugin files work
      *
      * @generated from protobuf rpc: ListFiles(bareos.restore.ListFilesRequest) returns (stream bareos.restore.File);
      */
     listFiles(input: ListFilesRequest, options?: RpcOptions): ServerStreamingCall<ListFilesRequest, File> {
-        const method = this.methods[2], opt = this._transport.mergeOptions(options);
+        const method = this.methods[4], opt = this._transport.mergeOptions(options);
         return stackIntercept<ListFilesRequest, File>("serverStreaming", this._transport, method, opt, input);
     }
     /**
      * @generated from protobuf rpc: ChangeDirectory(bareos.restore.ChangeDirectoryRequest) returns (bareos.restore.ChangeDirectoryResponse);
      */
     changeDirectory(input: ChangeDirectoryRequest, options?: RpcOptions): UnaryCall<ChangeDirectoryRequest, ChangeDirectoryResponse> {
-        const method = this.methods[3], opt = this._transport.mergeOptions(options);
+        const method = this.methods[5], opt = this._transport.mergeOptions(options);
         return stackIntercept<ChangeDirectoryRequest, ChangeDirectoryResponse>("unary", this._transport, method, opt, input);
     }
     /**
      * @generated from protobuf rpc: ChangeMarkedStatus(bareos.restore.ChangeMarkedRequest) returns (bareos.restore.ChangeMarkedResponse);
      */
     changeMarkedStatus(input: ChangeMarkedRequest, options?: RpcOptions): UnaryCall<ChangeMarkedRequest, ChangeMarkedResponse> {
-        const method = this.methods[4], opt = this._transport.mergeOptions(options);
+        const method = this.methods[6], opt = this._transport.mergeOptions(options);
         return stackIntercept<ChangeMarkedRequest, ChangeMarkedResponse>("unary", this._transport, method, opt, input);
     }
     /**
      * @generated from protobuf rpc: PathToFile(bareos.restore.PathToFileRequest) returns (bareos.restore.PathToFileResponse);
      */
     pathToFile(input: PathToFileRequest, options?: RpcOptions): UnaryCall<PathToFileRequest, PathToFileResponse> {
-        const method = this.methods[5], opt = this._transport.mergeOptions(options);
+        const method = this.methods[7], opt = this._transport.mergeOptions(options);
         return stackIntercept<PathToFileRequest, PathToFileResponse>("unary", this._transport, method, opt, input);
     }
     /**
      * @generated from protobuf rpc: CurrentDirectory(bareos.restore.CurrentDirectoryRequest) returns (bareos.restore.CurrentDirectoryResponse);
      */
     currentDirectory(input: CurrentDirectoryRequest, options?: RpcOptions): UnaryCall<CurrentDirectoryRequest, CurrentDirectoryResponse> {
-        const method = this.methods[6], opt = this._transport.mergeOptions(options);
+        const method = this.methods[8], opt = this._transport.mergeOptions(options);
         return stackIntercept<CurrentDirectoryRequest, CurrentDirectoryResponse>("unary", this._transport, method, opt, input);
     }
     // maybe list marked files as function
@@ -143,14 +169,14 @@ export class RestoreClient implements IRestoreClient, ServiceInfo {
      * @generated from protobuf rpc: Run(bareos.restore.RunRequest) returns (bareos.restore.RunResponse);
      */
     run(input: RunRequest, options?: RpcOptions): UnaryCall<RunRequest, RunResponse> {
-        const method = this.methods[7], opt = this._transport.mergeOptions(options);
+        const method = this.methods[9], opt = this._transport.mergeOptions(options);
         return stackIntercept<RunRequest, RunResponse>("unary", this._transport, method, opt, input);
     }
     /**
      * @generated from protobuf rpc: Cancel(bareos.restore.CancelRequest) returns (bareos.restore.CancelResponse);
      */
     cancel(input: CancelRequest, options?: RpcOptions): UnaryCall<CancelRequest, CancelResponse> {
-        const method = this.methods[8], opt = this._transport.mergeOptions(options);
+        const method = this.methods[10], opt = this._transport.mergeOptions(options);
         return stackIntercept<CancelRequest, CancelResponse>("unary", this._transport, method, opt, input);
     }
 }

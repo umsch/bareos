@@ -107,10 +107,14 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return response!.response.sessions!
   }
 
-  const createSession = async (job: Job) => {
+  const createSession = async (catalog: Catalog, backupJob: Job) => {
     const response = await restoreClient.value?.begin({
-      backupJob: job,
-      findJobChain: false,
+      start: {
+        findJobChain: false,
+        mergeFilesets: false,
+        backupJob,
+        catalog,
+      },
     })
     return response?.response.session
   }
@@ -124,9 +128,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     try {
       await restoreClient.value?.run({
         session,
-        restoreOptions: {
-          restoreClient: client,
-        },
       })
     } catch (e) {
       console.error(e)
@@ -143,7 +144,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
       if (!call?.responses) {
         return files
       }
-      console.debug('call', call)
       for await (const file of call.responses) {
         console.debug('file', file)
         files.push(file)
@@ -191,6 +191,13 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     })
   }
 
+  const fetchState = async (session: RestoreSession) => {
+    const response = await restoreClient.value?.getState({ session })
+
+    console.log(response?.response.state ?? null)
+    return response?.response.state ?? null
+  }
+
   return {
     transport,
     catalogs,
@@ -205,5 +212,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     currentDirectory,
     changeDirectory,
     changeMarkedStatus,
+    fetchState,
   }
 })

@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { useWizardStore } from 'src/stores/wizardStore'
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { File, FileType } from 'src/generated/restore'
 import {
   matQuestionMark,
   matInsertDriveFile,
   matFolder,
 } from '@quasar/extras/material-icons'
+import { storeToRefs } from 'pinia'
 
-const wizard = useWizardStore()
-// const checkedFiles = ref([]);
+const wizardStore = useWizardStore()
+
+const { currentDirectory, files } = storeToRefs(wizardStore)
 
 const getIcon = (type: FileType) => {
   switch (type) {
@@ -24,15 +26,10 @@ const getIcon = (type: FileType) => {
   }
 }
 
-const breadcrumbs = computed(() => {
-  console.debug('breadcrumbs', wizard.cwd)
-  return wizard.cwd
-})
-
 const changeDirectory = (name: File, event: Event) => {
   event.preventDefault()
   console.debug('changeDirectory:', name)
-  wizard.changeDirectory(name)
+  wizardStore.changeDirectory(name)
 }
 
 const isDirectory = (row: File) => {
@@ -47,18 +44,18 @@ watch(selected, (file: File | undefined) => {
     console.info('file is undefined')
     return
   }
-  wizard.changeDirectory(file)
+  wizardStore.changeDirectory(file)
 })
 
 const updateMarkedStatus = async (value: boolean, file: File) => {
   console.log('updateMarking:', value, file)
-  await wizard.updateMarkedStatus(file)
+  await wizardStore.updateMarkedStatus(file)
 }
 </script>
 
 <template>
   <q-breadcrumbs gutter="sm">
-    <template v-for="(breadcrumb, index) in breadcrumbs" :key="index">
+    <template v-for="(breadcrumb, index) in currentDirectory" :key="index">
       <template v-if="breadcrumb.id?.value != 0n">
         <q-breadcrumbs-el
           to="#"
@@ -84,7 +81,7 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
       :virtual-scroll-item-size="42"
       virtual-scroll-sticky-size-start="32"
       virtual-scroll-sticky-size-end="32"
-      :items="wizard.files"
+      :items="files"
       dense
     >
       <template v-slot:before>

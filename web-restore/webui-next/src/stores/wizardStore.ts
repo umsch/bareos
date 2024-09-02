@@ -1,78 +1,88 @@
 import { defineStore } from 'pinia'
-import type { Catalog, CatalogId } from 'src/generated/config'
-import { onMounted, ref, watch } from 'vue'
+import type { Catalog } from 'src/generated/config'
+import { onBeforeMount, ref, watch } from 'vue'
 import type { Client, Job } from 'src/generated/common'
-import type { RestoreSession, File } from 'src/generated/restore'
+import type { RestoreSession, File, SessionState } from 'src/generated/restore'
 import { useRestoreClientStore } from 'src/stores/restoreClientStore'
-import { first, isEmpty, reverse } from 'lodash'
+import { find, first, isEmpty, isEqual, reverse } from 'lodash'
 
 export const useWizardStore = defineStore('wizard', () => {
   const restoreClient = useRestoreClientStore()
 
-  onMounted(async () => {
-    await updateCatalogs()
+  const selectCatalogFromState = (state: SessionState, catalogs: Catalog[]) => {
+    if (catalogs.length > 0 && state?.start?.catalog) {
+      selectedCatalog.value =
+        find(catalogs, (c) => isEqual(c.id, state.start?.catalog)) ?? null
+    }
+  }
+
+  const selectJobFromState = (state: SessionState, jobs: Job[]) => {
+    if (jobs.length > 0 && state.start?.backupJob) {
+      selectedJob.value =
+        find(jobs, (j) => isEqual(j.jobid, state.start?.backupJob?.jobid)) ??
+        null
+    }
+  }
+
+  onBeforeMount(async () => {
+    console.log('onBeforeMount - store')
     await updateSessions()
 
-    if (!selectedCatalog.value && !isEmpty(catalogs.value)) {
+    if (!selectedSession.value && sessions.value.length > 0) {
+      selectedSession.value = first(sessions.value)!
+    }
+
+    if (selectedSession.value) {
+      await updateState()
+    }
+
+    await updateCatalogs()
+    if (sessionState.value && catalogs.value) {
+      selectCatalogFromState(sessionState.value, catalogs.value)
+    }
+
+    if (!selectedCatalog.value && catalogs.value && catalogs.value.length > 0) {
       selectedCatalog.value = first(catalogs.value)!
     }
 
-    if (!selectedSession.value && !isEmpty(sessions.value)) {
-      selectedSession.value = first(sessions.value)!
+    await updateJobs()
+    if (sessionState.value && catalogs.value) {
+      selectJobFromState(sessionState.value, jobs.value)
     }
   })
 
   // clients
   const catalogs = ref<Catalog[]>([])
-  const isCatalogsLoading = ref(false)
   const selectedCatalog = ref<Catalog | null>(null)
   const updateCatalogs = async () => {
-    isCatalogsLoading.value = true
-    try {
-      console.debug('fetching catalogs')
-      catalogs.value = await restoreClient.fetchCatalogs()
-    } finally {
-      isCatalogsLoading.value = false
-    }
+    console.debug('fetching catalogs')
+    catalogs.value = await restoreClient.fetchCatalogs()
   }
 
   // jobs
   const selectedJob = ref<Job | null>(null)
   const jobs = ref<Job[]>([])
-  const isJobsLoading = ref(false)
-  const updateJobs = async (catalog_id: CatalogId) => {
-    isJobsLoading.value = true
-    try {
+  const updateJobs = async () => {
+    const catalog_id = selectedCatalog.value?.id
+    if (catalog_id) {
       console.debug('fetching jobs from catalog', catalog_id)
       jobs.value = await restoreClient.fetchJobs(catalog_id)
-    } finally {
-      isJobsLoading.value = false
     }
   }
 
   // sessions
   const selectedSession = ref<RestoreSession | null>(null)
   const sessions = ref<RestoreSession[]>([])
-  const isSessionsLoading = ref(false)
 
   const updateSessions = async () => {
-    try {
-      console.debug('fetching sessions')
-      isSessionsLoading.value = true
-      sessions.value = await restoreClient.fetchSessions()
-    } finally {
-      isSessionsLoading.value = false
-    }
+    console.debug('fetching sessions')
+    sessions.value = await restoreClient.fetchSessions()
   }
 
   // client
   const clients = ref<Client[]>([])
   const selectedClient = ref<Client | null>(null)
   const updateClients = async (catalog: Catalog) => {
-    if (!selectedCatalog.value) {
-      throw new Error('No catalog selected')
-    }
-
     clients.value = await restoreClient.fetchClients(catalog)
   }
 
@@ -80,16 +90,36 @@ export const useWizardStore = defineStore('wizard', () => {
 
   watch(selectedCatalog, async (catalog) => {
     console.debug('selected catalog changed', catalog)
+
+    if (!catalog) {
+      console.debug('catalog was unset')
+      selectedJob.value = null
+      jobs.value = []
+
+      selectedClient.value = null
+      clients.value = []
+
+      return
+    }
+
     if (catalog?.id) {
-      await updateJobs(catalog.id)
+      await updateJobs()
       await updateClients(catalog)
     }
   })
 
-  watch(selectedJob, async () => {
+  watch(selectedJob, async (job) => {
+    if (isEqual(sessionState.value?.start?.backupJob, selectedJob.value)) {
+      console.debug('session already running for job', selectedJob.value)
+      return
+    }
+
     await cleanUpSessions()
-    await createRestoreSession()
-    await updateSessions()
+    if (job) {
+      await createRestoreSession()
+      await updateSessions()
+    }
+    await updateState()
   })
 
   const cleanUpSessions = async () => {
@@ -105,13 +135,20 @@ export const useWizardStore = defineStore('wizard', () => {
   }
 
   const createRestoreSession = async () => {
-    console.debug('starting restore session', selectedJob.value?.jobid)
+    console.debug(
+      '---- starting restore session',
+      selectedJob.value,
+      sessionState.value?.start?.backupJob
+    )
 
-    if (!selectedJob.value) {
-      throw new Error('No job selected')
+    if (!selectedJob.value || !selectedCatalog.value) {
+      return
     }
 
-    const session = await restoreClient.createSession(selectedJob.value)
+    const session = await restoreClient.createSession(
+      selectedCatalog.value,
+      selectedJob.value
+    )
     await updateSessions()
     selectedSession.value = session!
   }
@@ -139,7 +176,7 @@ export const useWizardStore = defineStore('wizard', () => {
   }
 
   const files = ref<File[]>([])
-  const cwd = ref<File[] | undefined>([])
+  const currentDirectory = ref<File[] | null>([])
 
   watch(selectedSession, async (session) => {
     console.debug('selected session changed', session)
@@ -147,12 +184,13 @@ export const useWizardStore = defineStore('wizard', () => {
 
     if (session) {
       const currentPath = await restoreClient.currentDirectory(session)
-      cwd.value = reverse(currentPath!)
+      currentDirectory.value = reverse(currentPath!)
       files.value = await restoreClient.fetchFiles(session)
     } else {
-      cwd.value = undefined
+      currentDirectory.value = null
       files.value = []
     }
+    await updateState()
   })
 
   const changeDirectory = async (path: File) => {
@@ -164,7 +202,7 @@ export const useWizardStore = defineStore('wizard', () => {
       selectedSession.value,
       path
     )
-    cwd.value = reverse(currentPath!)
+    currentDirectory.value = reverse(currentPath!)
     files.value = await restoreClient.fetchFiles(selectedSession.value)
   }
 
@@ -178,6 +216,19 @@ export const useWizardStore = defineStore('wizard', () => {
       file,
       file.marked
     )
+    await updateState()
+  }
+
+  const sessionState = ref<SessionState | null>(null)
+
+  const updateState = async () => {
+    if (!selectedSession.value) {
+      sessionState.value = null
+      return
+    }
+
+    sessionState.value = await restoreClient.fetchState(selectedSession.value)
+    console.debug('new State: ', sessionState.value)
   }
 
   return {
@@ -186,20 +237,18 @@ export const useWizardStore = defineStore('wizard', () => {
     selectedCatalog,
     clients,
     selectedClient,
-    updateJobs,
-    isJobsLoading,
     jobs,
     selectedJob,
     updateSessions,
-    isSessionsLoading,
     sessions,
     selectedSession,
     createRestoreSession,
     runRestoreSession,
     deleteRestoreSession,
     files,
-    cwd,
+    currentDirectory,
     changeDirectory,
     updateMarkedStatus,
+    sessionState,
   }
 })

@@ -823,6 +823,7 @@ class BareosDb : public BareosDbQueryEnum {
                        PoolDbRecord* pr,
                        OutputFormatter* sendit,
                        e_list_type type);
+  const char* ListJobsQuery();
   bool ListJobRecords(JobControlRecord* jcr,
                       JobDbRecord* jr,
                       const char* range,

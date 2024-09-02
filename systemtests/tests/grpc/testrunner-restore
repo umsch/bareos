@@ -50,7 +50,8 @@ get_id()
 
 start_test
 
-CATALOG=$(grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/list" | jq -c '.catalogs | .[0] | .id')
+grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/catalogs.list"
+CATALOG=$(jq -c '.catalogs | .[0] | .id' "$log_home/catalogs.list")
 grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list"
 grpc bareos.config.Config/ListJobs "{ \"filters\" : [ { \"type\" : { \"select\" : \"RESTORE\" }}]}" | tee "$log_home/restore_jobs.list"
 grpc bareos.config.Config/ListClients "{}" | tee "$log_home/restore_clients.list"

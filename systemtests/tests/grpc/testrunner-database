@@ -42,7 +42,9 @@ JobName=backup-bareos-fd
 
 start_test
 
-CATALOG="{ \"name\" : \"MyCatalog\" }"
+grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/catalogs.list"
+
+CATALOG=$(jq '.catalogs | .[0] | .id' "$log_home/catalogs.list")
 
 grpc bareos.database.Database/ListClients "{ \"catalog\" : $CATALOG }" | tee "$log_home/client.list"
 grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/job.list"

@@ -10,7 +10,12 @@ import { storeToRefs } from 'pinia'
 import { useWizardStore } from 'stores/wizardStore'
 import { QSelect } from 'quasar'
 
-const replace = ref(ReplaceType.NEVER)
+const wizard = useWizardStore()
+const { clients, sessionState } = storeToRefs(wizard)
+
+const replace = ref(
+  sessionState.value?.restoreOptions?.replace ?? ReplaceType.NEVER
+)
 const replaceOptions = ref([
   { label: 'Immer', value: ReplaceType.ALWAYS },
   { label: 'Nie', value: ReplaceType.NEVER },
@@ -20,12 +25,24 @@ const replaceOptions = ref([
 
 const restoreLocation = ref('/tmp')
 
-const wizard = useWizardStore()
+const restoreClient = ref(sessionState.value?.restoreOptions?.restoreClient)
 
-const { clients, selectedClient } = storeToRefs(wizard)
+watch(restoreClient, (client) => {
+  if (sessionState.value) {
+    sessionState.value.restoreOptions = {
+      ...sessionState.value.restoreOptions,
+      restoreClient: client,
+    }
+  }
+})
 
-watch(replace, (m) => {
-  console.log(m)
+watch(replace, (replaceType) => {
+  if (sessionState.value) {
+    sessionState.value.restoreOptions = {
+      ...sessionState.value.restoreOptions,
+      replace: replaceType,
+    }
+  }
 })
 </script>
 
@@ -49,7 +66,8 @@ watch(replace, (m) => {
     </q-field>
     <q-select
       filled
-      v-model="selectedClient"
+      :disable="!sessionState?.restoreOptions"
+      v-model="restoreClient"
       clearable
       use-input
       hide-selected

@@ -81,7 +81,6 @@ export const useWizardStore = defineStore('wizard', () => {
 
   // client
   const clients = ref<Client[]>([])
-  const selectedClient = ref<Client | null>(null)
   const updateClients = async (catalog: Catalog) => {
     clients.value = await restoreClient.fetchClients(catalog)
   }
@@ -96,7 +95,6 @@ export const useWizardStore = defineStore('wizard', () => {
       selectedJob.value = null
       jobs.value = []
 
-      selectedClient.value = null
       clients.value = []
 
       return
@@ -154,7 +152,7 @@ export const useWizardStore = defineStore('wizard', () => {
   }
 
   const runRestoreSession = async () => {
-    if (!selectedClient.value) {
+    if (!sessionState.value?.restoreOptions?.restoreClient) {
       throw new Error('No client selected')
     }
 
@@ -162,7 +160,10 @@ export const useWizardStore = defineStore('wizard', () => {
       throw new Error('No session selected')
     }
 
-    await restoreClient.runSession(selectedSession.value!, selectedClient.value)
+    await restoreClient.runSession(
+      selectedSession.value!,
+      sessionState.value.restoreOptions.restoreClient
+    )
   }
 
   const deleteRestoreSession = async () => {
@@ -231,18 +232,28 @@ export const useWizardStore = defineStore('wizard', () => {
     console.debug('new State: ', sessionState.value)
   }
 
-  // const setMergeFileSets = async () => {
-  //   await restoreClient.setState(selectedSession, {
-  //
-  //   })
-  // }
+  const pushRestoreOptions = async () => {
+    if (selectedSession.value && sessionState.value) {
+      await restoreClient.pushRestoreOptions(
+        selectedSession.value,
+        sessionState.value?.restoreOptions ?? {}
+      )
+    }
+  }
+
+  watch(
+    () => sessionState.value?.restoreOptions,
+    async () => {
+      console.debug('pushing restore options')
+      await pushRestoreOptions()
+    }
+  )
 
   return {
     updateCatalogs,
     catalogs,
     selectedCatalog,
     clients,
-    selectedClient,
     jobs,
     selectedJob,
     updateSessions,
@@ -256,5 +267,6 @@ export const useWizardStore = defineStore('wizard', () => {
     changeDirectory,
     updateMarkedStatus,
     sessionState,
+    pushRestoreOptions,
   }
 })

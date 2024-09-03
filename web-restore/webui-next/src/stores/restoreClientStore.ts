@@ -199,11 +199,11 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return response?.response.state ?? null
   }
 
-  const setState = async (
+  const pushRestoreOptions = async (
     session: RestoreSession,
     newOptions: RestoreOptions
   ) => {
-    await restoreClient.value?.updateState({ session, newOptions })
+    return restoreClient.value?.updateState({ session, newOptions })
   }
 
   return {
@@ -221,6 +221,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     changeDirectory,
     changeMarkedStatus,
     fetchState,
-    setState,
+    pushRestoreOptions,
   }
 })

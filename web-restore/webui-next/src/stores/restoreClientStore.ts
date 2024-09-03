@@ -16,6 +16,7 @@ import {
   type File,
   FileType,
   MarkAction,
+  RestoreOptions,
   type RestoreSession,
 } from 'src/generated/restore'
 
@@ -198,6 +199,13 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return response?.response.state ?? null
   }
 
+  const setState = async (
+    session: RestoreSession,
+    newOptions: RestoreOptions
+  ) => {
+    await restoreClient.value?.updateState({ session, newOptions })
+  }
+
   return {
     transport,
     catalogs,
@@ -213,5 +221,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     changeDirectory,
     changeMarkedStatus,
     fetchState,
+    setState,
   }
 })

@@ -20,6 +20,7 @@ const { jobs, selectedJob } = storeToRefs(wizardStore)
     label="Backup Job"
     :options="jobs"
     option-label="jobid"
+    stack-label
   >
     <template v-slot:no-option>
       <q-item>

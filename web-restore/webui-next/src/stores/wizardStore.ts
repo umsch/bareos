@@ -231,6 +231,12 @@ export const useWizardStore = defineStore('wizard', () => {
     console.debug('new State: ', sessionState.value)
   }
 
+  // const setMergeFileSets = async () => {
+  //   await restoreClient.setState(selectedSession, {
+  //
+  //   })
+  // }
+
   return {
     updateCatalogs,
     catalogs,

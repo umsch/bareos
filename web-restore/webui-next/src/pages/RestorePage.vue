@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import CatalogSelector from 'components/restore/CatalogSelector.vue'
 import JobSelector from 'components/restore/JobSelector.vue'
-import ClientSelector from 'components/restore/ClientSelector.vue'
 import FilesBrowser from 'components/restore/FilesBrowser.vue'
 import SessionState from 'components/restore/SessionState.vue'
 import RunSession from 'components/restore/RunSession.vue'
 
 import { useWizardStore } from 'stores/wizardStore'
+import MergeFilesetsSwitch from 'components/restore/MergeFilesetsSwitch.vue'
+import RestoreOptions from 'components/restore/RestoreOptions.vue'
 const wizard = useWizardStore()
 </script>
 
@@ -18,10 +19,13 @@ const wizard = useWizardStore()
           <catalog-selector />
         </q-card-section>
         <q-card-section>
+          <merge-filesets-switch />
+        </q-card-section>
+        <q-card-section>
           <job-selector />
         </q-card-section>
         <q-card-section>
-          <client-selector />
+          <restore-options />
         </q-card-section>
         <q-card-section>
           <run-session />

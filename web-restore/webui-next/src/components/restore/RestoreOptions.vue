@@ -27,28 +27,59 @@ const restoreLocation = ref('/tmp')
 
 const restoreClient = ref(sessionState.value?.restoreOptions?.restoreClient)
 
-watch(restoreClient, (client) => {
-  if (sessionState.value) {
-    sessionState.value.restoreOptions = {
-      ...sessionState.value.restoreOptions,
-      restoreClient: client,
+watch(
+  restoreClient,
+  (client) => {
+    if (sessionState.value) {
+      sessionState.value.restoreOptions = {
+        ...sessionState.value.restoreOptions,
+        restoreClient: client,
+      }
     }
+  },
+  {
+    immediate: false,
   }
-})
+)
 
-watch(replace, (replaceType) => {
-  if (sessionState.value) {
-    sessionState.value.restoreOptions = {
-      ...sessionState.value.restoreOptions,
-      replace: replaceType,
+watch(
+  replace,
+  (replaceType) => {
+    if (sessionState.value) {
+      sessionState.value.restoreOptions = {
+        ...sessionState.value.restoreOptions,
+        replace: replaceType,
+      }
     }
+  },
+  {
+    immediate: false,
   }
-})
+)
+
+watch(
+  sessionState,
+  (ss) => {
+    console.debug(
+      'sessions state restore options',
+      sessionState.value?.restoreOptions
+    )
+
+    replace.value = ss?.restoreOptions?.replace ?? ReplaceType.NEVER
+    restoreClient.value = ss?.restoreOptions?.restoreClient
+    restoreLocation.value =
+      ss?.restoreOptions?.restoreLocation ?? '/tmp/restore'
+  },
+  {
+    immediate: false,
+  }
+)
 </script>
 
 <template>
   <div class="q-gutter-y-md full-width">
     <q-field
+      :disable="!sessionState?.restoreOptions"
       label="Dateien bei Rücksicherung ersetzen"
       filled
       borderless
@@ -86,6 +117,7 @@ watch(replace, (replaceType) => {
     </q-select>
     <q-input
       v-model="restoreLocation"
+      :disable="!sessionState?.restoreOptions"
       label="Prefix Pfad für Rücksicherung auf dem Client"
       filled
       borderless

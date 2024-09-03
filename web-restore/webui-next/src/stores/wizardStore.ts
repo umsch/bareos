@@ -244,7 +244,10 @@ export const useWizardStore = defineStore('wizard', () => {
   watch(
     () => sessionState.value?.restoreOptions,
     async () => {
-      console.debug('pushing restore options')
+      console.debug(
+        'pushing restore options',
+        sessionState.value?.restoreOptions
+      )
       await pushRestoreOptions()
     }
   )

@@ -16,12 +16,14 @@ watch([() => sessionState.value?.filesMarkedCount], (markedFiles) => {
 </script>
 
 <template>
-  <q-btn
-    :icon="matRocketLaunch"
-    label="Start"
-    color="primary"
-    :disabled="!canRun"
-  />
+  <q-field dense>
+    <q-btn
+      :icon="matRocketLaunch"
+      label="Start"
+      color="primary"
+      :disabled="!canRun"
+    />
+  </q-field>
 </template>
 
 <style scoped></style>

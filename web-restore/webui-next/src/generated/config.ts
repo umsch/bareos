@@ -15,6 +15,7 @@ import type { IBinaryReader } from "@protobuf-ts/runtime";
 import type { PartialMessage } from "@protobuf-ts/runtime";
 import { reflectionMergePartial } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
+import { JobType } from "./common";
 /**
  * @generated from protobuf message bareos.config.ListClientsRequest
  */
@@ -25,9 +26,9 @@ export interface ListClientsRequest {
  */
 export interface ClientId {
     /**
-     * @generated from protobuf field: string name = 1;
+     * @generated from protobuf field: bytes name = 1;
      */
-    name: string;
+    name: Uint8Array;
 }
 /**
  * @generated from protobuf message bareos.config.Client
@@ -60,9 +61,9 @@ export interface ListClientsResponse {
  */
 export interface JobId {
     /**
-     * @generated from protobuf field: string name = 1;
+     * @generated from protobuf field: bytes name = 1;
      */
-    name: string;
+    name: Uint8Array;
 }
 /**
  * @generated from protobuf message bareos.config.Job
@@ -77,20 +78,20 @@ export interface Job {
      */
     name: string;
     /**
-     * @generated from protobuf field: bareos.config.JobType type = 3;
+     * @generated from protobuf field: bareos.common.JobType type = 3;
      */
     type: JobType;
     /**
-     * @generated from protobuf field: optional bareos.config.JobLevel default_level = 4;
+     * @generated from protobuf field: string description = 4;
      */
-    defaultLevel?: JobLevel;
+    description: string;
 }
 /**
  * @generated from protobuf message bareos.config.JobTypeFilter
  */
 export interface JobTypeFilter {
     /**
-     * @generated from protobuf field: bareos.config.JobType select = 1;
+     * @generated from protobuf field: bareos.common.JobType select = 1;
      */
     select: JobType;
 }
@@ -138,9 +139,9 @@ export interface ListJobsResponse {
  */
 export interface CatalogId {
     /**
-     * @generated from protobuf field: string name = 1;
+     * @generated from protobuf field: bytes name = 1;
      */
-    name: string;
+    name: Uint8Array;
 }
 /**
  * @generated from protobuf message bareos.config.Catalog
@@ -174,66 +175,44 @@ export interface ListCatalogsResponse {
     catalogs: Catalog[];
 }
 /**
- * @generated from protobuf enum bareos.config.JobType
+ * @generated from protobuf message bareos.config.GetDefinitionRequest
  */
-export enum JobType {
+export interface GetDefinitionRequest {
     /**
-     * @generated from protobuf enum value: JOB_TYPE_UNSPECIFIED = 0;
+     * @generated from protobuf oneof: config_type
      */
-    JOB_TYPE_UNSPECIFIED = 0,
-    /**
-     * @generated from protobuf enum value: RESTORE = 1;
-     */
-    RESTORE = 1,
-    /**
-     * @generated from protobuf enum value: BACKUP = 2;
-     */
-    BACKUP = 2,
-    /**
-     * @generated from protobuf enum value: COPY = 3;
-     */
-    COPY = 3,
-    /**
-     * @generated from protobuf enum value: VERIFY = 4;
-     */
-    VERIFY = 4,
-    /**
-     * @generated from protobuf enum value: ADMIN = 5;
-     */
-    ADMIN = 5,
-    /**
-     * @generated from protobuf enum value: ARCHIVE = 6;
-     */
-    ARCHIVE = 6,
-    /**
-     * @generated from protobuf enum value: MIGRATE = 7;
-     */
-    MIGRATE = 7,
-    /**
-     * @generated from protobuf enum value: CONSOLIDATE = 8;
-     */
-    CONSOLIDATE = 8
+    configType: {
+        oneofKind: "client";
+        /**
+         * @generated from protobuf field: bareos.config.ClientId client = 1;
+         */
+        client: ClientId;
+    } | {
+        oneofKind: "catalog";
+        /**
+         * @generated from protobuf field: bareos.config.CatalogId catalog = 2;
+         */
+        catalog: CatalogId;
+    } | {
+        oneofKind: "job";
+        /**
+         * @generated from protobuf field: bareos.config.JobId job = 3;
+         */
+        job: JobId;
+    } | {
+        oneofKind: undefined;
+    };
 }
 /**
- * @generated from protobuf enum bareos.config.JobLevel
+ * @generated from protobuf message bareos.config.GetDefinitionResponse
  */
-export enum JobLevel {
+export interface GetDefinitionResponse {
     /**
-     * @generated from protobuf enum value: JOB_LEVEL_UNSPECIFIED = 0;
+     * @generated from protobuf field: map<string, string> set_options = 1;
      */
-    JOB_LEVEL_UNSPECIFIED = 0,
-    /**
-     * @generated from protobuf enum value: FULL = 1;
-     */
-    FULL = 1,
-    /**
-     * @generated from protobuf enum value: DIFFERENTIAL = 2;
-     */
-    DIFFERENTIAL = 2,
-    /**
-     * @generated from protobuf enum value: INCREMENTAL = 3;
-     */
-    INCREMENTAL = 3
+    setOptions: {
+        [key: string]: string;
+    };
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class ListClientsRequest$Type extends MessageType<ListClientsRequest> {
@@ -264,12 +243,12 @@ export const ListClientsRequest = new ListClientsRequest$Type();
 class ClientId$Type extends MessageType<ClientId> {
     constructor() {
         super("bareos.config.ClientId", [
-            { no: 1, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 1, name: "name", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
         ]);
     }
     create(value?: PartialMessage<ClientId>): ClientId {
         const message = globalThis.Object.create((this.messagePrototype!));
-        message.name = "";
+        message.name = new Uint8Array(0);
         if (value !== undefined)
             reflectionMergePartial<ClientId>(this, message, value);
         return message;
@@ -279,8 +258,8 @@ class ClientId$Type extends MessageType<ClientId> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* string name */ 1:
-                    message.name = reader.string();
+                case /* bytes name */ 1:
+                    message.name = reader.bytes();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -294,9 +273,9 @@ class ClientId$Type extends MessageType<ClientId> {
         return message;
     }
     internalBinaryWrite(message: ClientId, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string name = 1; */
-        if (message.name !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.name);
+        /* bytes name = 1; */
+        if (message.name.length)
+            writer.tag(1, WireType.LengthDelimited).bytes(message.name);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -420,12 +399,12 @@ export const ListClientsResponse = new ListClientsResponse$Type();
 class JobId$Type extends MessageType<JobId> {
     constructor() {
         super("bareos.config.JobId", [
-            { no: 1, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 1, name: "name", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
         ]);
     }
     create(value?: PartialMessage<JobId>): JobId {
         const message = globalThis.Object.create((this.messagePrototype!));
-        message.name = "";
+        message.name = new Uint8Array(0);
         if (value !== undefined)
             reflectionMergePartial<JobId>(this, message, value);
         return message;
@@ -435,8 +414,8 @@ class JobId$Type extends MessageType<JobId> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* string name */ 1:
-                    message.name = reader.string();
+                case /* bytes name */ 1:
+                    message.name = reader.bytes();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -450,9 +429,9 @@ class JobId$Type extends MessageType<JobId> {
         return message;
     }
     internalBinaryWrite(message: JobId, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string name = 1; */
-        if (message.name !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.name);
+        /* bytes name = 1; */
+        if (message.name.length)
+            writer.tag(1, WireType.LengthDelimited).bytes(message.name);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -469,14 +448,15 @@ class Job$Type extends MessageType<Job> {
         super("bareos.config.Job", [
             { no: 1, name: "id", kind: "message", T: () => JobId },
             { no: 2, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 3, name: "type", kind: "enum", T: () => ["bareos.config.JobType", JobType] },
-            { no: 4, name: "default_level", kind: "enum", opt: true, T: () => ["bareos.config.JobLevel", JobLevel] }
+            { no: 3, name: "type", kind: "enum", T: () => ["bareos.common.JobType", JobType] },
+            { no: 4, name: "description", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     create(value?: PartialMessage<Job>): Job {
         const message = globalThis.Object.create((this.messagePrototype!));
         message.name = "";
         message.type = 0;
+        message.description = "";
         if (value !== undefined)
             reflectionMergePartial<Job>(this, message, value);
         return message;
@@ -492,11 +472,11 @@ class Job$Type extends MessageType<Job> {
                 case /* string name */ 2:
                     message.name = reader.string();
                     break;
-                case /* bareos.config.JobType type */ 3:
+                case /* bareos.common.JobType type */ 3:
                     message.type = reader.int32();
                     break;
-                case /* optional bareos.config.JobLevel default_level */ 4:
-                    message.defaultLevel = reader.int32();
+                case /* string description */ 4:
+                    message.description = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -516,12 +496,12 @@ class Job$Type extends MessageType<Job> {
         /* string name = 2; */
         if (message.name !== "")
             writer.tag(2, WireType.LengthDelimited).string(message.name);
-        /* bareos.config.JobType type = 3; */
+        /* bareos.common.JobType type = 3; */
         if (message.type !== 0)
             writer.tag(3, WireType.Varint).int32(message.type);
-        /* optional bareos.config.JobLevel default_level = 4; */
-        if (message.defaultLevel !== undefined)
-            writer.tag(4, WireType.Varint).int32(message.defaultLevel);
+        /* string description = 4; */
+        if (message.description !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.description);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -536,7 +516,7 @@ export const Job = new Job$Type();
 class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
     constructor() {
         super("bareos.config.JobTypeFilter", [
-            { no: 1, name: "select", kind: "enum", T: () => ["bareos.config.JobType", JobType] }
+            { no: 1, name: "select", kind: "enum", T: () => ["bareos.common.JobType", JobType] }
         ]);
     }
     create(value?: PartialMessage<JobTypeFilter>): JobTypeFilter {
@@ -551,7 +531,7 @@ class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.config.JobType select */ 1:
+                case /* bareos.common.JobType select */ 1:
                     message.select = reader.int32();
                     break;
                 default:
@@ -566,7 +546,7 @@ class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
         return message;
     }
     internalBinaryWrite(message: JobTypeFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.config.JobType select = 1; */
+        /* bareos.common.JobType select = 1; */
         if (message.select !== 0)
             writer.tag(1, WireType.Varint).int32(message.select);
         let u = options.writeUnknownFields;
@@ -727,12 +707,12 @@ export const ListJobsResponse = new ListJobsResponse$Type();
 class CatalogId$Type extends MessageType<CatalogId> {
     constructor() {
         super("bareos.config.CatalogId", [
-            { no: 1, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 1, name: "name", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
         ]);
     }
     create(value?: PartialMessage<CatalogId>): CatalogId {
         const message = globalThis.Object.create((this.messagePrototype!));
-        message.name = "";
+        message.name = new Uint8Array(0);
         if (value !== undefined)
             reflectionMergePartial<CatalogId>(this, message, value);
         return message;
@@ -742,8 +722,8 @@ class CatalogId$Type extends MessageType<CatalogId> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* string name */ 1:
-                    message.name = reader.string();
+                case /* bytes name */ 1:
+                    message.name = reader.bytes();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -757,9 +737,9 @@ class CatalogId$Type extends MessageType<CatalogId> {
         return message;
     }
     internalBinaryWrite(message: CatalogId, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string name = 1; */
-        if (message.name !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.name);
+        /* bytes name = 1; */
+        if (message.name.length)
+            writer.tag(1, WireType.LengthDelimited).bytes(message.name);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -904,11 +884,145 @@ class ListCatalogsResponse$Type extends MessageType<ListCatalogsResponse> {
  * @generated MessageType for protobuf message bareos.config.ListCatalogsResponse
  */
 export const ListCatalogsResponse = new ListCatalogsResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class GetDefinitionRequest$Type extends MessageType<GetDefinitionRequest> {
+    constructor() {
+        super("bareos.config.GetDefinitionRequest", [
+            { no: 1, name: "client", kind: "message", oneof: "configType", T: () => ClientId },
+            { no: 2, name: "catalog", kind: "message", oneof: "configType", T: () => CatalogId },
+            { no: 3, name: "job", kind: "message", oneof: "configType", T: () => JobId }
+        ]);
+    }
+    create(value?: PartialMessage<GetDefinitionRequest>): GetDefinitionRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.configType = { oneofKind: undefined };
+        if (value !== undefined)
+            reflectionMergePartial<GetDefinitionRequest>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: GetDefinitionRequest): GetDefinitionRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.config.ClientId client */ 1:
+                    message.configType = {
+                        oneofKind: "client",
+                        client: ClientId.internalBinaryRead(reader, reader.uint32(), options, (message.configType as any).client)
+                    };
+                    break;
+                case /* bareos.config.CatalogId catalog */ 2:
+                    message.configType = {
+                        oneofKind: "catalog",
+                        catalog: CatalogId.internalBinaryRead(reader, reader.uint32(), options, (message.configType as any).catalog)
+                    };
+                    break;
+                case /* bareos.config.JobId job */ 3:
+                    message.configType = {
+                        oneofKind: "job",
+                        job: JobId.internalBinaryRead(reader, reader.uint32(), options, (message.configType as any).job)
+                    };
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: GetDefinitionRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.config.ClientId client = 1; */
+        if (message.configType.oneofKind === "client")
+            ClientId.internalBinaryWrite(message.configType.client, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.config.CatalogId catalog = 2; */
+        if (message.configType.oneofKind === "catalog")
+            CatalogId.internalBinaryWrite(message.configType.catalog, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.config.JobId job = 3; */
+        if (message.configType.oneofKind === "job")
+            JobId.internalBinaryWrite(message.configType.job, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.config.GetDefinitionRequest
+ */
+export const GetDefinitionRequest = new GetDefinitionRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class GetDefinitionResponse$Type extends MessageType<GetDefinitionResponse> {
+    constructor() {
+        super("bareos.config.GetDefinitionResponse", [
+            { no: 1, name: "set_options", kind: "map", K: 9 /*ScalarType.STRING*/, V: { kind: "scalar", T: 9 /*ScalarType.STRING*/ } }
+        ]);
+    }
+    create(value?: PartialMessage<GetDefinitionResponse>): GetDefinitionResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.setOptions = {};
+        if (value !== undefined)
+            reflectionMergePartial<GetDefinitionResponse>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: GetDefinitionResponse): GetDefinitionResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* map<string, string> set_options */ 1:
+                    this.binaryReadMap1(message.setOptions, reader, options);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    private binaryReadMap1(map: GetDefinitionResponse["setOptions"], reader: IBinaryReader, options: BinaryReadOptions): void {
+        let len = reader.uint32(), end = reader.pos + len, key: keyof GetDefinitionResponse["setOptions"] | undefined, val: GetDefinitionResponse["setOptions"][any] | undefined;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case 1:
+                    key = reader.string();
+                    break;
+                case 2:
+                    val = reader.string();
+                    break;
+                default: throw new globalThis.Error("unknown map entry field for field bareos.config.GetDefinitionResponse.set_options");
+            }
+        }
+        map[key ?? ""] = val ?? "";
+    }
+    internalBinaryWrite(message: GetDefinitionResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* map<string, string> set_options = 1; */
+        for (let k of globalThis.Object.keys(message.setOptions))
+            writer.tag(1, WireType.LengthDelimited).fork().tag(1, WireType.LengthDelimited).string(k).tag(2, WireType.LengthDelimited).string(message.setOptions[k]).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.config.GetDefinitionResponse
+ */
+export const GetDefinitionResponse = new GetDefinitionResponse$Type();
 /**
  * @generated ServiceType for protobuf service bareos.config.Config
  */
 export const Config = new ServiceType("bareos.config.Config", [
     { name: "ListClients", options: {}, I: ListClientsRequest, O: ListClientsResponse },
     { name: "ListJobs", options: {}, I: ListJobsRequest, O: ListJobsResponse },
-    { name: "ListCatalogs", options: {}, I: ListCatalogsRequest, O: ListCatalogsResponse }
+    { name: "ListCatalogs", options: {}, I: ListCatalogsRequest, O: ListCatalogsResponse },
+    { name: "GetDefinition", options: {}, I: GetDefinitionRequest, O: GetDefinitionResponse }
 ]);

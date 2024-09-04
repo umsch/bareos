@@ -15,18 +15,18 @@ import { UnknownFieldHandler } from "@protobuf-ts/runtime";
 import type { PartialMessage } from "@protobuf-ts/runtime";
 import { reflectionMergePartial } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
-import { Client } from "./common";
-import { JobId } from "./config";
+import { ClientId } from "./config";
+import { JobId as JobId$ } from "./config";
 import { CatalogId } from "./config";
-import { Job } from "./common";
+import { JobId } from "./database";
 /**
  * @generated from protobuf message bareos.restore.StartSelection
  */
 export interface StartSelection {
     /**
-     * @generated from protobuf field: bareos.common.Job backup_job = 1;
+     * @generated from protobuf field: bareos.database.JobId backup_job = 1;
      */
-    backupJob?: Job;
+    backupJob?: JobId;
     /**
      * @generated from protobuf field: bool find_job_chain = 2;
      */
@@ -149,15 +149,15 @@ export interface RestoreOptions {
     /**
      * @generated from protobuf field: optional bareos.config.JobId restore_job = 3;
      */
-    restoreJob?: JobId;
+    restoreJob?: JobId$;
     /**
      * @generated from protobuf field: optional string restore_location = 4;
      */
     restoreLocation?: string;
     /**
-     * @generated from protobuf field: optional bareos.common.Client restore_client = 5;
+     * @generated from protobuf field: optional bareos.config.ClientId restore_client = 5;
      */
-    restoreClient?: Client;
+    restoreClient?: ClientId;
 }
 /**
  * @generated from protobuf message bareos.restore.RunRequest
@@ -173,9 +173,9 @@ export interface RunRequest {
  */
 export interface RunResponse {
     /**
-     * @generated from protobuf field: bareos.common.Job jobid = 1;
+     * @generated from protobuf field: bareos.database.JobId jobid = 1;
      */
-    jobid?: Job;
+    jobid?: JobId;
 }
 /**
  * @generated from protobuf message bareos.restore.CancelRequest
@@ -428,7 +428,7 @@ export enum FileType {
 class StartSelection$Type extends MessageType<StartSelection> {
     constructor() {
         super("bareos.restore.StartSelection", [
-            { no: 1, name: "backup_job", kind: "message", T: () => Job },
+            { no: 1, name: "backup_job", kind: "message", T: () => JobId },
             { no: 2, name: "find_job_chain", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 3, name: "merge_filesets", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 4, name: "catalog", kind: "message", T: () => CatalogId }
@@ -447,8 +447,8 @@ class StartSelection$Type extends MessageType<StartSelection> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.common.Job backup_job */ 1:
-                    message.backupJob = Job.internalBinaryRead(reader, reader.uint32(), options, message.backupJob);
+                case /* bareos.database.JobId backup_job */ 1:
+                    message.backupJob = JobId.internalBinaryRead(reader, reader.uint32(), options, message.backupJob);
                     break;
                 case /* bool find_job_chain */ 2:
                     message.findJobChain = reader.bool();
@@ -471,9 +471,9 @@ class StartSelection$Type extends MessageType<StartSelection> {
         return message;
     }
     internalBinaryWrite(message: StartSelection, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.Job backup_job = 1; */
+        /* bareos.database.JobId backup_job = 1; */
         if (message.backupJob)
-            Job.internalBinaryWrite(message.backupJob, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+            JobId.internalBinaryWrite(message.backupJob, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
         /* bool find_job_chain = 2; */
         if (message.findJobChain !== false)
             writer.tag(2, WireType.Varint).bool(message.findJobChain);
@@ -961,9 +961,9 @@ class RestoreOptions$Type extends MessageType<RestoreOptions> {
     constructor() {
         super("bareos.restore.RestoreOptions", [
             { no: 1, name: "replace", kind: "enum", opt: true, T: () => ["bareos.restore.ReplaceType", ReplaceType] },
-            { no: 3, name: "restore_job", kind: "message", T: () => JobId },
+            { no: 3, name: "restore_job", kind: "message", T: () => JobId$ },
             { no: 4, name: "restore_location", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
-            { no: 5, name: "restore_client", kind: "message", T: () => Client }
+            { no: 5, name: "restore_client", kind: "message", T: () => ClientId }
         ]);
     }
     create(value?: PartialMessage<RestoreOptions>): RestoreOptions {
@@ -981,13 +981,13 @@ class RestoreOptions$Type extends MessageType<RestoreOptions> {
                     message.replace = reader.int32();
                     break;
                 case /* optional bareos.config.JobId restore_job */ 3:
-                    message.restoreJob = JobId.internalBinaryRead(reader, reader.uint32(), options, message.restoreJob);
+                    message.restoreJob = JobId$.internalBinaryRead(reader, reader.uint32(), options, message.restoreJob);
                     break;
                 case /* optional string restore_location */ 4:
                     message.restoreLocation = reader.string();
                     break;
-                case /* optional bareos.common.Client restore_client */ 5:
-                    message.restoreClient = Client.internalBinaryRead(reader, reader.uint32(), options, message.restoreClient);
+                case /* optional bareos.config.ClientId restore_client */ 5:
+                    message.restoreClient = ClientId.internalBinaryRead(reader, reader.uint32(), options, message.restoreClient);
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1006,13 +1006,13 @@ class RestoreOptions$Type extends MessageType<RestoreOptions> {
             writer.tag(1, WireType.Varint).int32(message.replace);
         /* optional bareos.config.JobId restore_job = 3; */
         if (message.restoreJob)
-            JobId.internalBinaryWrite(message.restoreJob, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
+            JobId$.internalBinaryWrite(message.restoreJob, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
         /* optional string restore_location = 4; */
         if (message.restoreLocation !== undefined)
             writer.tag(4, WireType.LengthDelimited).string(message.restoreLocation);
-        /* optional bareos.common.Client restore_client = 5; */
+        /* optional bareos.config.ClientId restore_client = 5; */
         if (message.restoreClient)
-            Client.internalBinaryWrite(message.restoreClient, writer.tag(5, WireType.LengthDelimited).fork(), options).join();
+            ClientId.internalBinaryWrite(message.restoreClient, writer.tag(5, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -1073,7 +1073,7 @@ export const RunRequest = new RunRequest$Type();
 class RunResponse$Type extends MessageType<RunResponse> {
     constructor() {
         super("bareos.restore.RunResponse", [
-            { no: 1, name: "jobid", kind: "message", T: () => Job }
+            { no: 1, name: "jobid", kind: "message", T: () => JobId }
         ]);
     }
     create(value?: PartialMessage<RunResponse>): RunResponse {
@@ -1087,8 +1087,8 @@ class RunResponse$Type extends MessageType<RunResponse> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.common.Job jobid */ 1:
-                    message.jobid = Job.internalBinaryRead(reader, reader.uint32(), options, message.jobid);
+                case /* bareos.database.JobId jobid */ 1:
+                    message.jobid = JobId.internalBinaryRead(reader, reader.uint32(), options, message.jobid);
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1102,9 +1102,9 @@ class RunResponse$Type extends MessageType<RunResponse> {
         return message;
     }
     internalBinaryWrite(message: RunResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.Job jobid = 1; */
+        /* bareos.database.JobId jobid = 1; */
         if (message.jobid)
-            Job.internalBinaryWrite(message.jobid, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+            JobId.internalBinaryWrite(message.jobid, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);

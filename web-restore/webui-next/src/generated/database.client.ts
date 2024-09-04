@@ -13,7 +13,7 @@ import type { ListJobsRequest } from "./database";
 import { stackIntercept } from "@protobuf-ts/runtime-rpc";
 import type { ListClientsResponse } from "./database";
 import type { ListClientsRequest } from "./database";
-import type { ServerStreamingCall } from "@protobuf-ts/runtime-rpc";
+import type { UnaryCall } from "@protobuf-ts/runtime-rpc";
 import type { RpcOptions } from "@protobuf-ts/runtime-rpc";
 /**
  * Should these functions return a typed response (like now) or rather a generic
@@ -26,13 +26,13 @@ export interface IDatabaseClient {
      * we should somehow have a limit & offset in these requests
      * most queries probably wont need all of them
      *
-     * @generated from protobuf rpc: ListClients(bareos.database.ListClientsRequest) returns (stream bareos.database.ListClientsResponse);
+     * @generated from protobuf rpc: ListClients(bareos.database.ListClientsRequest) returns (bareos.database.ListClientsResponse);
      */
-    listClients(input: ListClientsRequest, options?: RpcOptions): ServerStreamingCall<ListClientsRequest, ListClientsResponse>;
+    listClients(input: ListClientsRequest, options?: RpcOptions): UnaryCall<ListClientsRequest, ListClientsResponse>;
     /**
-     * @generated from protobuf rpc: ListJobs(bareos.database.ListJobsRequest) returns (stream bareos.database.ListJobsResponse);
+     * @generated from protobuf rpc: ListJobs(bareos.database.ListJobsRequest) returns (bareos.database.ListJobsResponse);
      */
-    listJobs(input: ListJobsRequest, options?: RpcOptions): ServerStreamingCall<ListJobsRequest, ListJobsResponse>;
+    listJobs(input: ListJobsRequest, options?: RpcOptions): UnaryCall<ListJobsRequest, ListJobsResponse>;
 }
 /**
  * Should these functions return a typed response (like now) or rather a generic
@@ -50,17 +50,17 @@ export class DatabaseClient implements IDatabaseClient, ServiceInfo {
      * we should somehow have a limit & offset in these requests
      * most queries probably wont need all of them
      *
-     * @generated from protobuf rpc: ListClients(bareos.database.ListClientsRequest) returns (stream bareos.database.ListClientsResponse);
+     * @generated from protobuf rpc: ListClients(bareos.database.ListClientsRequest) returns (bareos.database.ListClientsResponse);
      */
-    listClients(input: ListClientsRequest, options?: RpcOptions): ServerStreamingCall<ListClientsRequest, ListClientsResponse> {
+    listClients(input: ListClientsRequest, options?: RpcOptions): UnaryCall<ListClientsRequest, ListClientsResponse> {
         const method = this.methods[0], opt = this._transport.mergeOptions(options);
-        return stackIntercept<ListClientsRequest, ListClientsResponse>("serverStreaming", this._transport, method, opt, input);
+        return stackIntercept<ListClientsRequest, ListClientsResponse>("unary", this._transport, method, opt, input);
     }
     /**
-     * @generated from protobuf rpc: ListJobs(bareos.database.ListJobsRequest) returns (stream bareos.database.ListJobsResponse);
+     * @generated from protobuf rpc: ListJobs(bareos.database.ListJobsRequest) returns (bareos.database.ListJobsResponse);
      */
-    listJobs(input: ListJobsRequest, options?: RpcOptions): ServerStreamingCall<ListJobsRequest, ListJobsResponse> {
+    listJobs(input: ListJobsRequest, options?: RpcOptions): UnaryCall<ListJobsRequest, ListJobsResponse> {
         const method = this.methods[1], opt = this._transport.mergeOptions(options);
-        return stackIntercept<ListJobsRequest, ListJobsResponse>("serverStreaming", this._transport, method, opt, input);
+        return stackIntercept<ListJobsRequest, ListJobsResponse>("unary", this._transport, method, opt, input);
     }
 }

@@ -5,124 +5,65 @@
 //
 // LICENSE HERE
 //
-import type { BinaryWriteOptions } from "@protobuf-ts/runtime";
-import type { IBinaryWriter } from "@protobuf-ts/runtime";
-import { WireType } from "@protobuf-ts/runtime";
-import type { BinaryReadOptions } from "@protobuf-ts/runtime";
-import type { IBinaryReader } from "@protobuf-ts/runtime";
-import { UnknownFieldHandler } from "@protobuf-ts/runtime";
-import type { PartialMessage } from "@protobuf-ts/runtime";
-import { reflectionMergePartial } from "@protobuf-ts/runtime";
-import { MessageType } from "@protobuf-ts/runtime";
 /**
- * @generated from protobuf message bareos.common.Client
+ * @generated from protobuf enum bareos.common.JobType
  */
-export interface Client {
+export enum JobType {
     /**
-     * @generated from protobuf field: string name = 1;
+     * @generated from protobuf enum value: JOB_TYPE_UNSPECIFIED = 0;
      */
-    name: string;
-}
-/**
- * @generated from protobuf message bareos.common.Job
- */
-export interface Job {
+    JOB_TYPE_UNSPECIFIED = 0,
     /**
-     * @generated from protobuf field: int64 jobid = 1;
+     * @generated from protobuf enum value: RESTORE = 1;
      */
-    jobid: bigint;
-}
-// @generated message type with reflection information, may provide speed optimized methods
-class Client$Type extends MessageType<Client> {
-    constructor() {
-        super("bareos.common.Client", [
-            { no: 1, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
-        ]);
-    }
-    create(value?: PartialMessage<Client>): Client {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.name = "";
-        if (value !== undefined)
-            reflectionMergePartial<Client>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Client): Client {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* string name */ 1:
-                    message.name = reader.string();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: Client, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* string name = 1; */
-        if (message.name !== "")
-            writer.tag(1, WireType.LengthDelimited).string(message.name);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+    RESTORE = 1,
+    /**
+     * @generated from protobuf enum value: BACKUP = 2;
+     */
+    BACKUP = 2,
+    /**
+     * @generated from protobuf enum value: COPY = 3;
+     */
+    COPY = 3,
+    /**
+     * @generated from protobuf enum value: VERIFY = 4;
+     */
+    VERIFY = 4,
+    /**
+     * @generated from protobuf enum value: ADMIN = 5;
+     */
+    ADMIN = 5,
+    /**
+     * @generated from protobuf enum value: ARCHIVE = 6;
+     */
+    ARCHIVE = 6,
+    /**
+     * @generated from protobuf enum value: MIGRATE = 7;
+     */
+    MIGRATE = 7,
+    /**
+     * @generated from protobuf enum value: CONSOLIDATE = 8;
+     */
+    CONSOLIDATE = 8
 }
 /**
- * @generated MessageType for protobuf message bareos.common.Client
+ * @generated from protobuf enum bareos.common.JobLevel
  */
-export const Client = new Client$Type();
-// @generated message type with reflection information, may provide speed optimized methods
-class Job$Type extends MessageType<Job> {
-    constructor() {
-        super("bareos.common.Job", [
-            { no: 1, name: "jobid", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
-        ]);
-    }
-    create(value?: PartialMessage<Job>): Job {
-        const message = globalThis.Object.create((this.messagePrototype!));
-        message.jobid = 0n;
-        if (value !== undefined)
-            reflectionMergePartial<Job>(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Job): Job {
-        let message = target ?? this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* int64 jobid */ 1:
-                    message.jobid = reader.int64().toBigInt();
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message: Job, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* int64 jobid = 1; */
-        if (message.jobid !== 0n)
-            writer.tag(1, WireType.Varint).int64(message.jobid);
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
+export enum JobLevel {
+    /**
+     * @generated from protobuf enum value: JOB_LEVEL_UNSPECIFIED = 0;
+     */
+    JOB_LEVEL_UNSPECIFIED = 0,
+    /**
+     * @generated from protobuf enum value: FULL = 1;
+     */
+    FULL = 1,
+    /**
+     * @generated from protobuf enum value: DIFFERENTIAL = 2;
+     */
+    DIFFERENTIAL = 2,
+    /**
+     * @generated from protobuf enum value: INCREMENTAL = 3;
+     */
+    INCREMENTAL = 3
 }
-/**
- * @generated MessageType for protobuf message bareos.common.Job
- */
-export const Job = new Job$Type();

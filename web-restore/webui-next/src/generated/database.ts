@@ -15,10 +15,168 @@ import { UnknownFieldHandler } from "@protobuf-ts/runtime";
 import type { PartialMessage } from "@protobuf-ts/runtime";
 import { reflectionMergePartial } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
-import { Timestamp } from "./google/protobuf/timestamp";
-import { Job } from "./common";
-import { Client } from "./common";
 import { CatalogId } from "./config";
+import { Timestamp } from "./google/protobuf/timestamp";
+import { JobType } from "./common";
+import { JobLevel } from "./common";
+/**
+ * @generated from protobuf message bareos.database.ClientId
+ */
+export interface ClientId {
+    /**
+     * @generated from protobuf field: int64 id = 1;
+     */
+    id: bigint;
+}
+/**
+ * @generated from protobuf message bareos.database.JobId
+ */
+export interface JobId {
+    /**
+     * @generated from protobuf field: int64 id = 1;
+     */
+    id: bigint;
+}
+/**
+ * @generated from protobuf message bareos.database.Range
+ */
+export interface Range {
+    /**
+     * @generated from protobuf field: uint64 offset = 1;
+     */
+    offset: bigint;
+    /**
+     * @generated from protobuf field: uint64 limit = 2;
+     */
+    limit: bigint;
+}
+/**
+ * @generated from protobuf message bareos.database.QueryOptions
+ */
+export interface QueryOptions {
+    /**
+     * @generated from protobuf field: bareos.database.Range range = 1;
+     */
+    range?: Range;
+}
+/**
+ * @generated from protobuf message bareos.database.Client
+ */
+export interface Client {
+    /**
+     * @generated from protobuf field: bareos.database.ClientId id = 1;
+     */
+    id?: ClientId;
+    /**
+     * @generated from protobuf field: string name = 2;
+     */
+    name: string;
+    /**
+     * @generated from protobuf field: string uname = 3;
+     */
+    uname: string;
+    /**
+     * @generated from protobuf field: bool autoprune = 4;
+     */
+    autoprune: boolean;
+    /**
+     * @generated from protobuf field: int64 FileRetention = 5 [json_name = "FileRetention"];
+     */
+    fileRetention: bigint;
+    /**
+     * @generated from protobuf field: int64 JobRetention = 6 [json_name = "JobRetention"];
+     */
+    jobRetention: bigint;
+}
+/**
+ * @generated from protobuf message bareos.database.BackupData
+ */
+export interface BackupData {
+    /**
+     * @generated from protobuf field: bareos.common.JobLevel level = 1;
+     */
+    level: JobLevel;
+    /**
+     * @generated from protobuf field: bareos.database.ClientId client = 2;
+     */
+    client?: ClientId;
+    /**
+     * @generated from protobuf field: uint64 job_files = 3;
+     */
+    jobFiles: bigint;
+    /**
+     * @generated from protobuf field: uint64 job_bytes = 4;
+     */
+    jobBytes: bigint;
+}
+/**
+ * @generated from protobuf message bareos.database.Job
+ */
+export interface Job {
+    /**
+     * @generated from protobuf field: bareos.database.JobId id = 1;
+     */
+    id?: JobId;
+    /**
+     * @generated from protobuf field: string name = 2;
+     */
+    name: string;
+    /**
+     * @generated from protobuf field: bareos.common.JobType type = 3;
+     */
+    type: JobType;
+    /**
+     * @generated from protobuf field: google.protobuf.Timestamp sched_time = 4;
+     */
+    schedTime?: Timestamp;
+    /**
+     * @generated from protobuf field: google.protobuf.Timestamp start_time = 5;
+     */
+    startTime?: Timestamp;
+    /**
+     * @generated from protobuf field: google.protobuf.Timestamp end_time = 6;
+     */
+    endTime?: Timestamp;
+    /**
+     * @generated from protobuf field: optional string comment = 7;
+     */
+    comment?: string;
+    /**
+     * @generated from protobuf oneof: extra_job_data
+     */
+    extraJobData: {
+        oneofKind: "backup";
+        /**
+         * @generated from protobuf field: bareos.database.BackupData backup = 21;
+         */
+        backup: BackupData;
+    } | {
+        oneofKind: undefined;
+    };
+}
+/**
+ * @generated from protobuf message bareos.database.ListClientFilter
+ */
+export interface ListClientFilter {
+    /**
+     * @generated from protobuf oneof: filter_type
+     */
+    filterType: {
+        oneofKind: "name";
+        /**
+         * @generated from protobuf field: bareos.database.NameFilter name = 1;
+         */
+        name: NameFilter;
+    } | {
+        oneofKind: "uname";
+        /**
+         * @generated from protobuf field: bareos.database.NameFilter uname = 2;
+         */
+        uname: NameFilter;
+    } | {
+        oneofKind: undefined;
+    };
+}
 /**
  * @generated from protobuf message bareos.database.ListClientsRequest
  */
@@ -27,26 +185,79 @@ export interface ListClientsRequest {
      * @generated from protobuf field: bareos.config.CatalogId catalog = 1;
      */
     catalog?: CatalogId;
+    /**
+     * @generated from protobuf field: bareos.database.QueryOptions options = 2;
+     */
+    options?: QueryOptions;
+    /**
+     * @generated from protobuf field: repeated bareos.database.ListClientFilter filters = 3;
+     */
+    filters: ListClientFilter[];
 }
 /**
  * @generated from protobuf message bareos.database.ListClientsResponse
  */
 export interface ListClientsResponse {
     /**
-     * @generated from protobuf field: bareos.common.Client client = 1;
+     * @generated from protobuf field: repeated bareos.database.Client clients = 1;
      */
-    client?: Client;
+    clients: Client[];
 }
 /**
  * @generated from protobuf message bareos.database.ClientFilter
  */
 export interface ClientFilter {
     /**
-     * select only jobs that were created on _one_ of these clients.
-     *
-     * @generated from protobuf field: repeated bareos.common.Client client = 1;
+     * @generated from protobuf field: bareos.database.Client client = 1;
      */
-    client: Client[];
+    client?: Client;
+}
+/**
+ * @generated from protobuf message bareos.database.JobTypeFilter
+ */
+export interface JobTypeFilter {
+    /**
+     * @generated from protobuf field: bareos.common.JobType type = 1;
+     */
+    type: JobType;
+}
+/**
+ * @generated from protobuf message bareos.database.NameFilter
+ */
+export interface NameFilter {
+    /**
+     * @generated from protobuf field: string match = 1;
+     */
+    match: string;
+}
+/**
+ * @generated from protobuf message bareos.database.ListJobFilter
+ */
+export interface ListJobFilter {
+    /**
+     * @generated from protobuf oneof: filter_type
+     */
+    filterType: {
+        oneofKind: "client";
+        /**
+         * @generated from protobuf field: bareos.database.ClientFilter client = 1;
+         */
+        client: ClientFilter;
+    } | {
+        oneofKind: "type";
+        /**
+         * @generated from protobuf field: bareos.database.JobTypeFilter type = 2;
+         */
+        type: JobTypeFilter;
+    } | {
+        oneofKind: "name";
+        /**
+         * @generated from protobuf field: bareos.database.NameFilter name = 3;
+         */
+        name: NameFilter;
+    } | {
+        oneofKind: undefined;
+    };
 }
 /**
  * @generated from protobuf message bareos.database.ListJobsRequest
@@ -57,45 +268,547 @@ export interface ListJobsRequest {
      */
     catalog?: CatalogId;
     /**
-     * @generated from protobuf field: optional bareos.database.ClientFilter client_filter = 2;
+     * @generated from protobuf field: bareos.database.QueryOptions options = 2;
      */
-    clientFilter?: ClientFilter;
+    options?: QueryOptions;
+    /**
+     * @generated from protobuf field: repeated bareos.database.ListJobFilter filters = 3;
+     */
+    filters: ListJobFilter[];
 }
 /**
  * @generated from protobuf message bareos.database.ListJobsResponse
  */
 export interface ListJobsResponse {
     /**
-     * @generated from protobuf field: bareos.common.Job job = 1;
+     * @generated from protobuf field: repeated bareos.database.Job jobs = 1;
      */
-    job?: Job; // we should probably only return the jobid here and have a seperate
-    // JobInfo() rpc, as used databases have a lot of jobs in them
-    /**
-     * @generated from protobuf field: bareos.common.Client client = 2;
-     */
-    client?: Client;
-    /**
-     * @generated from protobuf field: string name = 3;
-     */
-    name: string;
-    /**
-     * @generated from protobuf field: google.protobuf.Timestamp start_time = 4;
-     */
-    startTime?: Timestamp;
-    /**
-     * @generated from protobuf field: optional google.protobuf.Timestamp end_time = 5;
-     */
-    endTime?: Timestamp;
+    jobs: Job[];
 }
+// @generated message type with reflection information, may provide speed optimized methods
+class ClientId$Type extends MessageType<ClientId> {
+    constructor() {
+        super("bareos.database.ClientId", [
+            { no: 1, name: "id", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ClientId>): ClientId {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.id = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<ClientId>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ClientId): ClientId {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* int64 id */ 1:
+                    message.id = reader.int64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ClientId, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* int64 id = 1; */
+        if (message.id !== 0n)
+            writer.tag(1, WireType.Varint).int64(message.id);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.ClientId
+ */
+export const ClientId = new ClientId$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class JobId$Type extends MessageType<JobId> {
+    constructor() {
+        super("bareos.database.JobId", [
+            { no: 1, name: "id", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<JobId>): JobId {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.id = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<JobId>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: JobId): JobId {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* int64 id */ 1:
+                    message.id = reader.int64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: JobId, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* int64 id = 1; */
+        if (message.id !== 0n)
+            writer.tag(1, WireType.Varint).int64(message.id);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.JobId
+ */
+export const JobId = new JobId$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class Range$Type extends MessageType<Range> {
+    constructor() {
+        super("bareos.database.Range", [
+            { no: 1, name: "offset", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 2, name: "limit", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<Range>): Range {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.offset = 0n;
+        message.limit = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<Range>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Range): Range {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 offset */ 1:
+                    message.offset = reader.uint64().toBigInt();
+                    break;
+                case /* uint64 limit */ 2:
+                    message.limit = reader.uint64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: Range, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 offset = 1; */
+        if (message.offset !== 0n)
+            writer.tag(1, WireType.Varint).uint64(message.offset);
+        /* uint64 limit = 2; */
+        if (message.limit !== 0n)
+            writer.tag(2, WireType.Varint).uint64(message.limit);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.Range
+ */
+export const Range = new Range$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class QueryOptions$Type extends MessageType<QueryOptions> {
+    constructor() {
+        super("bareos.database.QueryOptions", [
+            { no: 1, name: "range", kind: "message", T: () => Range }
+        ]);
+    }
+    create(value?: PartialMessage<QueryOptions>): QueryOptions {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<QueryOptions>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: QueryOptions): QueryOptions {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.database.Range range */ 1:
+                    message.range = Range.internalBinaryRead(reader, reader.uint32(), options, message.range);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: QueryOptions, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.database.Range range = 1; */
+        if (message.range)
+            Range.internalBinaryWrite(message.range, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.QueryOptions
+ */
+export const QueryOptions = new QueryOptions$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class Client$Type extends MessageType<Client> {
+    constructor() {
+        super("bareos.database.Client", [
+            { no: 1, name: "id", kind: "message", T: () => ClientId },
+            { no: 2, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 3, name: "uname", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 4, name: "autoprune", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
+            { no: 5, name: "FileRetention", kind: "scalar", jsonName: "FileRetention", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 6, name: "JobRetention", kind: "scalar", jsonName: "JobRetention", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<Client>): Client {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.name = "";
+        message.uname = "";
+        message.autoprune = false;
+        message.fileRetention = 0n;
+        message.jobRetention = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<Client>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Client): Client {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.database.ClientId id */ 1:
+                    message.id = ClientId.internalBinaryRead(reader, reader.uint32(), options, message.id);
+                    break;
+                case /* string name */ 2:
+                    message.name = reader.string();
+                    break;
+                case /* string uname */ 3:
+                    message.uname = reader.string();
+                    break;
+                case /* bool autoprune */ 4:
+                    message.autoprune = reader.bool();
+                    break;
+                case /* int64 FileRetention = 5 [json_name = "FileRetention"];*/ 5:
+                    message.fileRetention = reader.int64().toBigInt();
+                    break;
+                case /* int64 JobRetention = 6 [json_name = "JobRetention"];*/ 6:
+                    message.jobRetention = reader.int64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: Client, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.database.ClientId id = 1; */
+        if (message.id)
+            ClientId.internalBinaryWrite(message.id, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* string name = 2; */
+        if (message.name !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.name);
+        /* string uname = 3; */
+        if (message.uname !== "")
+            writer.tag(3, WireType.LengthDelimited).string(message.uname);
+        /* bool autoprune = 4; */
+        if (message.autoprune !== false)
+            writer.tag(4, WireType.Varint).bool(message.autoprune);
+        /* int64 FileRetention = 5 [json_name = "FileRetention"]; */
+        if (message.fileRetention !== 0n)
+            writer.tag(5, WireType.Varint).int64(message.fileRetention);
+        /* int64 JobRetention = 6 [json_name = "JobRetention"]; */
+        if (message.jobRetention !== 0n)
+            writer.tag(6, WireType.Varint).int64(message.jobRetention);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.Client
+ */
+export const Client = new Client$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class BackupData$Type extends MessageType<BackupData> {
+    constructor() {
+        super("bareos.database.BackupData", [
+            { no: 1, name: "level", kind: "enum", T: () => ["bareos.common.JobLevel", JobLevel] },
+            { no: 2, name: "client", kind: "message", T: () => ClientId },
+            { no: 3, name: "job_files", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 4, name: "job_bytes", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<BackupData>): BackupData {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.level = 0;
+        message.jobFiles = 0n;
+        message.jobBytes = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<BackupData>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BackupData): BackupData {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.common.JobLevel level */ 1:
+                    message.level = reader.int32();
+                    break;
+                case /* bareos.database.ClientId client */ 2:
+                    message.client = ClientId.internalBinaryRead(reader, reader.uint32(), options, message.client);
+                    break;
+                case /* uint64 job_files */ 3:
+                    message.jobFiles = reader.uint64().toBigInt();
+                    break;
+                case /* uint64 job_bytes */ 4:
+                    message.jobBytes = reader.uint64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: BackupData, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.common.JobLevel level = 1; */
+        if (message.level !== 0)
+            writer.tag(1, WireType.Varint).int32(message.level);
+        /* bareos.database.ClientId client = 2; */
+        if (message.client)
+            ClientId.internalBinaryWrite(message.client, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* uint64 job_files = 3; */
+        if (message.jobFiles !== 0n)
+            writer.tag(3, WireType.Varint).uint64(message.jobFiles);
+        /* uint64 job_bytes = 4; */
+        if (message.jobBytes !== 0n)
+            writer.tag(4, WireType.Varint).uint64(message.jobBytes);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.BackupData
+ */
+export const BackupData = new BackupData$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class Job$Type extends MessageType<Job> {
+    constructor() {
+        super("bareos.database.Job", [
+            { no: 1, name: "id", kind: "message", T: () => JobId },
+            { no: 2, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 3, name: "type", kind: "enum", T: () => ["bareos.common.JobType", JobType] },
+            { no: 4, name: "sched_time", kind: "message", T: () => Timestamp },
+            { no: 5, name: "start_time", kind: "message", T: () => Timestamp },
+            { no: 6, name: "end_time", kind: "message", T: () => Timestamp },
+            { no: 7, name: "comment", kind: "scalar", opt: true, T: 9 /*ScalarType.STRING*/ },
+            { no: 21, name: "backup", kind: "message", oneof: "extraJobData", T: () => BackupData }
+        ]);
+    }
+    create(value?: PartialMessage<Job>): Job {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.name = "";
+        message.type = 0;
+        message.extraJobData = { oneofKind: undefined };
+        if (value !== undefined)
+            reflectionMergePartial<Job>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Job): Job {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.database.JobId id */ 1:
+                    message.id = JobId.internalBinaryRead(reader, reader.uint32(), options, message.id);
+                    break;
+                case /* string name */ 2:
+                    message.name = reader.string();
+                    break;
+                case /* bareos.common.JobType type */ 3:
+                    message.type = reader.int32();
+                    break;
+                case /* google.protobuf.Timestamp sched_time */ 4:
+                    message.schedTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.schedTime);
+                    break;
+                case /* google.protobuf.Timestamp start_time */ 5:
+                    message.startTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.startTime);
+                    break;
+                case /* google.protobuf.Timestamp end_time */ 6:
+                    message.endTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.endTime);
+                    break;
+                case /* optional string comment */ 7:
+                    message.comment = reader.string();
+                    break;
+                case /* bareos.database.BackupData backup */ 21:
+                    message.extraJobData = {
+                        oneofKind: "backup",
+                        backup: BackupData.internalBinaryRead(reader, reader.uint32(), options, (message.extraJobData as any).backup)
+                    };
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: Job, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.database.JobId id = 1; */
+        if (message.id)
+            JobId.internalBinaryWrite(message.id, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* string name = 2; */
+        if (message.name !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.name);
+        /* bareos.common.JobType type = 3; */
+        if (message.type !== 0)
+            writer.tag(3, WireType.Varint).int32(message.type);
+        /* google.protobuf.Timestamp sched_time = 4; */
+        if (message.schedTime)
+            Timestamp.internalBinaryWrite(message.schedTime, writer.tag(4, WireType.LengthDelimited).fork(), options).join();
+        /* google.protobuf.Timestamp start_time = 5; */
+        if (message.startTime)
+            Timestamp.internalBinaryWrite(message.startTime, writer.tag(5, WireType.LengthDelimited).fork(), options).join();
+        /* google.protobuf.Timestamp end_time = 6; */
+        if (message.endTime)
+            Timestamp.internalBinaryWrite(message.endTime, writer.tag(6, WireType.LengthDelimited).fork(), options).join();
+        /* optional string comment = 7; */
+        if (message.comment !== undefined)
+            writer.tag(7, WireType.LengthDelimited).string(message.comment);
+        /* bareos.database.BackupData backup = 21; */
+        if (message.extraJobData.oneofKind === "backup")
+            BackupData.internalBinaryWrite(message.extraJobData.backup, writer.tag(21, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.Job
+ */
+export const Job = new Job$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ListClientFilter$Type extends MessageType<ListClientFilter> {
+    constructor() {
+        super("bareos.database.ListClientFilter", [
+            { no: 1, name: "name", kind: "message", oneof: "filterType", T: () => NameFilter },
+            { no: 2, name: "uname", kind: "message", oneof: "filterType", T: () => NameFilter }
+        ]);
+    }
+    create(value?: PartialMessage<ListClientFilter>): ListClientFilter {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.filterType = { oneofKind: undefined };
+        if (value !== undefined)
+            reflectionMergePartial<ListClientFilter>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ListClientFilter): ListClientFilter {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.database.NameFilter name */ 1:
+                    message.filterType = {
+                        oneofKind: "name",
+                        name: NameFilter.internalBinaryRead(reader, reader.uint32(), options, (message.filterType as any).name)
+                    };
+                    break;
+                case /* bareos.database.NameFilter uname */ 2:
+                    message.filterType = {
+                        oneofKind: "uname",
+                        uname: NameFilter.internalBinaryRead(reader, reader.uint32(), options, (message.filterType as any).uname)
+                    };
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ListClientFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.database.NameFilter name = 1; */
+        if (message.filterType.oneofKind === "name")
+            NameFilter.internalBinaryWrite(message.filterType.name, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.database.NameFilter uname = 2; */
+        if (message.filterType.oneofKind === "uname")
+            NameFilter.internalBinaryWrite(message.filterType.uname, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.ListClientFilter
+ */
+export const ListClientFilter = new ListClientFilter$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class ListClientsRequest$Type extends MessageType<ListClientsRequest> {
     constructor() {
         super("bareos.database.ListClientsRequest", [
-            { no: 1, name: "catalog", kind: "message", T: () => CatalogId }
+            { no: 1, name: "catalog", kind: "message", T: () => CatalogId },
+            { no: 2, name: "options", kind: "message", T: () => QueryOptions },
+            { no: 3, name: "filters", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => ListClientFilter }
         ]);
     }
     create(value?: PartialMessage<ListClientsRequest>): ListClientsRequest {
         const message = globalThis.Object.create((this.messagePrototype!));
+        message.filters = [];
         if (value !== undefined)
             reflectionMergePartial<ListClientsRequest>(this, message, value);
         return message;
@@ -107,6 +820,12 @@ class ListClientsRequest$Type extends MessageType<ListClientsRequest> {
             switch (fieldNo) {
                 case /* bareos.config.CatalogId catalog */ 1:
                     message.catalog = CatalogId.internalBinaryRead(reader, reader.uint32(), options, message.catalog);
+                    break;
+                case /* bareos.database.QueryOptions options */ 2:
+                    message.options = QueryOptions.internalBinaryRead(reader, reader.uint32(), options, message.options);
+                    break;
+                case /* repeated bareos.database.ListClientFilter filters */ 3:
+                    message.filters.push(ListClientFilter.internalBinaryRead(reader, reader.uint32(), options));
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -123,6 +842,12 @@ class ListClientsRequest$Type extends MessageType<ListClientsRequest> {
         /* bareos.config.CatalogId catalog = 1; */
         if (message.catalog)
             CatalogId.internalBinaryWrite(message.catalog, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.database.QueryOptions options = 2; */
+        if (message.options)
+            QueryOptions.internalBinaryWrite(message.options, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* repeated bareos.database.ListClientFilter filters = 3; */
+        for (let i = 0; i < message.filters.length; i++)
+            ListClientFilter.internalBinaryWrite(message.filters[i], writer.tag(3, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -137,11 +862,12 @@ export const ListClientsRequest = new ListClientsRequest$Type();
 class ListClientsResponse$Type extends MessageType<ListClientsResponse> {
     constructor() {
         super("bareos.database.ListClientsResponse", [
-            { no: 1, name: "client", kind: "message", T: () => Client }
+            { no: 1, name: "clients", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => Client }
         ]);
     }
     create(value?: PartialMessage<ListClientsResponse>): ListClientsResponse {
         const message = globalThis.Object.create((this.messagePrototype!));
+        message.clients = [];
         if (value !== undefined)
             reflectionMergePartial<ListClientsResponse>(this, message, value);
         return message;
@@ -151,8 +877,8 @@ class ListClientsResponse$Type extends MessageType<ListClientsResponse> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.common.Client client */ 1:
-                    message.client = Client.internalBinaryRead(reader, reader.uint32(), options, message.client);
+                case /* repeated bareos.database.Client clients */ 1:
+                    message.clients.push(Client.internalBinaryRead(reader, reader.uint32(), options));
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -166,9 +892,9 @@ class ListClientsResponse$Type extends MessageType<ListClientsResponse> {
         return message;
     }
     internalBinaryWrite(message: ListClientsResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.Client client = 1; */
-        if (message.client)
-            Client.internalBinaryWrite(message.client, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* repeated bareos.database.Client clients = 1; */
+        for (let i = 0; i < message.clients.length; i++)
+            Client.internalBinaryWrite(message.clients[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -183,12 +909,11 @@ export const ListClientsResponse = new ListClientsResponse$Type();
 class ClientFilter$Type extends MessageType<ClientFilter> {
     constructor() {
         super("bareos.database.ClientFilter", [
-            { no: 1, name: "client", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => Client }
+            { no: 1, name: "client", kind: "message", T: () => Client }
         ]);
     }
     create(value?: PartialMessage<ClientFilter>): ClientFilter {
         const message = globalThis.Object.create((this.messagePrototype!));
-        message.client = [];
         if (value !== undefined)
             reflectionMergePartial<ClientFilter>(this, message, value);
         return message;
@@ -198,8 +923,8 @@ class ClientFilter$Type extends MessageType<ClientFilter> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* repeated bareos.common.Client client */ 1:
-                    message.client.push(Client.internalBinaryRead(reader, reader.uint32(), options));
+                case /* bareos.database.Client client */ 1:
+                    message.client = Client.internalBinaryRead(reader, reader.uint32(), options, message.client);
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -213,9 +938,9 @@ class ClientFilter$Type extends MessageType<ClientFilter> {
         return message;
     }
     internalBinaryWrite(message: ClientFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* repeated bareos.common.Client client = 1; */
-        for (let i = 0; i < message.client.length; i++)
-            Client.internalBinaryWrite(message.client[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.database.Client client = 1; */
+        if (message.client)
+            Client.internalBinaryWrite(message.client, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -227,15 +952,181 @@ class ClientFilter$Type extends MessageType<ClientFilter> {
  */
 export const ClientFilter = new ClientFilter$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
+    constructor() {
+        super("bareos.database.JobTypeFilter", [
+            { no: 1, name: "type", kind: "enum", T: () => ["bareos.common.JobType", JobType] }
+        ]);
+    }
+    create(value?: PartialMessage<JobTypeFilter>): JobTypeFilter {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.type = 0;
+        if (value !== undefined)
+            reflectionMergePartial<JobTypeFilter>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: JobTypeFilter): JobTypeFilter {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.common.JobType type */ 1:
+                    message.type = reader.int32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: JobTypeFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.common.JobType type = 1; */
+        if (message.type !== 0)
+            writer.tag(1, WireType.Varint).int32(message.type);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.JobTypeFilter
+ */
+export const JobTypeFilter = new JobTypeFilter$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class NameFilter$Type extends MessageType<NameFilter> {
+    constructor() {
+        super("bareos.database.NameFilter", [
+            { no: 1, name: "match", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<NameFilter>): NameFilter {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.match = "";
+        if (value !== undefined)
+            reflectionMergePartial<NameFilter>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: NameFilter): NameFilter {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string match */ 1:
+                    message.match = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: NameFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string match = 1; */
+        if (message.match !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.match);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.NameFilter
+ */
+export const NameFilter = new NameFilter$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ListJobFilter$Type extends MessageType<ListJobFilter> {
+    constructor() {
+        super("bareos.database.ListJobFilter", [
+            { no: 1, name: "client", kind: "message", oneof: "filterType", T: () => ClientFilter },
+            { no: 2, name: "type", kind: "message", oneof: "filterType", T: () => JobTypeFilter },
+            { no: 3, name: "name", kind: "message", oneof: "filterType", T: () => NameFilter }
+        ]);
+    }
+    create(value?: PartialMessage<ListJobFilter>): ListJobFilter {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.filterType = { oneofKind: undefined };
+        if (value !== undefined)
+            reflectionMergePartial<ListJobFilter>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ListJobFilter): ListJobFilter {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.database.ClientFilter client */ 1:
+                    message.filterType = {
+                        oneofKind: "client",
+                        client: ClientFilter.internalBinaryRead(reader, reader.uint32(), options, (message.filterType as any).client)
+                    };
+                    break;
+                case /* bareos.database.JobTypeFilter type */ 2:
+                    message.filterType = {
+                        oneofKind: "type",
+                        type: JobTypeFilter.internalBinaryRead(reader, reader.uint32(), options, (message.filterType as any).type)
+                    };
+                    break;
+                case /* bareos.database.NameFilter name */ 3:
+                    message.filterType = {
+                        oneofKind: "name",
+                        name: NameFilter.internalBinaryRead(reader, reader.uint32(), options, (message.filterType as any).name)
+                    };
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ListJobFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.database.ClientFilter client = 1; */
+        if (message.filterType.oneofKind === "client")
+            ClientFilter.internalBinaryWrite(message.filterType.client, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.database.JobTypeFilter type = 2; */
+        if (message.filterType.oneofKind === "type")
+            JobTypeFilter.internalBinaryWrite(message.filterType.type, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.database.NameFilter name = 3; */
+        if (message.filterType.oneofKind === "name")
+            NameFilter.internalBinaryWrite(message.filterType.name, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.ListJobFilter
+ */
+export const ListJobFilter = new ListJobFilter$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class ListJobsRequest$Type extends MessageType<ListJobsRequest> {
     constructor() {
         super("bareos.database.ListJobsRequest", [
             { no: 1, name: "catalog", kind: "message", T: () => CatalogId },
-            { no: 2, name: "client_filter", kind: "message", T: () => ClientFilter }
+            { no: 2, name: "options", kind: "message", T: () => QueryOptions },
+            { no: 3, name: "filters", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => ListJobFilter }
         ]);
     }
     create(value?: PartialMessage<ListJobsRequest>): ListJobsRequest {
         const message = globalThis.Object.create((this.messagePrototype!));
+        message.filters = [];
         if (value !== undefined)
             reflectionMergePartial<ListJobsRequest>(this, message, value);
         return message;
@@ -248,8 +1139,11 @@ class ListJobsRequest$Type extends MessageType<ListJobsRequest> {
                 case /* bareos.config.CatalogId catalog */ 1:
                     message.catalog = CatalogId.internalBinaryRead(reader, reader.uint32(), options, message.catalog);
                     break;
-                case /* optional bareos.database.ClientFilter client_filter */ 2:
-                    message.clientFilter = ClientFilter.internalBinaryRead(reader, reader.uint32(), options, message.clientFilter);
+                case /* bareos.database.QueryOptions options */ 2:
+                    message.options = QueryOptions.internalBinaryRead(reader, reader.uint32(), options, message.options);
+                    break;
+                case /* repeated bareos.database.ListJobFilter filters */ 3:
+                    message.filters.push(ListJobFilter.internalBinaryRead(reader, reader.uint32(), options));
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -266,9 +1160,12 @@ class ListJobsRequest$Type extends MessageType<ListJobsRequest> {
         /* bareos.config.CatalogId catalog = 1; */
         if (message.catalog)
             CatalogId.internalBinaryWrite(message.catalog, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* optional bareos.database.ClientFilter client_filter = 2; */
-        if (message.clientFilter)
-            ClientFilter.internalBinaryWrite(message.clientFilter, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.database.QueryOptions options = 2; */
+        if (message.options)
+            QueryOptions.internalBinaryWrite(message.options, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* repeated bareos.database.ListJobFilter filters = 3; */
+        for (let i = 0; i < message.filters.length; i++)
+            ListJobFilter.internalBinaryWrite(message.filters[i], writer.tag(3, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -283,16 +1180,12 @@ export const ListJobsRequest = new ListJobsRequest$Type();
 class ListJobsResponse$Type extends MessageType<ListJobsResponse> {
     constructor() {
         super("bareos.database.ListJobsResponse", [
-            { no: 1, name: "job", kind: "message", T: () => Job },
-            { no: 2, name: "client", kind: "message", T: () => Client },
-            { no: 3, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 4, name: "start_time", kind: "message", T: () => Timestamp },
-            { no: 5, name: "end_time", kind: "message", T: () => Timestamp }
+            { no: 1, name: "jobs", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => Job }
         ]);
     }
     create(value?: PartialMessage<ListJobsResponse>): ListJobsResponse {
         const message = globalThis.Object.create((this.messagePrototype!));
-        message.name = "";
+        message.jobs = [];
         if (value !== undefined)
             reflectionMergePartial<ListJobsResponse>(this, message, value);
         return message;
@@ -302,20 +1195,8 @@ class ListJobsResponse$Type extends MessageType<ListJobsResponse> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.common.Job job */ 1:
-                    message.job = Job.internalBinaryRead(reader, reader.uint32(), options, message.job);
-                    break;
-                case /* bareos.common.Client client */ 2:
-                    message.client = Client.internalBinaryRead(reader, reader.uint32(), options, message.client);
-                    break;
-                case /* string name */ 3:
-                    message.name = reader.string();
-                    break;
-                case /* google.protobuf.Timestamp start_time */ 4:
-                    message.startTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.startTime);
-                    break;
-                case /* optional google.protobuf.Timestamp end_time */ 5:
-                    message.endTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.endTime);
+                case /* repeated bareos.database.Job jobs */ 1:
+                    message.jobs.push(Job.internalBinaryRead(reader, reader.uint32(), options));
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -329,21 +1210,9 @@ class ListJobsResponse$Type extends MessageType<ListJobsResponse> {
         return message;
     }
     internalBinaryWrite(message: ListJobsResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.Job job = 1; */
-        if (message.job)
-            Job.internalBinaryWrite(message.job, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* bareos.common.Client client = 2; */
-        if (message.client)
-            Client.internalBinaryWrite(message.client, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
-        /* string name = 3; */
-        if (message.name !== "")
-            writer.tag(3, WireType.LengthDelimited).string(message.name);
-        /* google.protobuf.Timestamp start_time = 4; */
-        if (message.startTime)
-            Timestamp.internalBinaryWrite(message.startTime, writer.tag(4, WireType.LengthDelimited).fork(), options).join();
-        /* optional google.protobuf.Timestamp end_time = 5; */
-        if (message.endTime)
-            Timestamp.internalBinaryWrite(message.endTime, writer.tag(5, WireType.LengthDelimited).fork(), options).join();
+        /* repeated bareos.database.Job jobs = 1; */
+        for (let i = 0; i < message.jobs.length; i++)
+            Job.internalBinaryWrite(message.jobs[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -358,6 +1227,6 @@ export const ListJobsResponse = new ListJobsResponse$Type();
  * @generated ServiceType for protobuf service bareos.database.Database
  */
 export const Database = new ServiceType("bareos.database.Database", [
-    { name: "ListClients", serverStreaming: true, options: {}, I: ListClientsRequest, O: ListClientsResponse },
-    { name: "ListJobs", serverStreaming: true, options: {}, I: ListJobsRequest, O: ListJobsResponse }
+    { name: "ListClients", options: {}, I: ListClientsRequest, O: ListClientsResponse },
+    { name: "ListJobs", options: {}, I: ListJobsRequest, O: ListJobsResponse }
 ]);

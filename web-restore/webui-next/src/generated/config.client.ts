@@ -8,6 +8,8 @@
 import type { RpcTransport } from "@protobuf-ts/runtime-rpc";
 import type { ServiceInfo } from "@protobuf-ts/runtime-rpc";
 import { Config } from "./config";
+import type { GetDefinitionResponse } from "./config";
+import type { GetDefinitionRequest } from "./config";
 import type { ListCatalogsResponse } from "./config";
 import type { ListCatalogsRequest } from "./config";
 import type { ListJobsResponse } from "./config";
@@ -33,6 +35,10 @@ export interface IConfigClient {
      * @generated from protobuf rpc: ListCatalogs(bareos.config.ListCatalogsRequest) returns (bareos.config.ListCatalogsResponse);
      */
     listCatalogs(input: ListCatalogsRequest, options?: RpcOptions): UnaryCall<ListCatalogsRequest, ListCatalogsResponse>;
+    /**
+     * @generated from protobuf rpc: GetDefinition(bareos.config.GetDefinitionRequest) returns (bareos.config.GetDefinitionResponse);
+     */
+    getDefinition(input: GetDefinitionRequest, options?: RpcOptions): UnaryCall<GetDefinitionRequest, GetDefinitionResponse>;
 }
 /**
  * @generated from protobuf service bareos.config.Config
@@ -63,5 +69,12 @@ export class ConfigClient implements IConfigClient, ServiceInfo {
     listCatalogs(input: ListCatalogsRequest, options?: RpcOptions): UnaryCall<ListCatalogsRequest, ListCatalogsResponse> {
         const method = this.methods[2], opt = this._transport.mergeOptions(options);
         return stackIntercept<ListCatalogsRequest, ListCatalogsResponse>("unary", this._transport, method, opt, input);
+    }
+    /**
+     * @generated from protobuf rpc: GetDefinition(bareos.config.GetDefinitionRequest) returns (bareos.config.GetDefinitionResponse);
+     */
+    getDefinition(input: GetDefinitionRequest, options?: RpcOptions): UnaryCall<GetDefinitionRequest, GetDefinitionResponse> {
+        const method = this.methods[3], opt = this._transport.mergeOptions(options);
+        return stackIntercept<GetDefinitionRequest, GetDefinitionResponse>("unary", this._transport, method, opt, input);
     }
 }

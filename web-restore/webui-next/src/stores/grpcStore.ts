@@ -3,6 +3,7 @@ import { ref, shallowRef, watch } from 'vue'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import { ConfigClient, IConfigClient } from 'src/generated/config.client'
 import { DatabaseClient, IDatabaseClient } from 'src/generated/database.client'
+import { IRestoreClient, RestoreClient } from 'src/generated/restore.client'
 
 export const useGrpcStore = defineStore('transportStore', () => {
   // todo: make url configurable
@@ -10,6 +11,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
   const transport = shallowRef<GrpcWebFetchTransport | null>(null)
   const configClient = shallowRef<IConfigClient | null>(null)
   const databaseClient = shallowRef<IDatabaseClient | null>(null)
+  const restoreClient = shallowRef<IRestoreClient | null>(null)
 
   watch(
     baseUrl,
@@ -22,9 +24,10 @@ export const useGrpcStore = defineStore('transportStore', () => {
 
       configClient.value = new ConfigClient(transport.value)
       databaseClient.value = new DatabaseClient(transport.value)
+      restoreClient.value = new RestoreClient(transport.value)
     },
     { immediate: true }
   ) // immediate ensures the watch callback runs immediately, initializing transport and configClient
 
-  return { baseUrl, configClient, databaseClient }
+  return { baseUrl, configClient, databaseClient, restoreClient }
 })

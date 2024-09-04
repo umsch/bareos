@@ -11,12 +11,10 @@ import { ReplaceType } from 'src/generated/restore'
 import { storeToRefs } from 'pinia'
 import { useWizardStore } from 'stores/wizardStore'
 import { QSelect } from 'quasar'
-import { isEmpty, isEqual } from 'lodash'
-import type { ClientId } from 'src/generated/config'
 
 const wizard = useWizardStore()
 
-const { clients, sessionState } = storeToRefs(wizard)
+const { sessionState, configClients } = storeToRefs(wizard)
 
 const replace = ref(
   sessionState.value?.restoreOptions?.replace ?? ReplaceType.NEVER
@@ -29,27 +27,16 @@ const replaceOptions = ref([
 ])
 
 const restoreLocation = ref('/tmp')
-const clientById = (clientId: ClientId) => {
-  if (isEmpty(clients)) {
-    return null
-  }
 
-  return clients.value.find((c) => isEqual(c.id, clientId))
-}
-
-const restoreClient = ref(
-  clients.value.find((c) =>
-    isEqual(c.id, sessionState.value?.restoreOptions?.restoreClient)
-  )
-)
+const restoreClient = ref()
 
 watch(
   restoreClient,
-  (client) => {
+  (rc) => {
     if (sessionState.value) {
       sessionState.value.restoreOptions = {
         ...sessionState.value.restoreOptions,
-        restoreClient: client.id,
+        restoreClient: rc?.id ?? null,
       }
     }
   },
@@ -82,7 +69,7 @@ watch(
     )
 
     replace.value = ss?.restoreOptions?.replace ?? ReplaceType.NEVER
-    restoreClient.value = clientById(ss?.restoreOptions?.restoreClient)
+    // restoreClient.value = clientById(ss?.restoreOptions?.restoreClient)
     restoreLocation.value =
       ss?.restoreOptions?.restoreLocation ?? '/tmp/restore'
   },
@@ -122,7 +109,7 @@ watch(
       input-debounce="0"
       label="Client für Rücksicherung"
       stack-label
-      :options="clients"
+      :options="configClients"
       option-label="name"
     >
       <template v-slot:no-option>

@@ -1,13 +1,18 @@
 import { defineStore } from 'pinia'
 import type { Catalog } from 'src/generated/config'
 import { onBeforeMount, ref, watch } from 'vue'
-import type { Client, Job } from 'src/generated/common'
+import type { Client, Job } from 'src/generated/database'
+import type { Client as ConfigClient } from 'src/generated/config'
 import type { RestoreSession, File, SessionState } from 'src/generated/restore'
 import { useRestoreClientStore } from 'src/stores/restoreClientStore'
 import { find, first, isEmpty, isEqual, reverse } from 'lodash'
+import { useConfigStore } from 'stores/configStore'
+import { useDatabaseStore } from 'stores/databaseStore'
 
 export const useWizardStore = defineStore('wizard', () => {
   const restoreClient = useRestoreClientStore()
+  const configClient = useConfigStore()
+  const databaseClient = useDatabaseStore()
 
   const selectCatalogFromState = (state: SessionState, catalogs: Catalog[]) => {
     if (catalogs.length > 0 && state?.start?.catalog) {
@@ -19,15 +24,14 @@ export const useWizardStore = defineStore('wizard', () => {
   const selectJobFromState = (state: SessionState, jobs: Job[]) => {
     if (jobs.length > 0 && state.start?.backupJob) {
       selectedJob.value =
-        find(jobs, (j) => isEqual(j.jobid, state.start?.backupJob?.jobid)) ??
-        null
+        find(jobs, (j) => isEqual(j.id, state.start?.backupJob?.id)) ?? null
     }
   }
 
   onBeforeMount(async () => {
     console.log('onBeforeMount - store')
     await updateSessions()
-
+    await updateConfigClients()
     if (!selectedSession.value && sessions.value.length > 0) {
       selectedSession.value = first(sessions.value)!
     }
@@ -56,7 +60,7 @@ export const useWizardStore = defineStore('wizard', () => {
   const selectedCatalog = ref<Catalog | null>(null)
   const updateCatalogs = async () => {
     console.debug('fetching catalogs')
-    catalogs.value = await restoreClient.fetchCatalogs()
+    catalogs.value = await configClient.getConfigCatalogs()
   }
 
   // jobs
@@ -64,12 +68,9 @@ export const useWizardStore = defineStore('wizard', () => {
   const jobs = ref<Job[]>([])
   const updateJobs = async (catalog: Catalog, filter: Client | null) => {
     const catalog_id = catalog.id
-    if (catalog_id) {
+    if (catalog_id && filter) {
       console.debug('fetching jobs from catalog', catalog_id)
-      jobs.value = await restoreClient.fetchJobs(
-        catalog_id,
-        filter ? [filter] : []
-      )
+      jobs.value = await databaseClient.listJobs(catalog_id, filter!)
     }
   }
 
@@ -85,7 +86,7 @@ export const useWizardStore = defineStore('wizard', () => {
   // client
   const clients = ref<Client[]>([])
   const updateClients = async (catalog: Catalog) => {
-    clients.value = await restoreClient.fetchClients(catalog)
+    clients.value = await databaseClient.listClients(catalog)
   }
 
   const selectedSourceClient = ref<Client | null>(null)
@@ -117,6 +118,8 @@ export const useWizardStore = defineStore('wizard', () => {
   })
 
   watch(selectedJob, async (job) => {
+    console.debug('backup job changed to', job)
+
     if (isEqual(sessionState.value?.start?.backupJob, selectedJob.value)) {
       console.debug('session already running for job', selectedJob.value)
       return
@@ -259,6 +262,13 @@ export const useWizardStore = defineStore('wizard', () => {
     }
   )
 
+  const configClients = ref<ConfigClient[]>([])
+
+  const updateConfigClients = async () => {
+    console.debug('fetching config clients')
+    configClients.value = await configClient.getConfigClients()
+  }
+
   return {
     updateCatalogs,
     catalogs,
@@ -279,5 +289,6 @@ export const useWizardStore = defineStore('wizard', () => {
     updateMarkedStatus,
     sessionState,
     pushRestoreOptions,
+    configClients,
   }
 })

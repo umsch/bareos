@@ -1,17 +1,7 @@
-import { defineStore } from 'pinia'
-import { onBeforeMount, ref } from 'vue'
-import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import { ConfigClient, type IConfigClient } from 'src/generated/config.client'
-import type { Catalog, CatalogId } from 'src/generated/config'
-import {
-  DatabaseClient,
-  type IDatabaseClient,
-} from 'src/generated/database.client'
-import type { Client, Job } from 'src/generated/database'
-import {
-  type IRestoreClient,
-  RestoreClient,
-} from 'src/generated/restore.client'
+import { defineStore, storeToRefs } from 'pinia'
+import { ref } from 'vue'
+import type { Catalog } from 'src/generated/config'
+import type { Job } from 'src/generated/database'
 import {
   type File,
   FileType,
@@ -19,97 +9,11 @@ import {
   RestoreOptions,
   type RestoreSession,
 } from 'src/generated/restore'
-import { JobType } from 'src/generated/common'
-
-const all = { offset: BigInt(0), limit: BigInt(12) }
+import { useGrpcStore } from 'stores/grpcStore'
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
-  const transport = ref(
-    new GrpcWebFetchTransport({
-      baseUrl: 'http://127.0.0.1:9090',
-      format: 'binary',
-    })
-  )
-
-  const configClient = ref<IConfigClient | null>(null)
-  const databaseClient = ref<IDatabaseClient | null>(null)
-  const restoreClient = ref<IRestoreClient | null>(null)
-
+  const { restoreClient } = storeToRefs(useGrpcStore())
   const catalogs = ref<Catalog[]>([])
-
-  onBeforeMount(async () => {
-    console.log('Initializing clients')
-    await initializeClient()
-  })
-
-  const initializeClient = async () => {
-    if (!configClient.value) {
-      configClient.value = new ConfigClient(transport.value)
-    }
-
-    if (!databaseClient.value) {
-      databaseClient.value = new DatabaseClient(transport.value)
-    }
-
-    if (!restoreClient.value) {
-      restoreClient.value = new RestoreClient(transport.value)
-    }
-
-    console.log('Clients initialized')
-  }
-
-  const fetchCatalogs = async () => {
-    if (!configClient.value) {
-      console.error('configClient not initialized')
-      return []
-    }
-
-    const response = await configClient.value.listCatalogs({})
-    return response.response.catalogs
-  }
-
-  const fetchClients = async (catalog: Catalog) => {
-    if (!configClient.value) {
-      console.error('configClient not initialized')
-      return []
-    }
-
-    const response = await databaseClient.value?.listClients({
-      catalog: catalog.id!,
-      filters: [],
-      options: { range: all },
-    })
-
-    return response?.response.clients ?? []
-  }
-
-  const fetchJobs = async (catalog_id: CatalogId, client: Client) => {
-    if (!configClient.value) {
-      console.error('configClient not initialized')
-      return []
-    }
-
-    const response = await databaseClient.value?.listJobs({
-      catalog: catalog_id,
-      options: { range: all },
-      filters: [
-        {
-          filterType: {
-            oneofKind: 'client',
-            client: { client },
-          },
-        },
-        {
-          filterType: {
-            oneofKind: 'type',
-            type: { type: JobType.BACKUP },
-          },
-        },
-      ],
-    })
-
-    return response?.response.jobs ?? []
-  }
 
   const fetchSessions = async () => {
     const response = await restoreClient.value?.listSessions({})
@@ -216,11 +120,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   }
 
   return {
-    transport,
     catalogs,
-    fetchCatalogs,
-    fetchClients,
-    fetchJobs,
     fetchSessions,
     createSession,
     deleteSession,

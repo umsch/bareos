@@ -7,7 +7,7 @@ import {
   DatabaseClient,
   type IDatabaseClient,
 } from 'src/generated/database.client'
-import type { Client, Job } from 'src/generated/common'
+import type { Client, Job } from 'src/generated/database'
 import {
   type IRestoreClient,
   RestoreClient,
@@ -19,6 +19,9 @@ import {
   RestoreOptions,
   type RestoreSession,
 } from 'src/generated/restore'
+import { JobType } from 'src/generated/common'
+
+const all = { offset: BigInt(0), limit: BigInt(12) }
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
   const transport = ref(
@@ -71,39 +74,41 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
       return []
     }
 
-    const clients: Client[] = []
+    const response = await databaseClient.value?.listClients({
+      catalog: catalog.id!,
+      filters: [],
+      options: { range: all },
+    })
 
-    const call = databaseClient.value?.listClients({ catalog: catalog.id })
-    if (!call) {
-      return clients
-    }
-
-    for await (const client of call.responses!) {
-      clients.push(client.client!)
-    }
-
-    return clients
+    return response?.response.clients ?? []
   }
 
-  const fetchJobs = async (catalog_id: CatalogId, clients: Client[]) => {
+  const fetchJobs = async (catalog_id: CatalogId, client: Client) => {
     if (!configClient.value) {
       console.error('configClient not initialized')
       return []
     }
 
-    const jobs: Job[] = []
-    const call = databaseClient.value?.listJobs({
+    const response = await databaseClient.value?.listJobs({
       catalog: catalog_id,
-      clientFilter: { client: clients },
+      options: { range: all },
+      filters: [
+        {
+          filterType: {
+            oneofKind: 'client',
+            client: { client },
+          },
+        },
+        {
+          filterType: {
+            oneofKind: 'type',
+            type: { type: JobType.BACKUP },
+          },
+        },
+      ],
     })
-    if (!call) {
-      return jobs
-    }
-    for await (const job of call.responses!) {
-      jobs.push(job.job!)
-    }
 
-    return jobs
+    return response?.response.jobs ?? []
   }
 
   const fetchSessions = async () => {
@@ -116,8 +121,9 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
       start: {
         findJobChain: false,
         mergeFilesets: false,
-        backupJob,
-        catalog,
+
+        backupJob: backupJob.id,
+        catalog: catalog.id,
       },
     })
     return response?.response.session

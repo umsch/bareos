@@ -1,16 +1,21 @@
 <script setup lang="ts">
-// optional ReplaceType replace = 1;
-// optional bareos.config.JobId restore_job = 3;
-// optional string restore_location = 4;
-// optional bareos.common.Client restore_client = 5;
+// message RestoreOptions {
+//   optional ReplaceType replace = 1;
+//   optional bareos.config.JobId restore_job = 3;
+//   optional string restore_location = 4;
+//   optional bareos.config.ClientId restore_client = 5;
+// };
 
 import { ref, watch } from 'vue'
 import { ReplaceType } from 'src/generated/restore'
 import { storeToRefs } from 'pinia'
 import { useWizardStore } from 'stores/wizardStore'
 import { QSelect } from 'quasar'
+import { isEmpty, isEqual } from 'lodash'
+import type { ClientId } from 'src/generated/config'
 
 const wizard = useWizardStore()
+
 const { clients, sessionState } = storeToRefs(wizard)
 
 const replace = ref(
@@ -24,8 +29,19 @@ const replaceOptions = ref([
 ])
 
 const restoreLocation = ref('/tmp')
+const clientById = (clientId: ClientId) => {
+  if (isEmpty(clients)) {
+    return null
+  }
 
-const restoreClient = ref(sessionState.value?.restoreOptions?.restoreClient)
+  return clients.value.find((c) => isEqual(c.id, clientId))
+}
+
+const restoreClient = ref(
+  clients.value.find((c) =>
+    isEqual(c.id, sessionState.value?.restoreOptions?.restoreClient)
+  )
+)
 
 watch(
   restoreClient,
@@ -33,7 +49,7 @@ watch(
     if (sessionState.value) {
       sessionState.value.restoreOptions = {
         ...sessionState.value.restoreOptions,
-        restoreClient: client,
+        restoreClient: client.id,
       }
     }
   },
@@ -66,7 +82,7 @@ watch(
     )
 
     replace.value = ss?.restoreOptions?.replace ?? ReplaceType.NEVER
-    restoreClient.value = ss?.restoreOptions?.restoreClient
+    restoreClient.value = clientById(ss?.restoreOptions?.restoreClient)
     restoreLocation.value =
       ss?.restoreOptions?.restoreLocation ?? '/tmp/restore'
   },
@@ -122,8 +138,7 @@ watch(
       filled
       borderless
       stack-label
-    >
-    </q-input>
+    />
   </div>
 </template>
 

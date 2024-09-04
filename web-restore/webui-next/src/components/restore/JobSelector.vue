@@ -43,7 +43,7 @@ const { jobs, selectedJob, selectedCatalog, clients, selectedSourceClient } =
       input-debounce="0"
       label="Backup Job"
       :options="jobs"
-      option-label="jobid"
+      option-label="name"
       stack-label
     >
       <template v-slot:no-option>

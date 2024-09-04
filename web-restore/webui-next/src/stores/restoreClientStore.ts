@@ -85,14 +85,17 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return clients
   }
 
-  const fetchJobs = async (catalog_id: CatalogId) => {
+  const fetchJobs = async (catalog_id: CatalogId, clients: Client[]) => {
     if (!configClient.value) {
       console.error('configClient not initialized')
       return []
     }
 
     const jobs: Job[] = []
-    const call = databaseClient.value?.listJobs({ catalog: catalog_id })
+    const call = databaseClient.value?.listJobs({
+      catalog: catalog_id,
+      clientFilter: { client: clients },
+    })
     if (!call) {
       return jobs
     }
@@ -124,8 +127,8 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     await restoreClient.value?.cancel({ session })
   }
 
-  const runSession = async (session: RestoreSession, client: Client) => {
-    console.debug('running session:', session, client)
+  const runSession = async (session: RestoreSession) => {
+    console.debug('running session:', session)
     try {
       await restoreClient.value?.run({
         session,

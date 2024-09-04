@@ -45,7 +45,7 @@ export const useWizardStore = defineStore('wizard', () => {
       selectedCatalog.value = first(catalogs.value)!
     }
 
-    await updateJobs()
+    await updateJobs(selectedCatalog.value!, null)
     if (sessionState.value && catalogs.value) {
       selectJobFromState(sessionState.value, jobs.value)
     }
@@ -62,11 +62,14 @@ export const useWizardStore = defineStore('wizard', () => {
   // jobs
   const selectedJob = ref<Job | null>(null)
   const jobs = ref<Job[]>([])
-  const updateJobs = async () => {
-    const catalog_id = selectedCatalog.value?.id
+  const updateJobs = async (catalog: Catalog, filter: Client | null) => {
+    const catalog_id = catalog.id
     if (catalog_id) {
       console.debug('fetching jobs from catalog', catalog_id)
-      jobs.value = await restoreClient.fetchJobs(catalog_id)
+      jobs.value = await restoreClient.fetchJobs(
+        catalog_id,
+        filter ? [filter] : []
+      )
     }
   }
 
@@ -85,6 +88,13 @@ export const useWizardStore = defineStore('wizard', () => {
     clients.value = await restoreClient.fetchClients(catalog)
   }
 
+  const selectedSourceClient = ref<Client | null>(null)
+
+  watch(selectedSourceClient, async (sourceClient) => {
+    await updateJobs(selectedCatalog.value!, sourceClient)
+    selectedJob.value = null
+  })
+
   // logics
 
   watch(selectedCatalog, async (catalog) => {
@@ -101,7 +111,7 @@ export const useWizardStore = defineStore('wizard', () => {
     }
 
     if (catalog?.id) {
-      await updateJobs()
+      await updateJobs(selectedCatalog.value!, selectedSourceClient.value)
       await updateClients(catalog)
     }
   })
@@ -160,10 +170,7 @@ export const useWizardStore = defineStore('wizard', () => {
       throw new Error('No session selected')
     }
 
-    await restoreClient.runSession(
-      selectedSession.value!,
-      sessionState.value.restoreOptions.restoreClient
-    )
+    await restoreClient.runSession(selectedSession.value!)
   }
 
   const deleteRestoreSession = async () => {
@@ -257,6 +264,7 @@ export const useWizardStore = defineStore('wizard', () => {
     catalogs,
     selectedCatalog,
     clients,
+    selectedSourceClient,
     jobs,
     selectedJob,
     updateSessions,

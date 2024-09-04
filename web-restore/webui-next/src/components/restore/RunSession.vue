@@ -8,20 +8,28 @@ const wizardStore = useWizardStore()
 
 const { sessionState } = storeToRefs(wizardStore)
 
-const canRun = ref(false)
+const canStart = ref(false)
+const executeStart = () => {
+  wizardStore.runRestoreSession()
+}
 
 watch([() => sessionState.value?.filesMarkedCount], (markedFiles) => {
-  canRun.value = Number(markedFiles) !== 0
+  canStart.value = Number(markedFiles) !== 0
 })
 </script>
 
 <template>
-  <q-field dense>
+  <q-field
+    borderless
+    dense
+    hint="hier fehlen noch hinweise darauf, welche Eingaben noch fehlen"
+  >
     <q-btn
       :icon="matRocketLaunch"
       label="Start"
       color="primary"
-      :disabled="!canRun"
+      :disabled="!canStart"
+      @click="executeStart"
     />
   </q-field>
 </template>

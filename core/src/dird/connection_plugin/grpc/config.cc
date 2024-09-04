@@ -58,8 +58,9 @@ bool job_filter(const ::google::protobuf::RepeatedPtrField<
   return accept;
 }
 
-std::optional<JobType> bareos_to_grpc_type(bareos_job_type type)
+std::optional<bareos::common::JobType> bareos_to_grpc_type(bareos_job_type type)
 {
+  using namespace bareos::common;
   switch (type) {
     case BJT_BACKUP:
       return BACKUP;
@@ -143,25 +144,11 @@ class ConfigImpl final : public Config::Service {
           return false;
         }
 
-        switch (data->level) {
-          case BJL_NONE: {
-            // do nothing
-          } break;
-          case BJL_FULL: {
-            j.set_default_level(FULL);
-          } break;
-          case BJL_DIFFERENTIAL: {
-            j.set_default_level(DIFFERENTIAL);
-          } break;
-          case BJL_INCREMENTAL: {
-            j.set_default_level(INCREMENTAL);
-          } break;
-          default: {
-            return false;
-          }
-        }
+        if (!job_filter(filters, j)) { return true; }
 
-        if (job_filter(filters, j)) { jobs->Add(std::move(j)); }
+        if (data->description) { j.set_description(data->description); }
+
+        jobs->Add(std::move(j));
         return true;
       };
 
@@ -191,6 +178,62 @@ class ConfigImpl final : public Config::Service {
 
       if (!cap.list_catalogs(c_callback<decltype(lambda)>, &lambda)) {
         throw grpc_error(grpc::StatusCode::UNKNOWN, "Internal bareos error");
+      }
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+
+    return Status::OK;
+  }
+
+  void CatalogDefinition(const char* name, GetDefinitionResponse* resp)
+  {
+    auto lambda = [opts = resp->mutable_set_options()](
+                      const char* opt, const char* val) -> bool {
+      opts->insert({opt, val});
+      return true;
+    };
+    if (!cap.catalog_definition(name, c_callback<decltype(lambda)>, &lambda)) {
+      throw grpc_error(grpc::StatusCode::UNKNOWN, "internal bareos error");
+    }
+  }
+  void JobDefinition(const char* name, GetDefinitionResponse* resp)
+  {
+    auto lambda = [opts = resp->mutable_set_options()](
+                      const char* opt, const char* val) -> bool {
+      opts->insert({opt, val});
+      return true;
+    };
+    if (!cap.job_definition(name, c_callback<decltype(lambda)>, &lambda)) {
+      throw grpc_error(grpc::StatusCode::UNKNOWN, "internal bareos error");
+    }
+  }
+  void ClientDefinition(const char* name, GetDefinitionResponse* resp)
+  {
+    auto lambda = [opts = resp->mutable_set_options()](
+                      const char* opt, const char* val) -> bool {
+      opts->insert({opt, val});
+      return true;
+    };
+    if (!cap.client_definition(name, c_callback<decltype(lambda)>, &lambda)) {
+      throw grpc_error(grpc::StatusCode::UNKNOWN, "internal bareos error");
+    }
+  }
+
+  Status GetDefinition(ServerContext*,
+                       const GetDefinitionRequest* request,
+                       GetDefinitionResponse* response) override
+  {
+    try {
+      if (request->has_catalog()) {
+        CatalogDefinition(request->catalog().name().c_str(), response);
+      } else if (request->has_job()) {
+        JobDefinition(request->job().name().c_str(), response);
+      } else if (request->has_client()) {
+        ClientDefinition(request->client().name().c_str(), response);
+      } else {
+        throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+                         "no usable configuration id given");
       }
     } catch (const grpc_error& err) {
       return err.status;

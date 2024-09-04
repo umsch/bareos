@@ -61,10 +61,16 @@ struct bareos_config_catalog {
   const char* db_name;
 };
 
+struct bareos_config_option {
+  const char* name;
+  const char* value;
+};
+
 struct bareos_config_job {
   const char* name;
   enum bareos_job_type type;
-  enum bareos_job_level level;
+
+  const char* description;  // may be null!
 };
 
 struct bareos_config_client {
@@ -77,15 +83,32 @@ typedef bool(config_client_callback)(void* user,
 typedef bool(config_catalog_callback)(void* user,
                                       const bareos_config_catalog* data);
 typedef bool(config_job_callback)(void* user, const bareos_config_job* data);
+typedef bool(config_definition_callback)(void* user,
+                                         const char* option,
+                                         const char* value);
 
 typedef bool(ConfigListClients_t)(config_client_callback* cb, void* user);
 typedef bool(ConfigListJobs_t)(config_job_callback* cb, void* user);
 typedef bool(ConfigListCatalogs_t)(config_catalog_callback* cb, void* user);
 
+typedef bool(ConfigClientDefinition_t)(const char* client_name,
+                                       config_definition_callback* cb,
+                                       void* user);
+typedef bool(ConfigJobDefinition_t)(const char* job_name,
+                                    config_definition_callback* cb,
+                                    void* user);
+typedef bool(ConfigCatalogDefinition_t)(const char* catalog_name,
+                                        config_definition_callback* cb,
+                                        void* user);
+
 struct config_capability {
   ConfigListClients_t* list_clients;
   ConfigListJobs_t* list_jobs;
   ConfigListCatalogs_t* list_catalogs;
+
+  ConfigClientDefinition_t* client_definition;
+  ConfigJobDefinition_t* job_definition;
+  ConfigCatalogDefinition_t* catalog_definition;
 };
 
 #ifdef __cplusplus

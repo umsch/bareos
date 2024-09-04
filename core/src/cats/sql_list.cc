@@ -162,6 +162,12 @@ void BareosDb::ListPoolRecords(JobControlRecord* jcr,
   SqlFreeResult();
 }
 
+const char* BareosDb::ListClientQuery()
+{
+  return "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
+         "JobRetention FROM Client ORDER BY ClientId ";
+}
+
 bool BareosDb::ListClientRecords(JobControlRecord* jcr,
                                  const char* clientname,
                                  bool extended,

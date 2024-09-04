@@ -52,23 +52,21 @@ class Client {
 
     ClientContext ctx;
 
-    auto reader = db->ListJobs(&ctx, req);
+    ListJobsResponse resp;
 
-    ListJobsResponse msg;
+    auto status = db->ListJobs(&ctx, req, &resp);
 
-    while (reader->Read(&msg)) {
-      std::cout << "Job: " << msg.job().jobid() << std::endl;
-    }
-
-    auto status = reader->Finish();
-
-    if (status.ok()) {
-      std::cout << "OK" << std::endl;
-    } else {
+    if (!status.ok()) {
       std::cout << "Error/" << status.error_code() << ": "
                 << status.error_message() << "\n  " << status.error_details()
                 << std::endl;
+      return;
     }
+
+    for (auto& job : resp.jobs()) {
+      std::cout << "Job: " << job.id().id() << std::endl;
+    }
+    std::cout << "OK" << std::endl;
   }
 };
 

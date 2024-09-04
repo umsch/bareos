@@ -7,7 +7,7 @@ syntax = "proto3";
 package bareos.restore;
 
 import "config.proto";
-import "common.proto";
+import "database.proto";
 
 service Restore {
   rpc ListSessions (ListSessionsRequest) returns (ListSessionsResponse);
@@ -34,7 +34,7 @@ service Restore {
 }
 
 message StartSelection {
-  bareos.common.Job backup_job = 1;
+  bareos.database.JobId backup_job = 1;
   bool find_job_chain = 2;
   bool merge_filesets = 3;
   bareos.config.CatalogId catalog = 4;
@@ -95,7 +95,7 @@ message RestoreOptions {
   optional ReplaceType replace = 1;
   optional bareos.config.JobId restore_job = 3;
   optional string restore_location = 4;
-  optional bareos.common.Client restore_client = 5;
+  optional bareos.config.ClientId restore_client = 5;
 };
 
 message RunRequest {
@@ -103,7 +103,7 @@ message RunRequest {
 };
 
 message RunResponse {
-  bareos.common.Job jobid = 1;
+  bareos.database.JobId jobid = 1;
 }
 
 message CancelRequest {

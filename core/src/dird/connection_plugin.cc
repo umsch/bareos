@@ -39,8 +39,10 @@
 #include <string_view>
 #include <thread>
 #include <dlfcn.h>
+#include <jansson.h>
 
 #include "lib/fnmatch.h"
+#include "lib/output_formatter_resource.h"
 #include "lib/parse_conf.h"
 #include "connection_plugin/restore.h"
 #include "connection_plugin/config.h"
@@ -806,7 +808,8 @@ bool PluginMarkUnmark(restore_session_handle* handle,
   return true;
 }
 
-bool PluginConfigListClients(config_client_callback* cb, void* user)
+namespace config {
+bool PluginListClients(config_client_callback* cb, void* user)
 {
   ResLocker _{my_config};
 
@@ -826,7 +829,7 @@ bool PluginConfigListClients(config_client_callback* cb, void* user)
   return true;
 }
 
-bool PluginConfigListJobs(config_job_callback* cb, void* user)
+bool PluginListJobs(config_job_callback* cb, void* user)
 {
   ResLocker _{my_config};
 
@@ -839,14 +842,14 @@ bool PluginConfigListJobs(config_job_callback* cb, void* user)
     bareos_config_job data = {
         .name = name.c_str(),
         .type = static_cast<bareos_job_type>(job->JobType),
-        .level = static_cast<bareos_job_level>(job->JobLevel),
+        .description = job->description_,
     };
     if (!cb(user, &data)) { return false; }
   }
   return true;
 }
 
-bool PluginConfigListCatalogs(config_catalog_callback* cb, void* user)
+bool PluginListCatalogs(config_catalog_callback* cb, void* user)
 {
   ResLocker _{my_config};
 
@@ -866,6 +869,148 @@ bool PluginConfigListCatalogs(config_catalog_callback* cb, void* user)
   }
   return true;
 }
+
+bool sendit(void*, const char*, ...) { return true; }
+
+bool PluginClientDefinition(const char* name,
+                            config_definition_callback* cb,
+                            void* user)
+{
+  ResLocker _{my_config};
+
+  auto* res = my_config->GetResWithName(R_CLIENT, name);
+
+  if (!res) { return false; }
+
+  OutputFormatter fmt(sendit, nullptr, nullptr, nullptr, API_MODE_JSON);
+  OutputFormatterResource fmt_res(&fmt);
+
+  res->PrintConfig(fmt_res, *my_config, true, false);
+
+
+  auto* json = fmt.JsonResult();
+
+  bool result = true;
+
+  auto* clients = json_object_get(json, "clients");
+
+  if (!clients) { return false; }
+
+  auto* client = json_object_get(clients, name);
+
+  if (!client) { return false; }
+
+  const char* option;
+  json_t* value;
+  json_object_foreach(client, option, value)
+  {
+    auto* string = json_string_value(value);
+
+    if (string) {
+      if (!cb(user, option, string)) {
+        result = false;
+        break;
+      }
+    }
+  }
+
+  fmt.FinalizeResult(true);
+
+  return result;
+}
+bool PluginCatalogDefinition(const char* name,
+                             config_definition_callback* cb,
+                             void* user)
+{
+  ResLocker _{my_config};
+
+  auto* res = my_config->GetResWithName(R_CATALOG, name);
+
+  if (!res) { return false; }
+
+  OutputFormatter fmt(sendit, nullptr, nullptr, nullptr, API_MODE_JSON);
+  OutputFormatterResource fmt_res(&fmt);
+
+  res->PrintConfig(fmt_res, *my_config, true, false);
+
+
+  auto* json = fmt.JsonResult();
+
+  bool result = true;
+
+  auto* catalogs = json_object_get(json, "catalogs");
+
+  if (!catalogs) { return false; }
+
+  auto* catalog = json_object_get(catalogs, name);
+
+  if (!catalog) { return false; }
+
+  const char* option;
+  json_t* value;
+  json_object_foreach(catalog, option, value)
+  {
+    auto* string = json_string_value(value);
+
+    if (string) {
+      if (!cb(user, option, string)) {
+        result = false;
+        break;
+      }
+    }
+  }
+
+  fmt.FinalizeResult(true);
+
+  return result;
+}
+bool PluginJobDefinition(const char* name,
+                         config_definition_callback* cb,
+                         void* user)
+{
+  ResLocker _{my_config};
+
+  auto* res = my_config->GetResWithName(R_JOB, name);
+
+  if (!res) { return false; }
+
+  OutputFormatter fmt(sendit, nullptr, nullptr, nullptr, API_MODE_JSON);
+  OutputFormatterResource fmt_res(&fmt);
+
+  res->PrintConfig(fmt_res, *my_config, true, false);
+
+
+  auto* json = fmt.JsonResult();
+
+  bool result = true;
+
+  auto* jobs = json_object_get(json, "jobs");
+
+  if (!jobs) { return false; }
+
+  auto* job = json_object_get(jobs, name);
+
+  if (!job) { return false; }
+
+  const char* option;
+  json_t* value;
+  json_object_foreach(job, option, value)
+  {
+    auto* string = json_string_value(value);
+
+    if (string) {
+      if (!cb(user, option, string)) {
+        result = false;
+        break;
+      }
+    }
+  }
+
+  fmt.FinalizeResult(true);
+
+  return result;
+}
+}  // namespace config
 
 namespace database {
 
@@ -932,7 +1077,10 @@ struct sql_result_handler : public list_result_handler {
   std::vector<char*> fields;
 };
 
-bool ListClients(database_session* sess, DB_result_callback* cb, void* user)
+bool ListClients(database_session* sess,
+                 DB_result_callback* cb,
+                 void* user,
+                 const char* outer)
 {
   if (!sess) { return false; }
 
@@ -940,10 +1088,27 @@ bool ListClients(database_session* sess, DB_result_callback* cb, void* user)
 
   sql_result_handler handler(cb, user);
 
-  if (!sess->ptr->ListClientRecords(nullptr, nullptr, false, &handler)) {
+  DbLocker _{sess->ptr};
+
+  auto* inner = sess->ptr->ListClientQuery();
+
+  PoolMem query;
+  if (outer) {
+    Mmsg(query, outer, inner);
+  } else {
+    PmStrcpy(query, inner);
+  }
+
+  if (!sess->ptr->SqlQuery(query.c_str())) {
     sess->error = sess->ptr->strerror();
     return false;
   }
+
+  if (sess->ptr->ListResult(&handler) < 0) {
+    sess->error = sess->ptr->strerror();
+    return false;
+  }
+
   return true;
 }
 
@@ -1009,9 +1174,12 @@ bool QueryCabability(bareos_capability Cap, size_t bufsize, void* buffer)
     case CAP_Config: {
       if (check_buffer<config_capability>(bufsize, buffer)) {
         config_capability cap = {
-            .list_clients = &PluginConfigListClients,
-            .list_jobs = &PluginConfigListJobs,
-            .list_catalogs = &PluginConfigListCatalogs,
+            .list_clients = &config::PluginListClients,
+            .list_jobs = &config::PluginListJobs,
+            .list_catalogs = &config::PluginListCatalogs,
+            .client_definition = &config::PluginClientDefinition,
+            .job_definition = &config::PluginJobDefinition,
+            .catalog_definition = &config::PluginCatalogDefinition,
         };
         memcpy(buffer, &cap, sizeof(cap));
         return true;

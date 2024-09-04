@@ -10,45 +10,106 @@ import "common.proto";
 import "config.proto";
 import "google/protobuf/timestamp.proto";
 
+message ClientId {
+  int64 id = 1;
+}
+
+message JobId {
+  int64 id = 1;
+};
+
+message Range {
+  uint64 offset = 1;
+  uint64 limit  = 2;
+};
+
+message QueryOptions {
+  Range range = 1;
+};
+
 /* Should these functions return a typed response (like now) or rather a generic
  * message SqlResponse { map<string, string>; } ?
  */
 service Database {
-
-
   // we should somehow have a limit & offset in these requests
   // most queries probably wont need all of them
-  rpc ListClients (ListClientsRequest) returns (stream ListClientsResponse);
-  rpc ListJobs (ListJobsRequest) returns (stream ListJobsResponse);
+  rpc ListClients (ListClientsRequest) returns (ListClientsResponse);
+  rpc ListJobs (ListJobsRequest) returns (ListJobsResponse);
+};
+
+message Client {
+  ClientId id = 1;
+  string name = 2;
+  string uname = 3;
+  bool autoprune = 4;
+  int64 FileRetention = 5;
+  int64 JobRetention = 6;
+};
+
+message BackupData {
+  bareos.common.JobLevel level = 1;
+  ClientId client = 2;
+  uint64 job_files = 3;
+  uint64 job_bytes = 4;
+};
+
+message Job {
+  JobId id = 1;
+  string name = 2;
+  bareos.common.JobType type = 3;
+  google.protobuf.Timestamp sched_time = 4;
+  google.protobuf.Timestamp start_time = 5;
+  google.protobuf.Timestamp end_time = 6;
+  optional string comment = 7;
+
+  oneof extra_job_data {
+    BackupData backup = 21;
+  };
+};
+
+message ListClientFilter {
+  oneof filter_type {
+    NameFilter name = 1;
+    NameFilter uname = 2;
+  };
 };
 
 message ListClientsRequest {
   bareos.config.CatalogId catalog = 1;
+  QueryOptions options = 2;
+  repeated ListClientFilter filters = 3;
 };
 
 message ListClientsResponse {
-  bareos.common.Client client = 1;
+  repeated Client clients = 1;
 };
 
 message ClientFilter {
-  // select only jobs that were created on _one_ of these clients.
-  repeated bareos.common.Client client = 1;
+  Client client = 1;
+};
+
+message JobTypeFilter {
+  bareos.common.JobType type = 1;
+};
+
+message NameFilter {
+  string match = 1;
+};
+
+message ListJobFilter {
+  oneof filter_type {
+    ClientFilter client = 1;
+    JobTypeFilter type = 2;
+    NameFilter name = 3;
+  };
 };
 
 message ListJobsRequest {
   bareos.config.CatalogId catalog = 1;
-  optional ClientFilter client_filter = 2;
+  QueryOptions options = 2;
+  repeated ListJobFilter filters = 3;
 };
 
 message ListJobsResponse {
-  bareos.common.Job job = 1;
-  // we should probably only return the jobid here and have a seperate
-  // JobInfo() rpc, as used databases have a lot of jobs in them
-
-
-  bareos.common.Client client = 2;
-
-  string name = 3;
-  google.protobuf.Timestamp start_time = 4;
-  optional google.protobuf.Timestamp end_time = 5;
+  repeated Job jobs = 1;
 };

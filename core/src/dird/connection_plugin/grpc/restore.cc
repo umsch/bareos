@@ -123,7 +123,7 @@ void to_grpc(SessionState* grpc, bareos_session_state* bareos)
   grpc->set_files_marked_count(bareos->marked_count);
   auto* start = grpc->mutable_start();
   start->mutable_catalog()->set_name(bareos->catalog_name);
-  start->mutable_backup_job()->set_jobid(bareos->start.jobids[0]);
+  start->mutable_backup_job()->set_id(bareos->start.jobids[0]);
   start->set_find_job_chain(bareos->start.select_parents);
   start->set_merge_filesets(bareos->start.merge_filesets);
   *grpc->mutable_restore_options() = std::move(opts);
@@ -379,7 +379,7 @@ class RestoreImpl : public Restore::Service {
                          "merge_filesets is currently not implemented.");
       }
 
-      auto jobid = request->start().backup_job().jobid();
+      auto jobid = request->start().backup_job().id();
 
       auto handle = new_session(request->start().catalog().name().c_str());
 
@@ -427,8 +427,8 @@ class RestoreImpl : public Restore::Service {
 
       handle.Remove();
 
-      bareos::common::Job job;
-      job.set_jobid(info.jobid);
+      bareos::database::JobId job;
+      job.set_id(info.jobid);
       *response->mutable_jobid() = std::move(job);
 
     } catch (const grpc_error& err) {

@@ -4,19 +4,24 @@
 
 syntax = "proto3";
 
+import "common.proto";
+
 package bareos.config;
 
 service Config {
   rpc ListClients (ListClientsRequest) returns (ListClientsResponse);
   rpc ListJobs (ListJobsRequest) returns (ListJobsResponse);
   rpc ListCatalogs (ListCatalogsRequest) returns (ListCatalogsResponse);
+
+
+  rpc GetDefinition (GetDefinitionRequest) returns (GetDefinitionResponse);
 };
 
 message ListClientsRequest {
 };
 
 message ClientId {
-  string name = 1;
+  bytes name = 1;
 };
 message Client {
   ClientId id = 1;
@@ -28,38 +33,20 @@ message ListClientsResponse {
   repeated Client clients = 1;
 };
 
-enum JobType {
-  JOB_TYPE_UNSPECIFIED = 0;
-  RESTORE = 1;
-  BACKUP = 2;
-  COPY = 3;
-  VERIFY = 4;
-  ADMIN = 5;
-  ARCHIVE = 6;
-  MIGRATE = 7;
-  CONSOLIDATE = 8;
-};
-
-enum JobLevel {
-  JOB_LEVEL_UNSPECIFIED = 0;
-  FULL = 1;
-  DIFFERENTIAL = 2;
-  INCREMENTAL = 3;
-};
-
 message JobId {
-  string name = 1;
+  bytes name = 1;
 };
 
 message Job {
   JobId id = 1;
   string name = 2;
-  JobType type = 3;
-  optional JobLevel default_level = 4;
+  bareos.common.JobType type = 3;
+
+  string description = 4;
 };
 
 message JobTypeFilter {
-  JobType select = 1;
+  bareos.common.JobType select = 1;
 };
 
 message JobFilter {
@@ -80,8 +67,9 @@ message ListJobsResponse {
 };
 
 message CatalogId {
-  string name = 1;
+  bytes name = 1;
 };
+
 message Catalog {
   CatalogId id = 1;
   string name = 2;
@@ -93,4 +81,16 @@ message ListCatalogsRequest {
 
 message ListCatalogsResponse {
   repeated Catalog catalogs = 1;
+};
+
+message GetDefinitionRequest {
+  oneof config_type {
+    ClientId client = 1;
+    CatalogId catalog = 2;
+    JobId job = 3;
+  };
+};
+
+message GetDefinitionResponse {
+  map<string, string> set_options = 1;
 };

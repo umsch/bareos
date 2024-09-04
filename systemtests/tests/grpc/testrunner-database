@@ -42,9 +42,51 @@ JobName=backup-bareos-fd
 
 start_test
 
-CATALOG="{ \"name\" : \"MyCatalog\" }"
+grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/catalogs.list"
 
-grpc bareos.database.Database/ListClients "{ \"catalog\" : $CATALOG }" | tee "$log_home/client.list"
-grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/job.list"
+CATALOG=$(jq -c '.catalogs | .[0] | .id' "$log_home/catalogs.list")
+
+DEFAULT_OPTIONS="{ \"range\" : { \"limit\" : 1000 } }"
+
+UNAME_ID=8
+UNAME_NAME=new-uname
+UNAME_UNAME=new-uname-very-unique
+UNAME_AUTOPRUNE=1
+UNAME_FILERETENTION=2989
+UNAME_JOBRETENTION=343
+
+NAME_ID=9
+NAME_NAME=new-name
+NAME_UNAME=""
+NAME_AUTOPRUNE=0
+NAME_FILERETENTION=0
+NAME_JOBRETENTION=0
+
+grpc bareos.database.Database/ListClients "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS, \"filters\" : [ { \"uname\" : { \"match\" : \"${UNAME_UNAME}\" } } ] }" | tee "$log_home/uname_pre_client.list"
+grpc bareos.database.Database/ListClients "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS, \"filters\" : [ { \"name\" : { \"match\" : \"${NAME_NAME}\" } } ] }" | tee "$log_home/name_pre_client.list"
+
+cat <<EOF > $tmp/bconcmds
+sqlquery
+INSERT INTO client (clientid, name, uname, autoprune, fileretention, jobretention)
+VALUES (${UNAME_ID}, '${UNAME_NAME}', '${UNAME_UNAME}', ${UNAME_AUTOPRUNE}, ${UNAME_FILERETENTION}, ${UNAME_JOBRETENTION}),
+       (${NAME_ID}, '${NAME_NAME}', '${NAME_UNAME}', ${NAME_AUTOPRUNE}, ${NAME_FILERETENTION}, ${NAME_JOBRETENTION});
+EOF
+run_bconsole
+
+grpc bareos.database.Database/ListClients "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS, \"filters\" : [ { \"uname\" : { \"match\" : \"${UNAME_UNAME}\" } } ] }" | tee "$log_home/uname_post_client.list"
+grpc bareos.database.Database/ListClients "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS, \"filters\" : [ { \"name\" : { \"match\" : \"${NAME_NAME}\" } } ] }" | tee "$log_home/name_post_client.list"
+
+# check that the condition holds
+jq -e ".clients | all(.name == \"${NAME_NAME}\")" tmp/testrunner-database/name_post_client.list
+# check that we found at least some clients
+jq -e ".clients | length | . > 0" tmp/testrunner-database/name_post_client.list
+# check that the condition holds
+jq -e ".clients | all(.uname == \"${UNAME_UNAME}\")" tmp/testrunner-database/uname_post_client.list
+# check that we found at least some clients
+jq -e ".clients | length | . > 0" tmp/testrunner-database/uname_post_client.list
+
+grpc bareos.database.Database/ListClients "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS }" | tee "$log_home/client.list"
+
+grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS }" | tee "$log_home/job.list"
 
 end_test

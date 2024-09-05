@@ -29,7 +29,6 @@ export const useWizardStore = defineStore('wizard', () => {
   }
 
   onBeforeMount(async () => {
-    console.log('onBeforeMount - store')
     await updateSessions()
     await updateConfigClients()
     if (!selectedSession.value && sessions.value.length > 0) {
@@ -59,7 +58,6 @@ export const useWizardStore = defineStore('wizard', () => {
   const catalogs = ref<Catalog[]>([])
   const selectedCatalog = ref<Catalog | null>(null)
   const updateCatalogs = async () => {
-    console.debug('fetching catalogs')
     catalogs.value = await configClient.getConfigCatalogs()
   }
 
@@ -69,7 +67,6 @@ export const useWizardStore = defineStore('wizard', () => {
   const updateJobs = async (catalog: Catalog, filter: Client | null) => {
     const catalog_id = catalog.id
     if (catalog_id && filter) {
-      console.debug('fetching jobs from catalog', catalog_id)
       jobs.value = await databaseClient.listJobs(catalog_id, filter!)
     }
   }
@@ -79,7 +76,6 @@ export const useWizardStore = defineStore('wizard', () => {
   const sessions = ref<RestoreSession[]>([])
 
   const updateSessions = async () => {
-    console.debug('fetching sessions')
     sessions.value = await restoreClient.fetchSessions()
   }
 
@@ -145,6 +141,9 @@ export const useWizardStore = defineStore('wizard', () => {
     await updateSessions()
   }
 
+  const findJobChain = ref(false)
+  const mergeFilesets = ref(false)
+
   const createRestoreSession = async () => {
     console.debug(
       '---- starting restore session',
@@ -156,10 +155,12 @@ export const useWizardStore = defineStore('wizard', () => {
       return
     }
 
-    const session = await restoreClient.createSession(
-      selectedCatalog.value,
-      selectedJob.value
-    )
+    const session = await restoreClient.createSession({
+      catalog: selectedCatalog.value.id,
+      backupJob: selectedJob.value.id,
+      findJobChain: findJobChain.value,
+      mergeFilesets: mergeFilesets.value,
+    })
     await updateSessions()
     selectedSession.value = session!
   }
@@ -191,8 +192,6 @@ export const useWizardStore = defineStore('wizard', () => {
 
   watch(selectedSession, async (session) => {
     console.debug('selected session changed', session)
-    console.debug('updating path and files')
-
     if (session) {
       const currentPath = await restoreClient.currentDirectory(session)
       currentDirectory.value = reverse(currentPath!)
@@ -239,7 +238,6 @@ export const useWizardStore = defineStore('wizard', () => {
     }
 
     sessionState.value = await restoreClient.fetchState(selectedSession.value)
-    console.debug('new State: ', sessionState.value)
   }
 
   const pushRestoreOptions = async () => {
@@ -254,10 +252,6 @@ export const useWizardStore = defineStore('wizard', () => {
   watch(
     () => sessionState.value?.restoreOptions,
     async () => {
-      console.debug(
-        'pushing restore options',
-        sessionState.value?.restoreOptions
-      )
       await pushRestoreOptions()
     }
   )
@@ -265,7 +259,6 @@ export const useWizardStore = defineStore('wizard', () => {
   const configClients = ref<ConfigClient[]>([])
 
   const updateConfigClients = async () => {
-    console.debug('fetching config clients')
     configClients.value = await configClient.getConfigClients()
   }
 
@@ -290,5 +283,7 @@ export const useWizardStore = defineStore('wizard', () => {
     sessionState,
     pushRestoreOptions,
     configClients,
+    findJobChain,
+    mergeFilesets,
   }
 })

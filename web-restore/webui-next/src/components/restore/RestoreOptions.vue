@@ -1,11 +1,4 @@
 <script setup lang="ts">
-// message RestoreOptions {
-//   optional ReplaceType replace = 1;
-//   optional bareos.config.JobId restore_job = 3;
-//   optional string restore_location = 4;
-//   optional bareos.config.ClientId restore_client = 5;
-// };
-
 import { ref, watch } from 'vue'
 import { ReplaceType } from 'src/generated/restore'
 import { storeToRefs } from 'pinia'
@@ -16,7 +9,7 @@ const wizard = useWizardStore()
 
 const { sessionState, configClients } = storeToRefs(wizard)
 
-const replace = ref(
+const replaceType = ref(
   sessionState.value?.restoreOptions?.replace ?? ReplaceType.NEVER
 )
 const replaceOptions = ref([
@@ -46,7 +39,7 @@ watch(
 )
 
 watch(
-  replace,
+  replaceType,
   (replaceType) => {
     if (sessionState.value) {
       sessionState.value.restoreOptions = {
@@ -68,7 +61,7 @@ watch(
       sessionState.value?.restoreOptions
     )
 
-    replace.value = ss?.restoreOptions?.replace ?? ReplaceType.NEVER
+    replaceType.value = ss?.restoreOptions?.replace ?? ReplaceType.NEVER
     // restoreClient.value = clientById(ss?.restoreOptions?.restoreClient)
     restoreLocation.value =
       ss?.restoreOptions?.restoreLocation ?? '/tmp/restore'
@@ -91,7 +84,7 @@ watch(
       <template v-slot:control>
         <div class="q-mt-sm full-width text-center">
           <q-btn-toggle
-            v-model="replace"
+            v-model="replaceType"
             :options="replaceOptions"
             toggle-color="primary"
           />

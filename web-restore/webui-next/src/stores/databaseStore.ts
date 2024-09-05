@@ -22,6 +22,7 @@ export const useDatabaseStore = defineStore('databseStore', () => {
     catalog_id: CatalogId,
     client: Client
   ): Promise<Job[]> => {
+    console.debug(client)
     const response = await databaseClient.value?.listJobs({
       catalog: catalog_id,
       options: { range: all },
@@ -40,7 +41,6 @@ export const useDatabaseStore = defineStore('databseStore', () => {
         },
       ],
     })
-
     return response?.response.jobs ?? []
   }
 

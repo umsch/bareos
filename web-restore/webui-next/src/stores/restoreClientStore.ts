@@ -1,13 +1,13 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { ref } from 'vue'
 import type { Catalog } from 'src/generated/config'
-import type { Job } from 'src/generated/database'
 import {
   type File,
   FileType,
   MarkAction,
   RestoreOptions,
   type RestoreSession,
+  StartSelection,
 } from 'src/generated/restore'
 import { useGrpcStore } from 'stores/grpcStore'
 
@@ -20,15 +20,9 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     return response!.response.sessions!
   }
 
-  const createSession = async (catalog: Catalog, backupJob: Job) => {
+  const createSession = async (startSelection: StartSelection) => {
     const response = await restoreClient.value?.begin({
-      start: {
-        findJobChain: false,
-        mergeFilesets: false,
-
-        backupJob: backupJob.id,
-        catalog: catalog.id,
-      },
+      start: startSelection,
     })
     return response?.response.session
   }
@@ -38,7 +32,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   }
 
   const runSession = async (session: RestoreSession) => {
-    console.debug('running session:', session)
     try {
       await restoreClient.value?.run({
         session,
@@ -51,7 +44,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   }
 
   const fetchFiles = async (session: RestoreSession) => {
-    console.debug('fetching files for session', session)
     const files: File[] = []
     try {
       const call = restoreClient.value?.listFiles({ session: session })
@@ -59,7 +51,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
         return files
       }
       for await (const file of call.responses) {
-        console.debug('file', file)
         files.push(file)
       }
     } catch (e) {
@@ -93,8 +84,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
     file: File,
     mark: boolean
   ) => {
-    console.debug('changing marked status: ', file, mark)
-
     await restoreClient.value?.changeMarkedStatus({
       session: session,
       action: mark ? MarkAction.MARK : MarkAction.UNMARK,

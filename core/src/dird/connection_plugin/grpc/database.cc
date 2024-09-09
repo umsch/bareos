@@ -333,7 +333,7 @@ template <> struct definition_of<client_db_entry> {
       {"uname", &client_db_entry::uName},
       {"autoprune", &client_db_entry::autoPrune},
       {"fileretention", &client_db_entry::fileRetention},
-      {"clientretention", &client_db_entry::jobRetention},
+      {"jobretention", &client_db_entry::jobRetention},
   });
 };
 

@@ -42,13 +42,17 @@ typedef const char*(DB_ErrorString_t)(struct database_session*);
 typedef bool(DB_ListClients_t)(struct database_session*,
                                DB_result_callback* cb,
                                void* user,
-                               /* outer query should contain one %s.
+                               /* query_fmt should contain one %s.
                                 * It is formatted with the query to select all
                                 * clients as single argument.*/
-                               const char* outer);
+                               const char* query_fmt);
 typedef bool(DB_ListJobs_t)(struct database_session*,
                             DB_result_callback* cb,
-                            void* user);
+                            void* user,
+                            /* query_fmt should contain one %s.
+                             * It is formatted with the query to select all
+                             * jobs as single argument.*/
+                            const char* query_fmt);
 struct database_capability {
   DB_OpenDatabase_t* open_database;
   DB_CloseDatabase_t* close_database;

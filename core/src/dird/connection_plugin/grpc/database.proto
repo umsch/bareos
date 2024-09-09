@@ -33,8 +33,33 @@ message QueryOptions {
 service Database {
   // we should somehow have a limit & offset in these requests
   // most queries probably wont need all of them
+
+  // orders of the ids inside the request and the infos in the response
+  // are independent of each other,  i.e. if you request info for 2,3,5,
+  // then the response may have the order 5,2,3 or 2,5,3!
+  rpc ClientInfo (ClientInfoRequest) returns (ClientInfoResponse);
+  rpc JobInfo (JobInfoRequest) returns (JobInfoResponse);
+
   rpc ListClients (ListClientsRequest) returns (ListClientsResponse);
   rpc ListJobs (ListJobsRequest) returns (ListJobsResponse);
+};
+
+message ClientInfoRequest {
+  bareos.config.CatalogId catalog = 1;
+  repeated ClientId id = 2;
+};
+
+message ClientInfoResponse {
+  repeated Client client = 1;
+};
+
+message JobInfoRequest {
+  bareos.config.CatalogId catalog = 1;
+  repeated JobId id = 2;
+};
+
+message JobInfoResponse {
+  repeated Job job = 1;
 };
 
 message Client {
@@ -58,8 +83,8 @@ message Job {
   string name = 2;
   bareos.common.JobType type = 3;
   google.protobuf.Timestamp sched_time = 4;
-  google.protobuf.Timestamp start_time = 5;
-  google.protobuf.Timestamp end_time = 6;
+  optional google.protobuf.Timestamp start_time = 5;
+  optional google.protobuf.Timestamp end_time = 6;
   optional string comment = 7;
 
   oneof extra_job_data {
@@ -85,7 +110,7 @@ message ListClientsResponse {
 };
 
 message ClientFilter {
-  Client client = 1;
+  ClientId id = 1;
 };
 
 message JobTypeFilter {

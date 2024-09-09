@@ -315,6 +315,28 @@ template <> struct definition_of<job_db_entry> {
   });
 };
 
+struct client_db_entry {
+  Int clientId;
+  Text name;
+  Text uName;
+
+  std::optional<Int> autoPrune;
+  std::optional<Int> fileRetention;
+  std::optional<Int> jobRetention;
+};
+
+template <> struct definition_of<client_db_entry> {
+  constexpr static auto def = make_array<definition<client_db_entry>>({
+      {"clientid", &client_db_entry::clientId},
+      {"name", &client_db_entry::name},
+      {"uname", &client_db_entry::uName},
+      {"autoprune", &client_db_entry::autoPrune},
+      {"fileretention", &client_db_entry::fileRetention},
+      {"clientretention", &client_db_entry::jobRetention},
+  });
+};
+
+
 bareos::common::JobType job_type_from(std::string_view v)
 {
   if (v.size() != 1) {
@@ -536,22 +558,30 @@ class DatabaseImpl final : public Database::Service {
           [writer = response->mutable_clients()](
               size_t field_count, const char* const* fields,
               const char* const* cols) -> bool {
-            Client c;
+            builder<client_db_entry> bob;
+
             for (size_t i = 0; i < field_count; ++i) {
-              if (strcmp(fields[i], "name") == 0) {
-                c.set_name(cols[i]);
-              } else if (strcmp(fields[i], "uname") == 0) {
-                c.set_uname(cols[i]);
-              } else if (strcmp(fields[i], "clientid") == 0) {
-                c.mutable_id()->set_id(std::atoi(cols[i]));
-              } else if (strcmp(fields[i], "autoprune") == 0) {
-                c.set_autoprune(std::atoi(cols[i]) > 0);
-              } else if (strcmp(fields[i], "fileretention") == 0) {
-                c.set_fileretention(std::atoi(cols[i]));
-              } else if (strcmp(fields[i], "jobretention") == 0) {
-                c.set_jobretention(std::atoi(cols[i]));
-              }
+              // skip bad table entries
+              if (!bob.set(fields[i], cols[i])) { return true; }
             }
+
+            std::optional entry = bob.finalize();
+
+            // skip bad table entries
+            if (!entry) { return true; }
+            Client c;
+            c.set_name(entry->name);
+            c.set_uname(entry->uName);
+            c.mutable_id()->set_id(entry->clientId);
+
+            if (entry->autoPrune) { c.set_autoprune(entry->autoPrune.value()); }
+            if (entry->jobRetention) {
+              c.set_jobretention(entry->jobRetention.value());
+            }
+            if (entry->fileRetention) {
+              c.set_fileretention(entry->fileRetention.value());
+            }
+
             writer->Add(std::move(c));
             return true;
           },

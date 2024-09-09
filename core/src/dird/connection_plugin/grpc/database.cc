@@ -337,52 +337,54 @@ template <> struct definition_of<client_db_entry> {
   });
 };
 
-
-bareos::common::JobType job_type_from(std::string_view v)
+bareos::database::JobType job_type_from(std::string_view v)
 {
   if (v.size() != 1) {
     // throw error
   }
 
-  if (v[0] == 'B') { return bareos::common::JobType::BACKUP; }
-  // if (v[0] == 'M') { return bareos::common::JobType::MIGRATED_JOB; }
-  if (v[0] == 'V') { return bareos::common::JobType::VERIFY; }
-  if (v[0] == 'R') { return bareos::common::JobType::RESTORE; }
-  // if (v[0] == 'U') { return bareos::common::JobType::CONSOLE; }
-  // if (v[0] == 'I') { return bareos::common::JobType::SYSTEM; }
-  if (v[0] == 'D') { return bareos::common::JobType::ADMIN; }
-  if (v[0] == 'A') { return bareos::common::JobType::ARCHIVE; }
-  // if (v[0] == 'C') { return bareos::common::JobType::JOB_COPY; }
-  if (v[0] == 'c') { return bareos::common::JobType::COPY; }
-  if (v[0] == 'g') { return bareos::common::JobType::MIGRATE; }
-  // if (v[0] == 'S') { return bareos::common::JobType::SCAN; }
-  if (v[0] == 'O') { return bareos::common::JobType::CONSOLIDATE; }
+  if (v[0] == 'B') { return bareos::database::JobType::BACKUP; }
+  if (v[0] == 'M') { return bareos::database::JobType::MIGRATED_JOB; }
+  if (v[0] == 'V') { return bareos::database::JobType::VERIFY; }
+  if (v[0] == 'R') { return bareos::database::JobType::RESTORE; }
+  if (v[0] == 'U') { return bareos::database::JobType::CONSOLE; }
+  if (v[0] == 'I') { return bareos::database::JobType::SYSTEM; }
+  if (v[0] == 'D') { return bareos::database::JobType::ADMIN; }
+  if (v[0] == 'A') { return bareos::database::JobType::ARCHIVE; }
+  if (v[0] == 'C') { return bareos::database::JobType::JOB_COPY; }
+  if (v[0] == 'c') { return bareos::database::JobType::COPY; }
+  if (v[0] == 'g') { return bareos::database::JobType::MIGRATE; }
+  if (v[0] == 'S') { return bareos::database::JobType::SCAN; }
+  if (v[0] == 'O') { return bareos::database::JobType::CONSOLIDATE; }
 
   // throw error
-  return bareos::common::JobType::BACKUP;
+  return bareos::database::JobType::BACKUP;
 }
 
-bareos::common::JobLevel job_level_from(std::string_view v)
+bareos::database::JobLevel job_level_from(std::string_view v)
 {
   if (v.size() != 1) {
     // throw error
   }
-  if (v[0] == 'F') { return bareos::common::JobLevel::FULL; }
-  if (v[0] == 'I') { return bareos::common::JobLevel::INCREMENTAL; }
-  if (v[0] == 'D') { return bareos::common::JobLevel::DIFFERENTIAL; }
-  // if (v[0] == 'S') { return bareos::common::JobLevel::SINCE; }
-  // if (v[0] == 'C') { return bareos::common::JobLevel::VERIFY_CATALOG; }
-  // if (v[0] == 'V') { return bareos::common::JobLevel::VERIFY_INIT; }
-  // if (v[0] == 'O') { return
-  // bareos::common::JobLevel::VERIFY_VOLUME_TO_CATALOG; } if (v[0] == 'd') {
-  // return bareos::common::JobLevel::VERIFY_DISK_TO_CATALOG; } if (v[0] == 'A')
-  // { return bareos::common::JobLevel::VERIFY_DATA; } if (v[0] == 'B') { return
-  // bareos::common::JobLevel::BASE; } if (v[0] == ' ') { return
-  // bareos::common::JobLevel::NONE; } if (v[0] == 'f') { return
-  // bareos::common::JobLevel::VIRTUAL_FULL; }
+  if (v[0] == 'F') { return bareos::database::JobLevel::FULL; }
+  if (v[0] == 'I') { return bareos::database::JobLevel::INCREMENTAL; }
+  if (v[0] == 'D') { return bareos::database::JobLevel::DIFFERENTIAL; }
+  // if (v[0] == 'S') { return bareos::database::JobLevel::SINCE; }
+  if (v[0] == 'C') { return bareos::database::JobLevel::VERIFY_CATALOG; }
+  if (v[0] == 'V') { return bareos::database::JobLevel::VERIFY_INIT; }
+  if (v[0] == 'O') {
+    return bareos::database::JobLevel::VERIFY_VOLUME_TO_CATALOG;
+  }
+  if (v[0] == 'd') {
+    return bareos::database::JobLevel::VERIFY_DISK_TO_CATALOG;
+  }
+  if (v[0] == 'A') { return bareos::database::JobLevel::VERIFY_DATA; }
+  if (v[0] == 'B') { return bareos::database::JobLevel::BASE; }
+  // if (v[0] == ' ') { return bareos::database::JobLevel::NONE; }
+  if (v[0] == 'f') { return bareos::database::JobLevel::VIRTUAL_FULL; }
 
   // throw error
-  return bareos::common::JobLevel::FULL;
+  return bareos::database::JobLevel::FULL;
 }
 };  // namespace
 
@@ -624,35 +626,50 @@ class DatabaseImpl final : public Database::Service {
 
         res += "type = '";
         switch (type.type()) {
-          case common::JOB_TYPE_UNSPECIFIED:
-          case common::JobType_INT_MIN_SENTINEL_DO_NOT_USE_:
-          case common::JobType_INT_MAX_SENTINEL_DO_NOT_USE_: {
+          case bareos::database::JOB_TYPE_UNSPECIFIED:
+          case bareos::database::JobType_INT_MIN_SENTINEL_DO_NOT_USE_:
+          case bareos::database::JobType_INT_MAX_SENTINEL_DO_NOT_USE_: {
             throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
                              "job type filter not set correctly");
           } break;
-          case common::RESTORE: {
+          case bareos::database::RESTORE: {
             res += "R";
           } break;
-          case common::BACKUP: {
+          case bareos::database::BACKUP: {
             res += "B";
           } break;
-          case common::COPY: {
+          case bareos::database::COPY: {
             res += "c";
           } break;
-          case common::VERIFY: {
+          case bareos::database::VERIFY: {
             res += "V";
           } break;
-          case common::ADMIN: {
+          case bareos::database::ADMIN: {
             res += "D";
           } break;
-          case common::ARCHIVE: {
+          case bareos::database::ARCHIVE: {
             res += "A";
           } break;
-          case common::MIGRATE: {
+          case bareos::database::MIGRATE: {
             res += "g";
           } break;
-          case common::CONSOLIDATE: {
+          case bareos::database::CONSOLIDATE: {
             res += "O";
+          } break;
+          case bareos::database::MIGRATED_JOB: {
+            res += "M";
+          } break;
+          case bareos::database::CONSOLE: {
+            res += "U";
+          } break;
+          case bareos::database::SYSTEM: {
+            res += "I";
+          } break;
+          case bareos::database::JOB_COPY: {
+            res += "C";
+          } break;
+          case bareos::database::SCAN: {
+            res += "S";
           } break;
         }
         res += "'";
@@ -748,7 +765,7 @@ class DatabaseImpl final : public Database::Service {
             job.set_comment(*entry->comment);
 
             switch (job.type()) {
-              case common::JobType::BACKUP: {
+              case bareos::database::JobType::BACKUP: {
                 if (!entry->clientId || !entry->jobFiles || !entry->jobBytes) {
                   // ignore this one
                   return true;

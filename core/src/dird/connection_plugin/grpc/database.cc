@@ -166,6 +166,7 @@ template <typename T> struct builder {
         return std::visit(
             [value](auto&& val) {
               if (val->has_value()) { return false; }
+              val->emplace();
               return set_value(val->value(), value);
             },
             get(member));

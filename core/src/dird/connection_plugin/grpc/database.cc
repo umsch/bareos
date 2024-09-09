@@ -366,6 +366,7 @@ bareos::database::JobLevel job_level_from(std::string_view v)
   if (v.size() != 1) {
     // throw error
   }
+
   if (v[0] == 'F') { return bareos::database::JobLevel::FULL; }
   if (v[0] == 'I') { return bareos::database::JobLevel::INCREMENTAL; }
   if (v[0] == 'D') { return bareos::database::JobLevel::DIFFERENTIAL; }
@@ -380,7 +381,7 @@ bareos::database::JobLevel job_level_from(std::string_view v)
   }
   if (v[0] == 'A') { return bareos::database::JobLevel::VERIFY_DATA; }
   if (v[0] == 'B') { return bareos::database::JobLevel::BASE; }
-  // if (v[0] == ' ') { return bareos::database::JobLevel::NONE; }
+  if (v[0] == ' ') { return bareos::database::JobLevel::NONE; }
   if (v[0] == 'f') { return bareos::database::JobLevel::VIRTUAL_FULL; }
 
   // throw error

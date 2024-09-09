@@ -33,55 +33,28 @@ namespace {
 using Int = std::int64_t;
 using Text = const char*;
 
-template <typename T, typename U> uintptr_t calculate_offset(T U::*ptr)
-{
-  U* base = nullptr;
-
-  T* member = &(base->*ptr);
-
-  return reinterpret_cast<uintptr_t>(member);
-}
-
-struct definition;
-
-struct defined_struct {
-  virtual std::pair<size_t, const definition*> introspect() = 0;
-
-  bool set(std::string_view key, const char* value);
-
-  bool finalize();
-};
-
-template <typename T, typename U>
-constexpr std::optional<T> defined_struct::*defined_offset_of(
-    std::optional<T> U::*ptr)
-{
-  return static_cast<std::optional<T> defined_struct::*>(ptr);
-}
-
 enum class enum_option
 {
   Required,
   Optional
 };
 
-struct definition {
+template <typename U> struct definition {
   definition() = default;
-  template <typename T, typename U>
+  template <typename T>
   constexpr definition(std::string_view def_name,
-                       std::optional<T> U::*member,
+                       T U::*member,
                        enum_option opt = enum_option::Required,
                        const char* defval = nullptr)
-      : name{def_name}
-      , offset{defined_offset_of(member)}
-      , option{opt}
-      , default_value{defval}
+      : name{def_name}, offset{member}, option{opt}, default_value{defval}
   {
   }
 
   std::string_view name{};
-  std::variant<std::optional<Int> defined_struct::*,
-               std::optional<Text> defined_struct::*>
+  std::variant<Int U::*,
+               Text U::*,
+               std::optional<Int> U::*,
+               std::optional<Text> U::*>
       offset{};
   enum_option option{enum_option::Required};
   const char* default_value{};
@@ -101,50 +74,172 @@ template <> bool set_value(Text& place, const char* value)
   return true;
 }
 
-bool defined_struct::set(std::string_view key, const char* value)
-{
-  auto [len, ptr] = introspect();
+template <typename T> struct definition_of;
 
-  for (size_t i = 0; i < len; ++i) {
-    if (key == ptr[i].name) {
+template <typename T> struct builder {
+  constexpr static auto def = definition_of<T>::def;
+
+  template <typename Inner, typename Test>
+  static constexpr bool has_type
+      = std::is_same_v<Inner, Test T::*>
+        || std::is_same_v<Inner, std::optional<Test> T::*>;
+
+
+  template <typename U> constexpr static size_t type_count()
+  {
+    size_t count = 0;
+
+    for (size_t i = 0; i < def.size(); ++i) {
       std::visit(
-          [this, value](auto&& val) {
-            auto& opt = (this->*val);
-            if (opt.has_value()) { return false; }
-            return set_value(*opt, value);
+          [&count](auto&& val) {
+            using Inner = std::decay_t<decltype(val)>;
+            if constexpr (has_type<Inner, U>) {
+              count += 1;
+            } else {
+            }
           },
-          ptr[i].offset);
+          def[i].offset);
     }
+
+    return count;
   }
 
-  return false;
-}
+  constexpr static auto get_conversions()
+  {
+    std::array<size_t, def.size()> result{};
 
-bool defined_struct::finalize()
-{
-  auto [len, ptr] = introspect();
+    size_t current_int = 0;
+    size_t current_text = 0;
 
-  bool ok = true;
-
-  for (size_t i = 0; i < len; ++i) {
-    std::visit(
-        [this, &ok, defval = ptr[i].default_value,
-         required = (ptr[i].option == enum_option::Required)](auto&& val) {
-          auto& opt = (this->*val);
-
-          if (!opt.has_value()) {
-            if (defval) {
-              ok = set_value(*opt, defval);
-            } else if (required) {
-              ok = false;
+    for (size_t i = 0; i < def.size(); ++i) {
+      std::visit(
+          [cur = &result[i], &current_int, &current_text](auto&& val) {
+            using Inner = std::decay_t<decltype(val)>;
+            if constexpr (has_type<Inner, Int>) {
+              *cur = current_int++;
+            } else if constexpr (has_type<Inner, Text>) {
+              *cur = current_text++;
+            } else {
+              static_assert(0, "unhandled type");
             }
+          },
+          def[i].offset);
+    }
+
+    return result;
+  }
+
+  constexpr static auto conversions = get_conversions();
+
+  template <typename Inner>
+  using counted_array = std::array<std::optional<Inner>, type_count<Inner>()>;
+
+  counted_array<Int> ints;
+  counted_array<Text> texts;
+
+  using Value = std::variant<std::optional<Int>*, std::optional<Text>*>;
+
+
+  Value get(const definition<T>& member)
+  {
+    auto index = std::distance(&def.front(), &member);
+    auto sub_index = conversions[index];
+    return std::visit(
+        [this, sub_index](auto&& val) -> Value {
+          using Inner = std::decay_t<decltype(val)>;
+          if constexpr (has_type<Inner, Text>) {
+            return &texts[sub_index];
+          } else if constexpr (has_type<Inner, Int>) {
+            return &ints[sub_index];
+          } else {
+            static_assert(0, "unhanled type");
           }
         },
-        ptr[i].offset);
+        member.offset);
   }
 
-  return ok;
-}
+
+  bool set(std::string_view key, const char* value)
+  {
+    for (auto& member : def) {
+      if (key == member.name) {
+        return std::visit(
+            [value](auto&& val) {
+              if (val->has_value()) { return false; }
+              return set_value(val->value(), value);
+            },
+            get(member));
+      }
+    }
+
+    return false;
+  }
+
+  std::optional<T> finalize()
+  {
+    if (!set_defaults()) { return std::nullopt; }
+
+    T result;
+    for (auto& member : def) {
+      auto ok = std::visit(
+          [&result](auto&& place, auto&& value) {
+            using InnerP = std::decay_t<decltype(result.*place)>;
+            using InnerV = std::decay_t<decltype(value)>;
+
+            if constexpr (std::is_same_v<InnerV, std::optional<Text>*>) {
+              if constexpr (std::is_same_v<InnerP, Text>) {
+                if (!value->has_value()) { return false; }
+                result.*place = value->value();
+                return true;
+              } else if constexpr (std::is_same_v<InnerP,
+                                                  std::optional<Text>>) {
+                result.*place = *value;
+                return true;
+              } else {
+                return false;
+              }
+            } else if constexpr (std::is_same_v<InnerV, std::optional<Int>*>) {
+              if constexpr (std::is_same_v<InnerP, Int>) {
+                if (!value->has_value()) { return false; }
+                result.*place = value->value();
+                return true;
+              } else if constexpr (std::is_same_v<InnerP, std::optional<Int>>) {
+                result.*place = *value;
+                return true;
+              } else {
+                return false;
+              }
+            } else {
+              static_assert(0, "unhandled type");
+            }
+          },
+          member.offset, get(member));
+
+      if (!ok) { return std::nullopt; }
+    }
+
+    return result;
+  }
+
+ private:
+  bool set_defaults()
+  {
+    for (auto& member : def) {
+      if (!member.default_value) { continue; }
+
+      auto ok = std::visit(
+          [value = member.default_value](auto&& val) {
+            if (val->has_value()) { return true; }
+            return set_value(val->value(), value);
+          },
+          get(member));
+
+      if (!ok) { return false; }
+    }
+
+    return true;
+  }
+};
 
 
 template <typename T, size_t N>
@@ -157,14 +252,15 @@ constexpr std::array<T, N> make_array(const T (&arr)[N])
   return ret;
 }
 
-struct job_db_entry : defined_struct {
-  std::optional<Int> jobId;
-  std::optional<Text> job;
-  std::optional<Text> name;
-  std::optional<Text> type;
-  std::optional<Text> level;
+struct job_db_entry {
+  Int jobId;
+  Text job;
+  Text name;
+  Text type;
+  Text level;
   std::optional<Int> clientId;
-  std::optional<Text> jobStatus;
+  Text jobStatus;
+
   std::optional<Text> schedTime;
   std::optional<Text> startTime;
   std::optional<Text> endTime;
@@ -185,41 +281,38 @@ struct job_db_entry : defined_struct {
   std::optional<Int> hasCache;
   std::optional<Int> reviewed;
   std::optional<Text> comment;
+};
 
-  std::pair<size_t, const definition*> introspect() override
-  {
-    constexpr static auto job_def = make_array<definition>({
-        {"jobid", &job_db_entry::jobId},
-        {"job", &job_db_entry::job},
-        {"name", &job_db_entry::name},
-        {"type", &job_db_entry::type},
-        {"level", &job_db_entry::level},
-        {"clientid", &job_db_entry::clientId},
-        {"jobstatus", &job_db_entry::jobStatus},
-        {"schedtime", &job_db_entry::schedTime, enum_option::Optional},
-        {"starttime", &job_db_entry::startTime, enum_option::Optional},
-        {"endtime", &job_db_entry::endTime, enum_option::Optional},
-        {"realendtime", &job_db_entry::realEndTime, enum_option::Optional},
-        {"jobtdate", &job_db_entry::jobTDate},
-        {"volsessionid", &job_db_entry::volSessionId},
-        {"volsessiontime", &job_db_entry::volSessionTime},
-        {"jobfiles", &job_db_entry::jobFiles},
-        {"jobbytes", &job_db_entry::jobBytes},
-        {"readbytes", &job_db_entry::readBytes},
-        {"joberrors", &job_db_entry::jobErrors},
-        {"jobmissingfiles", &job_db_entry::jobMissingFiles},
-        {"poolid", &job_db_entry::poolId},
-        {"filesetid", &job_db_entry::filesetId},
-        {"priorjobid", &job_db_entry::priorJobid},
-        {"purgedfiles", &job_db_entry::purgedFiles},
-        {"hasbase", &job_db_entry::hasBase},
-        {"hascache", &job_db_entry::hasCache},
-        {"reviewed", &job_db_entry::reviewed},
-        {"comment", &job_db_entry::comment, enum_option::Optional},
-    });
-
-    return {job_def.size(), job_def.data()};
-  }
+template <> struct definition_of<job_db_entry> {
+  constexpr static auto def = make_array<definition<job_db_entry>>({
+      {"jobid", &job_db_entry::jobId},
+      {"job", &job_db_entry::job},
+      {"name", &job_db_entry::name},
+      {"type", &job_db_entry::type},
+      {"level", &job_db_entry::level},
+      {"clientid", &job_db_entry::clientId},
+      {"jobstatus", &job_db_entry::jobStatus},
+      {"schedtime", &job_db_entry::schedTime, enum_option::Optional},
+      {"starttime", &job_db_entry::startTime, enum_option::Optional},
+      {"endtime", &job_db_entry::endTime, enum_option::Optional},
+      {"realendtime", &job_db_entry::realEndTime, enum_option::Optional},
+      {"jobtdate", &job_db_entry::jobTDate},
+      {"volsessionid", &job_db_entry::volSessionId},
+      {"volsessiontime", &job_db_entry::volSessionTime},
+      {"jobfiles", &job_db_entry::jobFiles},
+      {"jobbytes", &job_db_entry::jobBytes},
+      {"readbytes", &job_db_entry::readBytes},
+      {"joberrors", &job_db_entry::jobErrors},
+      {"jobmissingfiles", &job_db_entry::jobMissingFiles},
+      {"poolid", &job_db_entry::poolId},
+      {"filesetid", &job_db_entry::filesetId},
+      {"priorjobid", &job_db_entry::priorJobid},
+      {"purgedfiles", &job_db_entry::purgedFiles},
+      {"hasbase", &job_db_entry::hasBase},
+      {"hascache", &job_db_entry::hasCache},
+      {"reviewed", &job_db_entry::reviewed},
+      {"comment", &job_db_entry::comment, enum_option::Optional},
+  });
 };
 
 bareos::common::JobType job_type_from(std::string_view v)
@@ -584,52 +677,58 @@ class DatabaseImpl final : public Database::Service {
           [writer = response->mutable_jobs()](size_t field_count,
                                               const char* const* fields,
                                               const char* const* cols) -> bool {
-            job_db_entry ent{};
-
+            builder<job_db_entry> builder{};
             for (size_t i = 0; i < field_count; ++i) {
-              if (!ent.set(fields[i], cols[i])) {
-                // throw error
+              if (!builder.set(fields[i], cols[i])) {
+                // ignore this job
+                return true;
               }
             }
 
-            if (!ent.finalize()) {
-              // throw error
+            std::optional entry = builder.finalize();
+            if (!entry) {
+              // ignore this job
+              return true;
             }
 
 
             Job job;
-            job.mutable_id()->set_id(*ent.jobId);
-            job.set_name(*ent.name);
-            job.set_type(job_type_from(*ent.type));
-            {
+            job.mutable_id()->set_id(entry->jobId);
+            job.set_name(entry->name);
+            job.set_type(job_type_from(entry->type));
+            if (entry->schedTime) {
               auto* ts = job.mutable_sched_time();
-              time_t t = StrToUtime(*ent.schedTime);
+              time_t t = StrToUtime(*entry->schedTime);
               ts->set_seconds(t);
               ts->set_nanos(0);
             }
-            {
+            if (entry->startTime) {
               auto* ts = job.mutable_start_time();
-              time_t t = StrToUtime(*ent.schedTime);
+              time_t t = StrToUtime(*entry->startTime);
               ts->set_seconds(t);
               ts->set_nanos(0);
             }
-            {
+            if (entry->endTime) {
               auto* ts = job.mutable_end_time();
-              time_t t = StrToUtime(*ent.schedTime);
+              time_t t = StrToUtime(*entry->endTime);
               ts->set_seconds(t);
               ts->set_nanos(0);
             }
-            job.set_comment(*ent.comment);
+            job.set_comment(*entry->comment);
 
             switch (job.type()) {
               case common::JobType::BACKUP: {
-                auto* data = job.mutable_backup();
+                if (!entry->clientId || !entry->jobFiles || !entry->jobBytes) {
+                  // ignore this one
+                  return true;
+                } else {
+                  auto* data = job.mutable_backup();
 
-                data->set_level(job_level_from(*ent.level));
-                data->mutable_client()->set_id(*ent.clientId);
-                data->set_job_files(*ent.jobFiles);
-                data->set_job_bytes(*ent.jobBytes);
-
+                  data->set_level(job_level_from(entry->level));
+                  data->mutable_client()->set_id(*entry->clientId);
+                  data->set_job_files(*entry->jobFiles);
+                  data->set_job_bytes(*entry->jobBytes);
+                }
               } break;
               default: {
               } break;

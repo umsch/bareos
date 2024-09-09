@@ -82,7 +82,7 @@ message Job {
   JobId id = 1;
   string name = 2;
   bareos.common.JobType type = 3;
-  google.protobuf.Timestamp sched_time = 4;
+  optional google.protobuf.Timestamp sched_time = 4;
   optional google.protobuf.Timestamp start_time = 5;
   optional google.protobuf.Timestamp end_time = 6;
   optional string comment = 7;

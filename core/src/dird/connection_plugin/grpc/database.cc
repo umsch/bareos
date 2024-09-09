@@ -33,7 +33,6 @@ namespace {
 using Int = std::int64_t;
 using Text = const char*;
 
-
 template <typename T, typename U> uintptr_t calculate_offset(T U::*ptr)
 {
   U* base = nullptr;
@@ -60,13 +59,23 @@ constexpr std::optional<T> defined_struct::*defined_offset_of(
   return static_cast<std::optional<T> defined_struct::*>(ptr);
 }
 
+enum class enum_option
+{
+  Required,
+  Optional
+};
+
 struct definition {
   definition() = default;
   template <typename T, typename U>
   constexpr definition(std::string_view def_name,
                        std::optional<T> U::*member,
+                       enum_option opt = enum_option::Required,
                        const char* defval = nullptr)
-      : name{def_name}, offset{defined_offset_of(member)}, default_value{defval}
+      : name{def_name}
+      , offset{defined_offset_of(member)}
+      , option{opt}
+      , default_value{defval}
   {
   }
 
@@ -74,6 +83,7 @@ struct definition {
   std::variant<std::optional<Int> defined_struct::*,
                std::optional<Text> defined_struct::*>
       offset{};
+  enum_option option{enum_option::Required};
   const char* default_value{};
 };
 
@@ -118,13 +128,14 @@ bool defined_struct::finalize()
 
   for (size_t i = 0; i < len; ++i) {
     std::visit(
-        [this, &ok, defval = ptr[i].default_value](auto&& val) {
+        [this, &ok, defval = ptr[i].default_value,
+         required = (ptr[i].option == enum_option::Required)](auto&& val) {
           auto& opt = (this->*val);
 
           if (!opt.has_value()) {
             if (defval) {
               ok = set_value(*opt, defval);
-            } else {
+            } else if (required) {
               ok = false;
             }
           }
@@ -185,10 +196,10 @@ struct job_db_entry : defined_struct {
         {"level", &job_db_entry::level},
         {"clientid", &job_db_entry::clientId},
         {"jobstatus", &job_db_entry::jobStatus},
-        {"schedtime", &job_db_entry::schedTime},
-        {"starttime", &job_db_entry::startTime},
-        {"endtime", &job_db_entry::endTime},
-        {"realendtime", &job_db_entry::realEndTime},
+        {"schedtime", &job_db_entry::schedTime, enum_option::Optional},
+        {"starttime", &job_db_entry::startTime, enum_option::Optional},
+        {"endtime", &job_db_entry::endTime, enum_option::Optional},
+        {"realendtime", &job_db_entry::realEndTime, enum_option::Optional},
         {"jobtdate", &job_db_entry::jobTDate},
         {"volsessionid", &job_db_entry::volSessionId},
         {"volsessiontime", &job_db_entry::volSessionTime},
@@ -204,7 +215,7 @@ struct job_db_entry : defined_struct {
         {"hasbase", &job_db_entry::hasBase},
         {"hascache", &job_db_entry::hasCache},
         {"reviewed", &job_db_entry::reviewed},
-        {"comment", &job_db_entry::comment},
+        {"comment", &job_db_entry::comment, enum_option::Optional},
     });
 
     return {job_def.size(), job_def.data()};

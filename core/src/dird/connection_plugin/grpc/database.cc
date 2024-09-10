@@ -242,7 +242,6 @@ template <typename T> struct builder {
   }
 };
 
-
 template <typename T, size_t N>
 constexpr std::array<T, N> make_array(const T (&arr)[N])
 {
@@ -282,6 +281,8 @@ struct job_db_entry {
   std::optional<Int> hasCache;
   std::optional<Int> reviewed;
   std::optional<Text> comment;
+
+  std::optional<bareos::database::Job> create() const;
 };
 
 template <> struct definition_of<job_db_entry> {
@@ -324,6 +325,20 @@ struct client_db_entry {
   std::optional<Int> autoPrune;
   std::optional<Int> fileRetention;
   std::optional<Int> jobRetention;
+
+  std::optional<bareos::database::Client> create() const noexcept
+  {
+    bareos::database::Client c;
+    c.set_name(name);
+    c.set_uname(uName);
+    c.mutable_id()->set_id(clientId);
+
+    if (autoPrune) { c.set_autoprune(autoPrune.value()); }
+    if (jobRetention) { c.set_jobretention(jobRetention.value()); }
+    if (fileRetention) { c.set_fileretention(fileRetention.value()); }
+
+    return c;
+  }
 };
 
 template <> struct definition_of<client_db_entry> {
@@ -421,6 +436,51 @@ time_t StrToUtime(const char* str)
 
   time = mktime(&datetime);
   return time;
+}
+
+std::optional<bareos::database::Job> job_db_entry::create() const
+{
+  bareos::database::Job job;
+  job.mutable_id()->set_id(jobId);
+  job.set_name(name);
+  job.set_type(job_type_from(type));
+  if (schedTime) {
+    auto* ts = job.mutable_sched_time();
+    time_t t = StrToUtime(*schedTime);
+    ts->set_seconds(t);
+    ts->set_nanos(0);
+  }
+  if (startTime) {
+    auto* ts = job.mutable_start_time();
+    time_t t = StrToUtime(*startTime);
+    ts->set_seconds(t);
+    ts->set_nanos(0);
+  }
+  if (endTime) {
+    auto* ts = job.mutable_end_time();
+    time_t t = StrToUtime(*endTime);
+    ts->set_seconds(t);
+    ts->set_nanos(0);
+  }
+  job.set_comment(*comment);
+
+  switch (job.type()) {
+    case bareos::database::JobType::BACKUP: {
+      if (!clientId || !jobFiles || !jobBytes) {
+        return std::nullopt;
+      } else {
+        auto* data = job.mutable_backup();
+
+        data->set_level(job_level_from(level));
+        data->mutable_client()->set_id(*clientId);
+        data->set_job_files(*jobFiles);
+        data->set_job_bytes(*jobBytes);
+      }
+    } break;
+    default: {
+    } break;
+  }
+  return job;
 }
 
 namespace bareos::database {
@@ -573,20 +633,15 @@ class DatabaseImpl final : public Database::Service {
 
             // skip bad table entries
             if (!entry) { return true; }
-            Client c;
-            c.set_name(entry->name);
-            c.set_uname(entry->uName);
-            c.mutable_id()->set_id(entry->clientId);
 
-            if (entry->autoPrune) { c.set_autoprune(entry->autoPrune.value()); }
-            if (entry->jobRetention) {
-              c.set_jobretention(entry->jobRetention.value());
-            }
-            if (entry->fileRetention) {
-              c.set_fileretention(entry->fileRetention.value());
+            auto client = entry->create();
+
+            if (!client) {
+              // ignore this client
+              return true;
             }
 
-            writer->Add(std::move(c));
+            writer->Add(std::move(client).value());
             return true;
           },
           query.c_str());
@@ -741,49 +796,14 @@ class DatabaseImpl final : public Database::Service {
             }
 
 
-            Job job;
-            job.mutable_id()->set_id(entry->jobId);
-            job.set_name(entry->name);
-            job.set_type(job_type_from(entry->type));
-            if (entry->schedTime) {
-              auto* ts = job.mutable_sched_time();
-              time_t t = StrToUtime(*entry->schedTime);
-              ts->set_seconds(t);
-              ts->set_nanos(0);
-            }
-            if (entry->startTime) {
-              auto* ts = job.mutable_start_time();
-              time_t t = StrToUtime(*entry->startTime);
-              ts->set_seconds(t);
-              ts->set_nanos(0);
-            }
-            if (entry->endTime) {
-              auto* ts = job.mutable_end_time();
-              time_t t = StrToUtime(*entry->endTime);
-              ts->set_seconds(t);
-              ts->set_nanos(0);
-            }
-            job.set_comment(*entry->comment);
+            auto job = entry->create();
 
-            switch (job.type()) {
-              case bareos::database::JobType::BACKUP: {
-                if (!entry->clientId || !entry->jobFiles || !entry->jobBytes) {
-                  // ignore this one
-                  return true;
-                } else {
-                  auto* data = job.mutable_backup();
-
-                  data->set_level(job_level_from(entry->level));
-                  data->mutable_client()->set_id(*entry->clientId);
-                  data->set_job_files(*entry->jobFiles);
-                  data->set_job_bytes(*entry->jobBytes);
-                }
-              } break;
-              default: {
-              } break;
+            if (!job) {
+              // ignore this job
+              return true;
             }
 
-            writer->Add(std::move(job));
+            writer->Add(std::move(job).value());
             return true;
           },
           query.c_str());

@@ -352,11 +352,9 @@ template <> struct definition_of<client_db_entry> {
   });
 };
 
-bareos::database::JobType job_type_from(std::string_view v)
+std::optional<bareos::database::JobType> job_type_from(std::string_view v)
 {
-  if (v.size() != 1) {
-    // throw error
-  }
+  if (v.size() != 1) { return std::nullopt; }
 
   if (v[0] == 'B') { return bareos::database::JobType::BACKUP; }
   if (v[0] == 'M') { return bareos::database::JobType::MIGRATED_JOB; }
@@ -372,15 +370,12 @@ bareos::database::JobType job_type_from(std::string_view v)
   if (v[0] == 'S') { return bareos::database::JobType::SCAN; }
   if (v[0] == 'O') { return bareos::database::JobType::CONSOLIDATE; }
 
-  // throw error
-  return bareos::database::JobType::BACKUP;
+  return std::nullopt;
 }
 
-bareos::database::JobLevel job_level_from(std::string_view v)
+std::optional<bareos::database::JobLevel> job_level_from(std::string_view v)
 {
-  if (v.size() != 1) {
-    // throw error
-  }
+  if (v.size() != 1) { return std::nullopt; }
 
   if (v[0] == 'F') { return bareos::database::JobLevel::FULL; }
   if (v[0] == 'I') { return bareos::database::JobLevel::INCREMENTAL; }
@@ -399,29 +394,29 @@ bareos::database::JobLevel job_level_from(std::string_view v)
   if (v[0] == ' ') { return bareos::database::JobLevel::NONE; }
   if (v[0] == 'f') { return bareos::database::JobLevel::VIRTUAL_FULL; }
 
-  // throw error
-  return bareos::database::JobLevel::FULL;
+  return std::nullopt;
 }
 };  // namespace
 
 // Convert standard time string yyyy-mm-dd hh:mm:ss to Unix time
-time_t StrToUtime(const char* str)
+std::optional<time_t> StrToUtime(const char* str)
 {
   tm datetime{};
-  time_t time;
 
   char trailinggarbage[16]{""};
 
   // Check for bad argument
-  if (!str || *str == 0) { return 0; }
+  if (!str || *str == 0) { return std::nullopt; }
 
   if ((sscanf(str, "%u-%u-%u %u:%u:%u%15s", &datetime.tm_year, &datetime.tm_mon,
               &datetime.tm_mday, &datetime.tm_hour, &datetime.tm_min,
               &datetime.tm_sec, trailinggarbage)
        != 7)
       || trailinggarbage[0] != '\0') {
-    return 0;
+    return std::nullopt;
   }
+
+  if (datetime.tm_mon == 0 || datetime.tm_year < 1900) { return std::nullopt; }
 
   // range for tm_mon is defined as 0-11
   --datetime.tm_mon;
@@ -434,7 +429,8 @@ time_t StrToUtime(const char* str)
   // set to -1 for "I don't know"
   datetime.tm_isdst = -1;
 
-  time = mktime(&datetime);
+  time_t time = mktime(&datetime);
+  if (time == (time_t)-1) { return std::nullopt; }
   return time;
 }
 
@@ -443,23 +439,30 @@ std::optional<bareos::database::Job> job_db_entry::create() const
   bareos::database::Job job;
   job.mutable_id()->set_id(jobId);
   job.set_name(name);
-  job.set_type(job_type_from(type));
+  if (auto t = job_type_from(type)) {
+    job.set_type(*t);
+  } else {
+    return std::nullopt;
+  }
   if (schedTime) {
     auto* ts = job.mutable_sched_time();
-    time_t t = StrToUtime(*schedTime);
-    ts->set_seconds(t);
+    auto seconds = StrToUtime(*schedTime);
+    if (!seconds) { return std::nullopt; }
+    ts->set_seconds(*seconds);
     ts->set_nanos(0);
   }
   if (startTime) {
     auto* ts = job.mutable_start_time();
-    time_t t = StrToUtime(*startTime);
-    ts->set_seconds(t);
+    auto seconds = StrToUtime(*schedTime);
+    if (!seconds) { return std::nullopt; }
+    ts->set_seconds(*seconds);
     ts->set_nanos(0);
   }
   if (endTime) {
     auto* ts = job.mutable_end_time();
-    time_t t = StrToUtime(*endTime);
-    ts->set_seconds(t);
+    auto seconds = StrToUtime(*schedTime);
+    if (!seconds) { return std::nullopt; }
+    ts->set_seconds(*seconds);
     ts->set_nanos(0);
   }
   job.set_comment(*comment);
@@ -471,7 +474,11 @@ std::optional<bareos::database::Job> job_db_entry::create() const
       } else {
         auto* data = job.mutable_backup();
 
-        data->set_level(job_level_from(level));
+        if (auto l = job_level_from(level)) {
+          data->set_level(*l);
+        } else {
+          return std::nullopt;
+        }
         data->mutable_client()->set_id(*clientId);
         data->set_job_files(*jobFiles);
         data->set_job_bytes(*jobBytes);

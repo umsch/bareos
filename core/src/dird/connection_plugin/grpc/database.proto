@@ -78,20 +78,20 @@ service Database {
 
 message ClientInfoRequest {
   bareos.config.CatalogId catalog = 1;
-  repeated ClientId id = 2;
+  repeated ClientId ids = 2;
 };
 
 message ClientInfoResponse {
-  repeated Client client = 1;
+  repeated Client clients = 1;
 };
 
 message JobInfoRequest {
   bareos.config.CatalogId catalog = 1;
-  repeated JobId id = 2;
+  repeated JobId ids = 2;
 };
 
 message JobInfoResponse {
-  repeated Job job = 1;
+  repeated Job jobs = 1;
 };
 
 message Client {

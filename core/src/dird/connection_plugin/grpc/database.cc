@@ -581,6 +581,68 @@ class DatabaseImpl final : public Database::Service {
     return res;
   }
 
+  Status ClientInfo(ServerContext*,
+                    const ClientInfoRequest* request,
+                    ClientInfoResponse* response) override
+  {
+    try {
+      if (!request->has_catalog()) {
+        throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+                         "catalog is missing.");
+      }
+
+      auto db = OpenDb(request->catalog());
+
+      auto ids = request->ids();
+
+      std::string s;
+
+      for (int i = 0; i < ids.size(); ++i) {
+        if (i != 0) { s += ","; }
+
+        s += std::to_string(ids[i].id());
+      }
+
+      std::string query
+          = "SELECT * FROM (%s) AS t WHERE clientid IN (" + s + ")";
+
+      db.list_clients(
+          [writer = response->mutable_clients()](
+              size_t field_count, const char* const* fields,
+              const char* const* cols) -> bool {
+            builder<client_db_entry> builder{};
+            for (size_t i = 0; i < field_count; ++i) {
+              if (!builder.set(fields[i], cols[i])) {
+                // ignore this client
+                return true;
+              }
+            }
+
+            std::optional entry = builder.finalize();
+            if (!entry) {
+              // ignore this client
+              return true;
+            }
+
+            auto client = entry->create();
+
+            if (!client) {
+              // ignore this client
+              return true;
+            }
+
+            writer->Add(std::move(client).value());
+            return true;
+          },
+          query.c_str());
+
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+
+    return Status::OK;
+  }
+
   Status ListClients(ServerContext*,
                      const ListClientsRequest* request,
                      ListClientsResponse* response) override
@@ -738,6 +800,66 @@ class DatabaseImpl final : public Database::Service {
     return res;
   }
 
+  Status JobInfo(ServerContext*,
+                 const JobInfoRequest* request,
+                 JobInfoResponse* response) override
+  {
+    try {
+      if (!request->has_catalog()) {
+        throw grpc_error(grpc::StatusCode::INVALID_ARGUMENT,
+                         "catalog is missing.");
+      }
+
+      auto db = OpenDb(request->catalog());
+
+      auto ids = request->ids();
+
+      std::string s;
+
+      for (int i = 0; i < ids.size(); ++i) {
+        if (i != 0) { s += ","; }
+
+        s += std::to_string(ids[i].id());
+      }
+
+      std::string query = "SELECT * FROM (%s) AS t WHERE jobid IN (" + s + ")";
+
+      db.list_jobs(
+          [writer = response->mutable_jobs()](size_t field_count,
+                                              const char* const* fields,
+                                              const char* const* cols) -> bool {
+            builder<job_db_entry> builder{};
+            for (size_t i = 0; i < field_count; ++i) {
+              if (!builder.set(fields[i], cols[i])) {
+                // ignore this job
+                return true;
+              }
+            }
+
+            std::optional entry = builder.finalize();
+            if (!entry) {
+              // ignore this job
+              return true;
+            }
+
+            auto job = entry->create();
+
+            if (!job) {
+              // ignore this job
+              return true;
+            }
+
+            writer->Add(std::move(job).value());
+            return true;
+          },
+          query.c_str());
+
+    } catch (const grpc_error& err) {
+      return err.status;
+    }
+
+    return Status::OK;
+  }
 
   Status ListJobs(ServerContext*,
                   const ListJobsRequest* request,

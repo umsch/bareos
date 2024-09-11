@@ -398,20 +398,17 @@ std::optional<bareos::database::JobLevel> job_level_from(std::string_view v)
 };  // namespace
 
 // Convert standard time string yyyy-mm-dd hh:mm:ss to Unix time
-std::optional<time_t> StrToUtime(const char* str)
+std::optional<time_t> MyStrToUtime(const char* str)
 {
   tm datetime{};
-
-  char trailinggarbage[16]{""};
 
   // Check for bad argument
   if (!str || *str == 0) { return std::nullopt; }
 
-  if ((sscanf(str, "%u-%u-%u %u:%u:%u%15s", &datetime.tm_year, &datetime.tm_mon,
-              &datetime.tm_mday, &datetime.tm_hour, &datetime.tm_min,
-              &datetime.tm_sec, trailinggarbage)
-       != 7)
-      || trailinggarbage[0] != '\0') {
+  if (sscanf(str, "%u-%u-%u %u:%u:%u", &datetime.tm_year, &datetime.tm_mon,
+             &datetime.tm_mday, &datetime.tm_hour, &datetime.tm_min,
+             &datetime.tm_sec)
+      != 6) {
     return std::nullopt;
   }
 
@@ -430,7 +427,7 @@ std::optional<time_t> StrToUtime(const char* str)
 
   time_t time = mktime(&datetime);
   if (time == (time_t)-1) { return std::nullopt; }
-  return time;
+  return std::make_optional(time);
 }
 
 std::optional<bareos::database::Job> job_db_entry::create() const
@@ -445,21 +442,21 @@ std::optional<bareos::database::Job> job_db_entry::create() const
   }
   if (schedTime) {
     auto* ts = job.mutable_sched_time();
-    auto seconds = StrToUtime(*schedTime);
+    auto seconds = MyStrToUtime(*schedTime);
     if (!seconds) { return std::nullopt; }
     ts->set_seconds(*seconds);
     ts->set_nanos(0);
   }
   if (startTime) {
     auto* ts = job.mutable_start_time();
-    auto seconds = StrToUtime(*schedTime);
+    auto seconds = MyStrToUtime(*startTime);
     if (!seconds) { return std::nullopt; }
     ts->set_seconds(*seconds);
     ts->set_nanos(0);
   }
   if (endTime) {
     auto* ts = job.mutable_end_time();
-    auto seconds = StrToUtime(*schedTime);
+    auto seconds = MyStrToUtime(*endTime);
     if (!seconds) { return std::nullopt; }
     ts->set_seconds(*seconds);
     ts->set_nanos(0);

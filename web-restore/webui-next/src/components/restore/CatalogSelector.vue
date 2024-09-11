@@ -2,6 +2,7 @@
 import { useWizardStore } from 'src/stores/wizardStore'
 import { QSelect } from 'quasar'
 import { storeToRefs } from 'pinia'
+import { Catalog } from 'src/generated/config'
 
 const wizardStore = useWizardStore()
 const { catalogs, selectedCatalog } = storeToRefs(wizardStore)
@@ -18,6 +19,7 @@ const { catalogs, selectedCatalog } = storeToRefs(wizardStore)
     label="Catalog"
     :options="catalogs"
     option-label="name"
+    :rules="[(val: Catalog) => !!val]"
   >
     <template v-slot:no-option>
       <q-item>

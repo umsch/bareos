@@ -1,7 +1,6 @@
 import { defineStore, storeToRefs } from 'pinia'
-import type { Catalog, Client, Job } from 'src/generated/config'
+import type { Catalog, Client, Job, JobType } from 'src/generated/config'
 import { useGrpcStore } from 'stores/grpcStore'
-import { JobType } from 'src/generated/common'
 
 export const useConfigStore = defineStore('configStore', () => {
   const { configClient } = storeToRefs(useGrpcStore())

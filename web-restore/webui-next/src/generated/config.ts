@@ -15,7 +15,6 @@ import type { IBinaryReader } from "@protobuf-ts/runtime";
 import type { PartialMessage } from "@protobuf-ts/runtime";
 import { reflectionMergePartial } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
-import { JobType } from "./common";
 /**
  * @generated from protobuf message bareos.config.ListClientsRequest
  */
@@ -78,7 +77,7 @@ export interface Job {
      */
     name: string;
     /**
-     * @generated from protobuf field: bareos.common.JobType type = 3;
+     * @generated from protobuf field: bareos.config.JobType type = 3;
      */
     type: JobType;
     /**
@@ -91,7 +90,7 @@ export interface Job {
  */
 export interface JobTypeFilter {
     /**
-     * @generated from protobuf field: bareos.common.JobType select = 1;
+     * @generated from protobuf field: bareos.config.JobType select = 1;
      */
     select: JobType;
 }
@@ -213,6 +212,98 @@ export interface GetDefinitionResponse {
     setOptions: {
         [key: string]: string;
     };
+}
+/**
+ * @generated from protobuf enum bareos.config.JobType
+ */
+export enum JobType {
+    /**
+     * @generated from protobuf enum value: JOB_TYPE_UNSPECIFIED = 0;
+     */
+    JOB_TYPE_UNSPECIFIED = 0,
+    /**
+     * @generated from protobuf enum value: RESTORE = 1;
+     */
+    RESTORE = 1,
+    /**
+     * @generated from protobuf enum value: BACKUP = 2;
+     */
+    BACKUP = 2,
+    /**
+     * @generated from protobuf enum value: COPY = 3;
+     */
+    COPY = 3,
+    /**
+     * @generated from protobuf enum value: VERIFY = 4;
+     */
+    VERIFY = 4,
+    /**
+     * @generated from protobuf enum value: ADMIN = 5;
+     */
+    ADMIN = 5,
+    /**
+     * @generated from protobuf enum value: ARCHIVE = 6;
+     */
+    ARCHIVE = 6,
+    /**
+     * @generated from protobuf enum value: MIGRATE = 7;
+     */
+    MIGRATE = 7,
+    /**
+     * @generated from protobuf enum value: CONSOLIDATE = 8;
+     */
+    CONSOLIDATE = 8
+}
+/**
+ * @generated from protobuf enum bareos.config.JobLevel
+ */
+export enum JobLevel {
+    /**
+     * @generated from protobuf enum value: JOB_LEVEL_UNSPECIFIED = 0;
+     */
+    JOB_LEVEL_UNSPECIFIED = 0,
+    /**
+     * @generated from protobuf enum value: FULL = 1;
+     */
+    FULL = 1,
+    /**
+     * @generated from protobuf enum value: DIFFERENTIAL = 2;
+     */
+    DIFFERENTIAL = 2,
+    /**
+     * @generated from protobuf enum value: INCREMENTAL = 3;
+     */
+    INCREMENTAL = 3,
+    /**
+     * SINCE = 4; (currently unused)
+     *
+     * @generated from protobuf enum value: VIRTUAL_FULL = 5;
+     */
+    VIRTUAL_FULL = 5,
+    /**
+     * @generated from protobuf enum value: NONE = 6;
+     */
+    NONE = 6,
+    /**
+     * @generated from protobuf enum value: L_VERIFY_CATALOG = 7;
+     */
+    L_VERIFY_CATALOG = 7,
+    /**
+     * @generated from protobuf enum value: L_VERIFY_INIT = 8;
+     */
+    L_VERIFY_INIT = 8,
+    /**
+     * @generated from protobuf enum value: L_VERIFY_VOLUME_TO_CATALOG = 9;
+     */
+    L_VERIFY_VOLUME_TO_CATALOG = 9,
+    /**
+     * @generated from protobuf enum value: L_VERIFY_DISK_TO_CATALOG = 10;
+     */
+    L_VERIFY_DISK_TO_CATALOG = 10,
+    /**
+     * @generated from protobuf enum value: L_VERIFY_DATA = 11;
+     */
+    L_VERIFY_DATA = 11
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class ListClientsRequest$Type extends MessageType<ListClientsRequest> {
@@ -448,7 +539,7 @@ class Job$Type extends MessageType<Job> {
         super("bareos.config.Job", [
             { no: 1, name: "id", kind: "message", T: () => JobId },
             { no: 2, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 3, name: "type", kind: "enum", T: () => ["bareos.common.JobType", JobType] },
+            { no: 3, name: "type", kind: "enum", T: () => ["bareos.config.JobType", JobType] },
             { no: 4, name: "description", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
@@ -472,7 +563,7 @@ class Job$Type extends MessageType<Job> {
                 case /* string name */ 2:
                     message.name = reader.string();
                     break;
-                case /* bareos.common.JobType type */ 3:
+                case /* bareos.config.JobType type */ 3:
                     message.type = reader.int32();
                     break;
                 case /* string description */ 4:
@@ -496,7 +587,7 @@ class Job$Type extends MessageType<Job> {
         /* string name = 2; */
         if (message.name !== "")
             writer.tag(2, WireType.LengthDelimited).string(message.name);
-        /* bareos.common.JobType type = 3; */
+        /* bareos.config.JobType type = 3; */
         if (message.type !== 0)
             writer.tag(3, WireType.Varint).int32(message.type);
         /* string description = 4; */
@@ -516,7 +607,7 @@ export const Job = new Job$Type();
 class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
     constructor() {
         super("bareos.config.JobTypeFilter", [
-            { no: 1, name: "select", kind: "enum", T: () => ["bareos.common.JobType", JobType] }
+            { no: 1, name: "select", kind: "enum", T: () => ["bareos.config.JobType", JobType] }
         ]);
     }
     create(value?: PartialMessage<JobTypeFilter>): JobTypeFilter {
@@ -531,7 +622,7 @@ class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.common.JobType select */ 1:
+                case /* bareos.config.JobType select */ 1:
                     message.select = reader.int32();
                     break;
                 default:
@@ -546,7 +637,7 @@ class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
         return message;
     }
     internalBinaryWrite(message: JobTypeFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.JobType select = 1; */
+        /* bareos.config.JobType select = 1; */
         if (message.select !== 0)
             writer.tag(1, WireType.Varint).int32(message.select);
         let u = options.writeUnknownFields;

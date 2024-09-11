@@ -10,22 +10,38 @@ import type { ServiceInfo } from "@protobuf-ts/runtime-rpc";
 import { Database } from "./database";
 import type { ListJobsResponse } from "./database";
 import type { ListJobsRequest } from "./database";
-import { stackIntercept } from "@protobuf-ts/runtime-rpc";
 import type { ListClientsResponse } from "./database";
 import type { ListClientsRequest } from "./database";
+import type { JobInfoResponse } from "./database";
+import type { JobInfoRequest } from "./database";
+import { stackIntercept } from "@protobuf-ts/runtime-rpc";
+import type { ClientInfoResponse } from "./database";
+import type { ClientInfoRequest } from "./database";
 import type { UnaryCall } from "@protobuf-ts/runtime-rpc";
 import type { RpcOptions } from "@protobuf-ts/runtime-rpc";
 /**
  * Should these functions return a typed response (like now) or rather a generic
  * message SqlResponse { map<string, string>; } ?
  *
+ * we should somehow have a limit & offset in these requests
+ * most queries probably wont need all of them
+ *
  * @generated from protobuf service bareos.database.Database
  */
 export interface IDatabaseClient {
     /**
-     * we should somehow have a limit & offset in these requests
-     * most queries probably wont need all of them
+     * orders of the ids inside the request and the infos in the response
+     * are independent of each other,  i.e. if you request info for 2,3,5,
+     * then the response may have the order 5,2,3 or 2,5,3!
      *
+     * @generated from protobuf rpc: ClientInfo(bareos.database.ClientInfoRequest) returns (bareos.database.ClientInfoResponse);
+     */
+    clientInfo(input: ClientInfoRequest, options?: RpcOptions): UnaryCall<ClientInfoRequest, ClientInfoResponse>;
+    /**
+     * @generated from protobuf rpc: JobInfo(bareos.database.JobInfoRequest) returns (bareos.database.JobInfoResponse);
+     */
+    jobInfo(input: JobInfoRequest, options?: RpcOptions): UnaryCall<JobInfoRequest, JobInfoResponse>;
+    /**
      * @generated from protobuf rpc: ListClients(bareos.database.ListClientsRequest) returns (bareos.database.ListClientsResponse);
      */
     listClients(input: ListClientsRequest, options?: RpcOptions): UnaryCall<ListClientsRequest, ListClientsResponse>;
@@ -38,6 +54,9 @@ export interface IDatabaseClient {
  * Should these functions return a typed response (like now) or rather a generic
  * message SqlResponse { map<string, string>; } ?
  *
+ * we should somehow have a limit & offset in these requests
+ * most queries probably wont need all of them
+ *
  * @generated from protobuf service bareos.database.Database
  */
 export class DatabaseClient implements IDatabaseClient, ServiceInfo {
@@ -47,20 +66,35 @@ export class DatabaseClient implements IDatabaseClient, ServiceInfo {
     constructor(private readonly _transport: RpcTransport) {
     }
     /**
-     * we should somehow have a limit & offset in these requests
-     * most queries probably wont need all of them
+     * orders of the ids inside the request and the infos in the response
+     * are independent of each other,  i.e. if you request info for 2,3,5,
+     * then the response may have the order 5,2,3 or 2,5,3!
      *
+     * @generated from protobuf rpc: ClientInfo(bareos.database.ClientInfoRequest) returns (bareos.database.ClientInfoResponse);
+     */
+    clientInfo(input: ClientInfoRequest, options?: RpcOptions): UnaryCall<ClientInfoRequest, ClientInfoResponse> {
+        const method = this.methods[0], opt = this._transport.mergeOptions(options);
+        return stackIntercept<ClientInfoRequest, ClientInfoResponse>("unary", this._transport, method, opt, input);
+    }
+    /**
+     * @generated from protobuf rpc: JobInfo(bareos.database.JobInfoRequest) returns (bareos.database.JobInfoResponse);
+     */
+    jobInfo(input: JobInfoRequest, options?: RpcOptions): UnaryCall<JobInfoRequest, JobInfoResponse> {
+        const method = this.methods[1], opt = this._transport.mergeOptions(options);
+        return stackIntercept<JobInfoRequest, JobInfoResponse>("unary", this._transport, method, opt, input);
+    }
+    /**
      * @generated from protobuf rpc: ListClients(bareos.database.ListClientsRequest) returns (bareos.database.ListClientsResponse);
      */
     listClients(input: ListClientsRequest, options?: RpcOptions): UnaryCall<ListClientsRequest, ListClientsResponse> {
-        const method = this.methods[0], opt = this._transport.mergeOptions(options);
+        const method = this.methods[2], opt = this._transport.mergeOptions(options);
         return stackIntercept<ListClientsRequest, ListClientsResponse>("unary", this._transport, method, opt, input);
     }
     /**
      * @generated from protobuf rpc: ListJobs(bareos.database.ListJobsRequest) returns (bareos.database.ListJobsResponse);
      */
     listJobs(input: ListJobsRequest, options?: RpcOptions): UnaryCall<ListJobsRequest, ListJobsResponse> {
-        const method = this.methods[1], opt = this._transport.mergeOptions(options);
+        const method = this.methods[3], opt = this._transport.mergeOptions(options);
         return stackIntercept<ListJobsRequest, ListJobsResponse>("unary", this._transport, method, opt, input);
     }
 }

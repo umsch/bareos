@@ -29,14 +29,14 @@ export const useGrpcStore = defineStore('transportStore', () => {
     input: object,
     options: RpcOptions
   ): ServerStreamingCall => {
-    console.debug('📞 Calling Director:', method)
+    console.debug(`📞 Calling Director: ${method.name}`, JSON.stringify(input))
     const call = next(method, input, options)
 
     // Handle response stream
     call.responses.onMessage((response) => {
       console.debug(
         `👂  🐜🐜🐜 Received response from Director ${method.name}:`,
-        response
+        JSON.stringify(response)
       )
     })
 
@@ -48,7 +48,9 @@ export const useGrpcStore = defineStore('transportStore', () => {
       )
       $q.notify({
         color: 'negative',
-        message: error.message,
+        caption: error.message,
+        multiLine: true,
+        message: `😳 Error in Director streaming call of ${method.name}:`,
         icon: 'report_problem',
       })
     })
@@ -69,18 +71,23 @@ export const useGrpcStore = defineStore('transportStore', () => {
     input: object,
     options: RpcOptions
   ): UnaryCall => {
-    console.debug('📞 Calling Director:', method)
+    console.debug(`📞 Calling Director: ${method.name}`, JSON.stringify(input))
     const call: UnaryCall = next(method, input, options)
 
     call.response.then(
       (result) => {
-        console.debug('👂 Received from Director:', method, result)
+        console.debug(
+          `👂 Received from Director (${method.name}) :`,
+          JSON.stringify(result)
+        )
       },
       (error) => {
         console.error('😳 Error from Director:', method, JSON.stringify(error))
         $q.notify({
           color: 'negative',
-          message: error.message,
+          multiLine: true,
+          caption: error.message,
+          message: `😳 Error from Director when calling ${method.name}:`,
           icon: 'report_problem',
         })
       }

@@ -262,6 +262,17 @@ export const useWizardStore = defineStore('wizard', () => {
     configClients.value = await configClient.getConfigClients()
   }
 
+  const $reset = async () => {
+    selectedJob.value = null
+    selectedSession.value = null
+    sessionState.value = null
+    selectedJob.value = null
+
+    await updateCatalogs()
+    await updateState()
+    await updateSessions()
+  }
+
   return {
     updateCatalogs,
     catalogs,
@@ -285,5 +296,6 @@ export const useWizardStore = defineStore('wizard', () => {
     configClients,
     findJobChain,
     mergeFilesets,
+    $reset,
   }
 })

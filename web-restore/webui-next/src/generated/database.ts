@@ -15,10 +15,8 @@ import { UnknownFieldHandler } from "@protobuf-ts/runtime";
 import type { PartialMessage } from "@protobuf-ts/runtime";
 import { reflectionMergePartial } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
-import { CatalogId } from "./config";
 import { Timestamp } from "./google/protobuf/timestamp";
-import { JobType } from "./common";
-import { JobLevel } from "./common";
+import { CatalogId } from "./config";
 /**
  * @generated from protobuf message bareos.database.ClientId
  */
@@ -60,6 +58,50 @@ export interface QueryOptions {
     range?: Range;
 }
 /**
+ * @generated from protobuf message bareos.database.ClientInfoRequest
+ */
+export interface ClientInfoRequest {
+    /**
+     * @generated from protobuf field: bareos.config.CatalogId catalog = 1;
+     */
+    catalog?: CatalogId;
+    /**
+     * @generated from protobuf field: repeated bareos.database.ClientId ids = 2;
+     */
+    ids: ClientId[];
+}
+/**
+ * @generated from protobuf message bareos.database.ClientInfoResponse
+ */
+export interface ClientInfoResponse {
+    /**
+     * @generated from protobuf field: repeated bareos.database.Client clients = 1;
+     */
+    clients: Client[];
+}
+/**
+ * @generated from protobuf message bareos.database.JobInfoRequest
+ */
+export interface JobInfoRequest {
+    /**
+     * @generated from protobuf field: bareos.config.CatalogId catalog = 1;
+     */
+    catalog?: CatalogId;
+    /**
+     * @generated from protobuf field: repeated bareos.database.JobId ids = 2;
+     */
+    ids: JobId[];
+}
+/**
+ * @generated from protobuf message bareos.database.JobInfoResponse
+ */
+export interface JobInfoResponse {
+    /**
+     * @generated from protobuf field: repeated bareos.database.Job jobs = 1;
+     */
+    jobs: Job[];
+}
+/**
  * @generated from protobuf message bareos.database.Client
  */
 export interface Client {
@@ -93,7 +135,7 @@ export interface Client {
  */
 export interface BackupData {
     /**
-     * @generated from protobuf field: bareos.common.JobLevel level = 1;
+     * @generated from protobuf field: bareos.database.JobLevel level = 1;
      */
     level: JobLevel;
     /**
@@ -122,19 +164,19 @@ export interface Job {
      */
     name: string;
     /**
-     * @generated from protobuf field: bareos.common.JobType type = 3;
+     * @generated from protobuf field: bareos.database.JobType type = 3;
      */
     type: JobType;
     /**
-     * @generated from protobuf field: google.protobuf.Timestamp sched_time = 4;
+     * @generated from protobuf field: optional google.protobuf.Timestamp sched_time = 4;
      */
     schedTime?: Timestamp;
     /**
-     * @generated from protobuf field: google.protobuf.Timestamp start_time = 5;
+     * @generated from protobuf field: optional google.protobuf.Timestamp start_time = 5;
      */
     startTime?: Timestamp;
     /**
-     * @generated from protobuf field: google.protobuf.Timestamp end_time = 6;
+     * @generated from protobuf field: optional google.protobuf.Timestamp end_time = 6;
      */
     endTime?: Timestamp;
     /**
@@ -208,16 +250,16 @@ export interface ListClientsResponse {
  */
 export interface ClientFilter {
     /**
-     * @generated from protobuf field: bareos.database.Client client = 1;
+     * @generated from protobuf field: bareos.database.ClientId id = 1;
      */
-    client?: Client;
+    id?: ClientId;
 }
 /**
  * @generated from protobuf message bareos.database.JobTypeFilter
  */
 export interface JobTypeFilter {
     /**
-     * @generated from protobuf field: bareos.common.JobType type = 1;
+     * @generated from protobuf field: bareos.database.JobType type = 1;
      */
     type: JobType;
 }
@@ -284,6 +326,122 @@ export interface ListJobsResponse {
      * @generated from protobuf field: repeated bareos.database.Job jobs = 1;
      */
     jobs: Job[];
+}
+/**
+ * @generated from protobuf enum bareos.database.JobType
+ */
+export enum JobType {
+    /**
+     * @generated from protobuf enum value: JOB_TYPE_UNSPECIFIED = 0;
+     */
+    JOB_TYPE_UNSPECIFIED = 0,
+    /**
+     * @generated from protobuf enum value: RESTORE = 1;
+     */
+    RESTORE = 1,
+    /**
+     * @generated from protobuf enum value: BACKUP = 2;
+     */
+    BACKUP = 2,
+    /**
+     * @generated from protobuf enum value: COPY = 3;
+     */
+    COPY = 3,
+    /**
+     * @generated from protobuf enum value: VERIFY = 4;
+     */
+    VERIFY = 4,
+    /**
+     * @generated from protobuf enum value: ADMIN = 5;
+     */
+    ADMIN = 5,
+    /**
+     * @generated from protobuf enum value: ARCHIVE = 6;
+     */
+    ARCHIVE = 6,
+    /**
+     * @generated from protobuf enum value: MIGRATE = 7;
+     */
+    MIGRATE = 7,
+    /**
+     * @generated from protobuf enum value: CONSOLIDATE = 8;
+     */
+    CONSOLIDATE = 8,
+    /**
+     * @generated from protobuf enum value: MIGRATED_JOB = 9;
+     */
+    MIGRATED_JOB = 9,
+    /**
+     * @generated from protobuf enum value: CONSOLE = 10;
+     */
+    CONSOLE = 10,
+    /**
+     * @generated from protobuf enum value: SYSTEM = 11;
+     */
+    SYSTEM = 11,
+    /**
+     * @generated from protobuf enum value: JOB_COPY = 12;
+     */
+    JOB_COPY = 12,
+    /**
+     * @generated from protobuf enum value: SCAN = 13;
+     */
+    SCAN = 13
+}
+/**
+ * @generated from protobuf enum bareos.database.JobLevel
+ */
+export enum JobLevel {
+    /**
+     * @generated from protobuf enum value: JOB_LEVEL_UNSPECIFIED = 0;
+     */
+    JOB_LEVEL_UNSPECIFIED = 0,
+    /**
+     * @generated from protobuf enum value: FULL = 1;
+     */
+    FULL = 1,
+    /**
+     * @generated from protobuf enum value: DIFFERENTIAL = 2;
+     */
+    DIFFERENTIAL = 2,
+    /**
+     * @generated from protobuf enum value: INCREMENTAL = 3;
+     */
+    INCREMENTAL = 3,
+    /**
+     * SINCE = 4; (currently unused)
+     *
+     * @generated from protobuf enum value: VERIFY_CATALOG = 5;
+     */
+    VERIFY_CATALOG = 5,
+    /**
+     * @generated from protobuf enum value: VERIFY_INIT = 6;
+     */
+    VERIFY_INIT = 6,
+    /**
+     * @generated from protobuf enum value: VERIFY_VOLUME_TO_CATALOG = 7;
+     */
+    VERIFY_VOLUME_TO_CATALOG = 7,
+    /**
+     * @generated from protobuf enum value: VERIFY_DISK_TO_CATALOG = 8;
+     */
+    VERIFY_DISK_TO_CATALOG = 8,
+    /**
+     * @generated from protobuf enum value: VERIFY_DATA = 9;
+     */
+    VERIFY_DATA = 9,
+    /**
+     * @generated from protobuf enum value: BASE = 10;
+     */
+    BASE = 10,
+    /**
+     * @generated from protobuf enum value: VIRTUAL_FULL = 11;
+     */
+    VIRTUAL_FULL = 11,
+    /**
+     * @generated from protobuf enum value: NONE = 12;
+     */
+    NONE = 12
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class ClientId$Type extends MessageType<ClientId> {
@@ -481,6 +639,208 @@ class QueryOptions$Type extends MessageType<QueryOptions> {
  */
 export const QueryOptions = new QueryOptions$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class ClientInfoRequest$Type extends MessageType<ClientInfoRequest> {
+    constructor() {
+        super("bareos.database.ClientInfoRequest", [
+            { no: 1, name: "catalog", kind: "message", T: () => CatalogId },
+            { no: 2, name: "ids", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => ClientId }
+        ]);
+    }
+    create(value?: PartialMessage<ClientInfoRequest>): ClientInfoRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.ids = [];
+        if (value !== undefined)
+            reflectionMergePartial<ClientInfoRequest>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ClientInfoRequest): ClientInfoRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.config.CatalogId catalog */ 1:
+                    message.catalog = CatalogId.internalBinaryRead(reader, reader.uint32(), options, message.catalog);
+                    break;
+                case /* repeated bareos.database.ClientId ids */ 2:
+                    message.ids.push(ClientId.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ClientInfoRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.config.CatalogId catalog = 1; */
+        if (message.catalog)
+            CatalogId.internalBinaryWrite(message.catalog, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* repeated bareos.database.ClientId ids = 2; */
+        for (let i = 0; i < message.ids.length; i++)
+            ClientId.internalBinaryWrite(message.ids[i], writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.ClientInfoRequest
+ */
+export const ClientInfoRequest = new ClientInfoRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ClientInfoResponse$Type extends MessageType<ClientInfoResponse> {
+    constructor() {
+        super("bareos.database.ClientInfoResponse", [
+            { no: 1, name: "clients", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => Client }
+        ]);
+    }
+    create(value?: PartialMessage<ClientInfoResponse>): ClientInfoResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.clients = [];
+        if (value !== undefined)
+            reflectionMergePartial<ClientInfoResponse>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ClientInfoResponse): ClientInfoResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated bareos.database.Client clients */ 1:
+                    message.clients.push(Client.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ClientInfoResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated bareos.database.Client clients = 1; */
+        for (let i = 0; i < message.clients.length; i++)
+            Client.internalBinaryWrite(message.clients[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.ClientInfoResponse
+ */
+export const ClientInfoResponse = new ClientInfoResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class JobInfoRequest$Type extends MessageType<JobInfoRequest> {
+    constructor() {
+        super("bareos.database.JobInfoRequest", [
+            { no: 1, name: "catalog", kind: "message", T: () => CatalogId },
+            { no: 2, name: "ids", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => JobId }
+        ]);
+    }
+    create(value?: PartialMessage<JobInfoRequest>): JobInfoRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.ids = [];
+        if (value !== undefined)
+            reflectionMergePartial<JobInfoRequest>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: JobInfoRequest): JobInfoRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bareos.config.CatalogId catalog */ 1:
+                    message.catalog = CatalogId.internalBinaryRead(reader, reader.uint32(), options, message.catalog);
+                    break;
+                case /* repeated bareos.database.JobId ids */ 2:
+                    message.ids.push(JobId.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: JobInfoRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bareos.config.CatalogId catalog = 1; */
+        if (message.catalog)
+            CatalogId.internalBinaryWrite(message.catalog, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* repeated bareos.database.JobId ids = 2; */
+        for (let i = 0; i < message.ids.length; i++)
+            JobId.internalBinaryWrite(message.ids[i], writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.JobInfoRequest
+ */
+export const JobInfoRequest = new JobInfoRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class JobInfoResponse$Type extends MessageType<JobInfoResponse> {
+    constructor() {
+        super("bareos.database.JobInfoResponse", [
+            { no: 1, name: "jobs", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => Job }
+        ]);
+    }
+    create(value?: PartialMessage<JobInfoResponse>): JobInfoResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.jobs = [];
+        if (value !== undefined)
+            reflectionMergePartial<JobInfoResponse>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: JobInfoResponse): JobInfoResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated bareos.database.Job jobs */ 1:
+                    message.jobs.push(Job.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: JobInfoResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated bareos.database.Job jobs = 1; */
+        for (let i = 0; i < message.jobs.length; i++)
+            Job.internalBinaryWrite(message.jobs[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message bareos.database.JobInfoResponse
+ */
+export const JobInfoResponse = new JobInfoResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class Client$Type extends MessageType<Client> {
     constructor() {
         super("bareos.database.Client", [
@@ -570,7 +930,7 @@ export const Client = new Client$Type();
 class BackupData$Type extends MessageType<BackupData> {
     constructor() {
         super("bareos.database.BackupData", [
-            { no: 1, name: "level", kind: "enum", T: () => ["bareos.common.JobLevel", JobLevel] },
+            { no: 1, name: "level", kind: "enum", T: () => ["bareos.database.JobLevel", JobLevel] },
             { no: 2, name: "client", kind: "message", T: () => ClientId },
             { no: 3, name: "job_files", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 4, name: "job_bytes", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
@@ -590,7 +950,7 @@ class BackupData$Type extends MessageType<BackupData> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.common.JobLevel level */ 1:
+                case /* bareos.database.JobLevel level */ 1:
                     message.level = reader.int32();
                     break;
                 case /* bareos.database.ClientId client */ 2:
@@ -614,7 +974,7 @@ class BackupData$Type extends MessageType<BackupData> {
         return message;
     }
     internalBinaryWrite(message: BackupData, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.JobLevel level = 1; */
+        /* bareos.database.JobLevel level = 1; */
         if (message.level !== 0)
             writer.tag(1, WireType.Varint).int32(message.level);
         /* bareos.database.ClientId client = 2; */
@@ -642,7 +1002,7 @@ class Job$Type extends MessageType<Job> {
         super("bareos.database.Job", [
             { no: 1, name: "id", kind: "message", T: () => JobId },
             { no: 2, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 3, name: "type", kind: "enum", T: () => ["bareos.common.JobType", JobType] },
+            { no: 3, name: "type", kind: "enum", T: () => ["bareos.database.JobType", JobType] },
             { no: 4, name: "sched_time", kind: "message", T: () => Timestamp },
             { no: 5, name: "start_time", kind: "message", T: () => Timestamp },
             { no: 6, name: "end_time", kind: "message", T: () => Timestamp },
@@ -670,16 +1030,16 @@ class Job$Type extends MessageType<Job> {
                 case /* string name */ 2:
                     message.name = reader.string();
                     break;
-                case /* bareos.common.JobType type */ 3:
+                case /* bareos.database.JobType type */ 3:
                     message.type = reader.int32();
                     break;
-                case /* google.protobuf.Timestamp sched_time */ 4:
+                case /* optional google.protobuf.Timestamp sched_time */ 4:
                     message.schedTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.schedTime);
                     break;
-                case /* google.protobuf.Timestamp start_time */ 5:
+                case /* optional google.protobuf.Timestamp start_time */ 5:
                     message.startTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.startTime);
                     break;
-                case /* google.protobuf.Timestamp end_time */ 6:
+                case /* optional google.protobuf.Timestamp end_time */ 6:
                     message.endTime = Timestamp.internalBinaryRead(reader, reader.uint32(), options, message.endTime);
                     break;
                 case /* optional string comment */ 7:
@@ -709,16 +1069,16 @@ class Job$Type extends MessageType<Job> {
         /* string name = 2; */
         if (message.name !== "")
             writer.tag(2, WireType.LengthDelimited).string(message.name);
-        /* bareos.common.JobType type = 3; */
+        /* bareos.database.JobType type = 3; */
         if (message.type !== 0)
             writer.tag(3, WireType.Varint).int32(message.type);
-        /* google.protobuf.Timestamp sched_time = 4; */
+        /* optional google.protobuf.Timestamp sched_time = 4; */
         if (message.schedTime)
             Timestamp.internalBinaryWrite(message.schedTime, writer.tag(4, WireType.LengthDelimited).fork(), options).join();
-        /* google.protobuf.Timestamp start_time = 5; */
+        /* optional google.protobuf.Timestamp start_time = 5; */
         if (message.startTime)
             Timestamp.internalBinaryWrite(message.startTime, writer.tag(5, WireType.LengthDelimited).fork(), options).join();
-        /* google.protobuf.Timestamp end_time = 6; */
+        /* optional google.protobuf.Timestamp end_time = 6; */
         if (message.endTime)
             Timestamp.internalBinaryWrite(message.endTime, writer.tag(6, WireType.LengthDelimited).fork(), options).join();
         /* optional string comment = 7; */
@@ -909,7 +1269,7 @@ export const ListClientsResponse = new ListClientsResponse$Type();
 class ClientFilter$Type extends MessageType<ClientFilter> {
     constructor() {
         super("bareos.database.ClientFilter", [
-            { no: 1, name: "client", kind: "message", T: () => Client }
+            { no: 1, name: "id", kind: "message", T: () => ClientId }
         ]);
     }
     create(value?: PartialMessage<ClientFilter>): ClientFilter {
@@ -923,8 +1283,8 @@ class ClientFilter$Type extends MessageType<ClientFilter> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.database.Client client */ 1:
-                    message.client = Client.internalBinaryRead(reader, reader.uint32(), options, message.client);
+                case /* bareos.database.ClientId id */ 1:
+                    message.id = ClientId.internalBinaryRead(reader, reader.uint32(), options, message.id);
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -938,9 +1298,9 @@ class ClientFilter$Type extends MessageType<ClientFilter> {
         return message;
     }
     internalBinaryWrite(message: ClientFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.database.Client client = 1; */
-        if (message.client)
-            Client.internalBinaryWrite(message.client, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bareos.database.ClientId id = 1; */
+        if (message.id)
+            ClientId.internalBinaryWrite(message.id, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -955,7 +1315,7 @@ export const ClientFilter = new ClientFilter$Type();
 class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
     constructor() {
         super("bareos.database.JobTypeFilter", [
-            { no: 1, name: "type", kind: "enum", T: () => ["bareos.common.JobType", JobType] }
+            { no: 1, name: "type", kind: "enum", T: () => ["bareos.database.JobType", JobType] }
         ]);
     }
     create(value?: PartialMessage<JobTypeFilter>): JobTypeFilter {
@@ -970,7 +1330,7 @@ class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* bareos.common.JobType type */ 1:
+                case /* bareos.database.JobType type */ 1:
                     message.type = reader.int32();
                     break;
                 default:
@@ -985,7 +1345,7 @@ class JobTypeFilter$Type extends MessageType<JobTypeFilter> {
         return message;
     }
     internalBinaryWrite(message: JobTypeFilter, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* bareos.common.JobType type = 1; */
+        /* bareos.database.JobType type = 1; */
         if (message.type !== 0)
             writer.tag(1, WireType.Varint).int32(message.type);
         let u = options.writeUnknownFields;
@@ -1227,6 +1587,8 @@ export const ListJobsResponse = new ListJobsResponse$Type();
  * @generated ServiceType for protobuf service bareos.database.Database
  */
 export const Database = new ServiceType("bareos.database.Database", [
+    { name: "ClientInfo", options: {}, I: ClientInfoRequest, O: ClientInfoResponse },
+    { name: "JobInfo", options: {}, I: JobInfoRequest, O: JobInfoResponse },
     { name: "ListClients", options: {}, I: ListClientsRequest, O: ListClientsResponse },
     { name: "ListJobs", options: {}, I: ListJobsRequest, O: ListJobsResponse }
 ]);

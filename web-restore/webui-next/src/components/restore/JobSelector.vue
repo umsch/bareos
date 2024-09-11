@@ -24,6 +24,7 @@ const { jobs, selectedJob, selectedCatalog, clients, selectedSourceClient } =
       stack-label
       :options="clients"
       option-label="name"
+      :rules="[(val) => !!val || 'Quell Client wählen um Job wählen zu können']"
     >
       <template v-slot:no-option>
         <q-item>
@@ -45,6 +46,7 @@ const { jobs, selectedJob, selectedCatalog, clients, selectedSourceClient } =
       :options="jobs"
       option-label="name"
       stack-label
+      :rules="[(val) => !!val || 'Job wählen']"
     >
       <template v-slot:no-option>
         <q-item>

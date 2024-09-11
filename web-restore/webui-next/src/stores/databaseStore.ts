@@ -1,10 +1,9 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { useGrpcStore } from 'stores/grpcStore'
-import { Client, Job } from 'src/generated/database'
+import { Client, Job, JobType } from 'src/generated/database'
 import { Catalog, type CatalogId } from 'src/generated/config'
-import { JobType } from 'src/generated/common'
 
-const all = { offset: BigInt(0), limit: BigInt(12) }
+const all = { offset: BigInt(0), limit: BigInt(100) }
 
 export const useDatabaseStore = defineStore('databseStore', () => {
   const { databaseClient } = storeToRefs(useGrpcStore())
@@ -30,7 +29,7 @@ export const useDatabaseStore = defineStore('databseStore', () => {
         {
           filterType: {
             oneofKind: 'client',
-            client: { client },
+            client: { id: client.id },
           },
         },
         {

@@ -9,27 +9,34 @@ import { useWizardStore } from 'stores/wizardStore'
 import MergeFilesetsSwitch from 'components/restore/MergeFilesetsSwitch.vue'
 import RestoreOptions from 'components/restore/RestoreOptions.vue'
 const wizard = useWizardStore()
+
+const executeStart = async () => {
+  await wizard.runRestoreSession()
+  wizard.$reset()
+}
 </script>
 
 <template>
   <div class="q-pa-md row items-start q-gutter-x-md">
     <div class="q-gutter-y-md col-shrink">
       <q-card>
-        <q-card-section>
-          <catalog-selector />
-        </q-card-section>
-        <q-card-section>
-          <merge-filesets-switch />
-        </q-card-section>
-        <q-card-section>
-          <job-selector />
-        </q-card-section>
-        <q-card-section>
-          <restore-options />
-        </q-card-section>
-        <q-card-section>
-          <run-session />
-        </q-card-section>
+        <q-form greedy @submit="executeStart">
+          <q-card-section>
+            <catalog-selector />
+          </q-card-section>
+          <q-card-section>
+            <merge-filesets-switch />
+          </q-card-section>
+          <q-card-section>
+            <job-selector />
+          </q-card-section>
+          <q-card-section>
+            <restore-options />
+          </q-card-section>
+          <q-card-section>
+            <run-session />
+          </q-card-section>
+        </q-form>
       </q-card>
 
       <q-card>

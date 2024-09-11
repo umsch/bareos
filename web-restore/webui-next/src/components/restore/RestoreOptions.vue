@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ReplaceType } from 'src/generated/restore'
+import { type Client } from 'src/generated/config'
 import { storeToRefs } from 'pinia'
 import { useWizardStore } from 'stores/wizardStore'
 import { QSelect } from 'quasar'
@@ -62,7 +63,6 @@ watch(
     )
 
     replaceType.value = ss?.restoreOptions?.replace ?? ReplaceType.NEVER
-    // restoreClient.value = clientById(ss?.restoreOptions?.restoreClient)
     restoreLocation.value =
       ss?.restoreOptions?.restoreLocation ?? '/tmp/restore'
   },
@@ -80,6 +80,7 @@ watch(
       filled
       borderless
       stack-label
+      v-model="restoreClient"
     >
       <template v-slot:control>
         <div class="q-mt-sm full-width text-center">
@@ -104,6 +105,7 @@ watch(
       stack-label
       :options="configClients"
       option-label="name"
+      :rules="[(value: Client) => !!value || 'Ziel Client auswählen']"
     >
       <template v-slot:no-option>
         <q-item>
@@ -118,6 +120,8 @@ watch(
       filled
       borderless
       stack-label
+      :rules="[(val: string) =>
+    (!!val && val.length > 0) || 'Prefix für Rücksicherungspfad eingeben']"
     />
   </div>
 </template>

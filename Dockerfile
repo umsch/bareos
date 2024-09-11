@@ -1,5 +1,5 @@
 # Basis-Stufe mit den installierten Paketen
-FROM bareos:fedora40 as bareos_system
+FROM registry.bareos.com/fedora40.x86_64:latest as bareos_system
 
 LABEL description="build and test bareos grpc environment"
 

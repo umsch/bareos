@@ -21,7 +21,6 @@
 
 #include <optional>
 #include <variant>
-#include "common.pb.h"
 #include "grpc.h"
 
 using grpc::ServerContext;

@@ -4,7 +4,33 @@
 
 syntax = "proto3";
 
-import "common.proto";
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  RESTORE = 1;
+  BACKUP = 2;
+  COPY = 3;
+  VERIFY = 4;
+  ADMIN = 5;
+  ARCHIVE = 6;
+  MIGRATE = 7;
+  CONSOLIDATE = 8;
+};
+
+enum JobLevel {
+  JOB_LEVEL_UNSPECIFIED = 0;
+  FULL = 1;
+  DIFFERENTIAL = 2;
+  INCREMENTAL = 3;
+  // SINCE = 4; (currently unused)
+  VIRTUAL_FULL = 5;
+  NONE = 6;
+
+  L_VERIFY_CATALOG = 7;
+  L_VERIFY_INIT = 8;
+  L_VERIFY_VOLUME_TO_CATALOG = 9;
+  L_VERIFY_DISK_TO_CATALOG = 10;
+  L_VERIFY_DATA = 11;
+};
 
 package bareos.config;
 
@@ -40,13 +66,13 @@ message JobId {
 message Job {
   JobId id = 1;
   string name = 2;
-  bareos.common.JobType type = 3;
+  JobType type = 3;
 
   string description = 4;
 };
 
 message JobTypeFilter {
-  bareos.common.JobType select = 1;
+  JobType select = 1;
 };
 
 message JobFilter {

@@ -52,13 +52,14 @@ start_test
 
 grpc bareos.config.Config/ListCatalogs "{}" | tee "$log_home/catalogs.list"
 CATALOG=$(jq -c '.catalogs | .[0] | .id' "$log_home/catalogs.list")
-grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list"
+DEFAULT_OPTIONS="{ \"range\" : { \"limit\" : 1000 } }"
+grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS }" | tee "$log_home/jobs.list"
 grpc bareos.config.Config/ListJobs "{ \"filters\" : [ { \"type\" : { \"select\" : \"RESTORE\" }}]}" | tee "$log_home/restore_jobs.list"
 grpc bareos.config.Config/ListClients "{}" | tee "$log_home/restore_clients.list"
 
 RESTORECLIENT=$(jq -c ".clients | .[0] | .id" "$log_home/restore_clients.list")
 RESTOREJOB=$(jq -c ".jobs | .[0] | .id" "$log_home/restore_jobs.list")
-JOB=$(jq -sc ".[0] | .job" "$log_home/jobs.list")
+JOB=$(jq -c ".jobs | .[0] | .id" "$log_home/jobs.list")
 
 
 echo "client = $RESTORECLIENT"
@@ -135,7 +136,7 @@ grpc bareos.restore.Restore/Run "{\"session\" : $SESSION }" | tee "$log_home/run
 
 # check that the job actually exists in the database
 JOBID=$(jq ".jobid | .jobid" "$log_home/run")
-grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG }" | tee "$log_home/jobs.list.after"
+grpc bareos.database.Database/ListJobs "{ \"catalog\" : $CATALOG, \"options\" : $DEFAULT_OPTIONS }" | tee "$log_home/jobs.list.after"
 jq -s "map(.job.jobid) | any(. == $JOBID)" "$log_home/jobs.list.after"
 
 bin/bconsole <<EOF

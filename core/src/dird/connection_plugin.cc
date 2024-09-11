@@ -1112,7 +1112,10 @@ bool ListClients(database_session* sess,
   return true;
 }
 
-bool ListJobs(database_session* sess, DB_result_callback* cb, void* user)
+bool ListJobs(database_session* sess,
+              DB_result_callback* cb,
+              void* user,
+              const char* outer)
 {
   if (!sess) { return false; }
 
@@ -1120,15 +1123,27 @@ bool ListJobs(database_session* sess, DB_result_callback* cb, void* user)
 
   sql_result_handler handler(cb, user);
 
-  std::vector<char> v;
-  JobDbRecord jr{};
+  DbLocker _{sess->ptr};
 
-  if (!sess->ptr->ListJobRecords(nullptr, &jr, nullptr, nullptr, v, v, v,
-                                 nullptr, nullptr, 0, false, false, false,
-                                 &handler)) {
+  auto* inner = sess->ptr->ListJobsQuery();
+
+  PoolMem query;
+  if (outer) {
+    Mmsg(query, outer, inner);
+  } else {
+    PmStrcpy(query, inner);
+  }
+
+  if (!sess->ptr->SqlQuery(query.c_str())) {
     sess->error = sess->ptr->strerror();
     return false;
   }
+
+  if (sess->ptr->ListResult(&handler) < 0) {
+    sess->error = sess->ptr->strerror();
+    return false;
+  }
+
   return true;
 }
 

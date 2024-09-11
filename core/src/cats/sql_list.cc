@@ -546,6 +546,11 @@ void BareosDb::ListJobstatisticsRecords(JobControlRecord* jcr,
   SqlFreeResult();
 }
 
+const char* BareosDb::ListJobsQuery()
+{
+  return "SELECT * FROM job ORDER BY starttime";
+}
+
 bool BareosDb::ListJobRecords(JobControlRecord* jcr,
                               JobDbRecord* jr,
                               const char* range,

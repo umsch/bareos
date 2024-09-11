@@ -70,7 +70,7 @@ endmacro()
 
 addgrpcprotofiles(
   protosrcs protohdrs grpcsrcs grpchdrs "restore.proto" "database.proto"
-  "common.proto" "config.proto"
+  "config.proto"
 )
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")

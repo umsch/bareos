@@ -6,7 +6,6 @@ syntax = "proto3";
 
 package bareos.database;
 
-import "common.proto";
 import "config.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -27,14 +26,72 @@ message QueryOptions {
   Range range = 1;
 };
 
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  RESTORE = 1;
+  BACKUP = 2;
+  COPY = 3;
+  VERIFY = 4;
+  ADMIN = 5;
+  ARCHIVE = 6;
+  MIGRATE = 7;
+  CONSOLIDATE = 8;
+  MIGRATED_JOB = 9;
+  CONSOLE = 10;
+  SYSTEM = 11;
+  JOB_COPY = 12;
+  SCAN = 13;
+};
+
+enum JobLevel {
+  JOB_LEVEL_UNSPECIFIED = 0;
+  FULL = 1;
+  DIFFERENTIAL = 2;
+  INCREMENTAL = 3;
+  // SINCE = 4; (currently unused)
+  VERIFY_CATALOG = 5;
+  VERIFY_INIT = 6;
+  VERIFY_VOLUME_TO_CATALOG = 7;
+  VERIFY_DISK_TO_CATALOG = 8;
+  VERIFY_DATA = 9;
+  BASE = 10;
+  VIRTUAL_FULL = 11;
+  NONE = 12;
+};
+
 /* Should these functions return a typed response (like now) or rather a generic
  * message SqlResponse { map<string, string>; } ?
  */
 service Database {
   // we should somehow have a limit & offset in these requests
   // most queries probably wont need all of them
+
+  // orders of the ids inside the request and the infos in the response
+  // are independent of each other,  i.e. if you request info for 2,3,5,
+  // then the response may have the order 5,2,3 or 2,5,3!
+  rpc ClientInfo (ClientInfoRequest) returns (ClientInfoResponse);
+  rpc JobInfo (JobInfoRequest) returns (JobInfoResponse);
+
   rpc ListClients (ListClientsRequest) returns (ListClientsResponse);
   rpc ListJobs (ListJobsRequest) returns (ListJobsResponse);
+};
+
+message ClientInfoRequest {
+  bareos.config.CatalogId catalog = 1;
+  repeated ClientId ids = 2;
+};
+
+message ClientInfoResponse {
+  repeated Client clients = 1;
+};
+
+message JobInfoRequest {
+  bareos.config.CatalogId catalog = 1;
+  repeated JobId ids = 2;
+};
+
+message JobInfoResponse {
+  repeated Job jobs = 1;
 };
 
 message Client {
@@ -47,7 +104,7 @@ message Client {
 };
 
 message BackupData {
-  bareos.common.JobLevel level = 1;
+  JobLevel level = 1;
   ClientId client = 2;
   uint64 job_files = 3;
   uint64 job_bytes = 4;
@@ -56,10 +113,10 @@ message BackupData {
 message Job {
   JobId id = 1;
   string name = 2;
-  bareos.common.JobType type = 3;
-  google.protobuf.Timestamp sched_time = 4;
-  google.protobuf.Timestamp start_time = 5;
-  google.protobuf.Timestamp end_time = 6;
+  JobType type = 3;
+  optional google.protobuf.Timestamp sched_time = 4;
+  optional google.protobuf.Timestamp start_time = 5;
+  optional google.protobuf.Timestamp end_time = 6;
   optional string comment = 7;
 
   oneof extra_job_data {
@@ -85,11 +142,11 @@ message ListClientsResponse {
 };
 
 message ClientFilter {
-  Client client = 1;
+  ClientId id = 1;
 };
 
 message JobTypeFilter {
-  bareos.common.JobType type = 1;
+  JobType type = 1;
 };
 
 message NameFilter {

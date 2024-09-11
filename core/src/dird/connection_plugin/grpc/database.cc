@@ -731,7 +731,7 @@ class DatabaseImpl final : public Database::Service {
         if (!res.empty()) { res += " AND "; }
 
         res += "clientid = '";
-        res += client.id().id();
+        res += std::to_string(client.id().id());
         res += "'";
 
       } else if (current->has_name()) {

@@ -1,13 +1,17 @@
-import { defineStore } from 'pinia'
-import type { Catalog } from 'src/generated/config'
-import { onBeforeMount, ref, watch } from 'vue'
-import type { Client, Job } from 'src/generated/database'
-import type { Client as ConfigClient } from 'src/generated/config'
-import type { RestoreSession, File, SessionState } from 'src/generated/restore'
-import { useRestoreClientStore } from 'src/stores/restoreClientStore'
 import { find, first, isEmpty, isEqual, reverse } from 'lodash'
+
+import { onBeforeMount, ref, watch } from 'vue'
+
+import { defineStore } from 'pinia'
+
 import { useConfigStore } from 'stores/configStore'
 import { useDatabaseStore } from 'stores/databaseStore'
+import { useRestoreClientStore } from 'stores/restoreClientStore'
+
+import type { Catalog } from 'src/generated/config'
+import type { Client as ConfigClient } from 'src/generated/config'
+import type { Client, Job } from 'src/generated/database'
+import type { File, RestoreSession, SessionState } from 'src/generated/restore'
 
 export const useWizardStore = defineStore('wizard', () => {
   const restoreClient = useRestoreClientStore()
@@ -148,7 +152,7 @@ export const useWizardStore = defineStore('wizard', () => {
     console.debug(
       '---- starting restore session',
       selectedJob.value,
-      sessionState.value?.start?.backupJob
+      sessionState.value?.start?.backupJob,
     )
 
     if (!selectedJob.value || !selectedCatalog.value) {
@@ -210,7 +214,7 @@ export const useWizardStore = defineStore('wizard', () => {
 
     const currentPath = await restoreClient.changeDirectory(
       selectedSession.value,
-      path
+      path,
     )
     currentDirectory.value = reverse(currentPath!)
     files.value = await restoreClient.fetchFiles(selectedSession.value)
@@ -224,7 +228,7 @@ export const useWizardStore = defineStore('wizard', () => {
     await restoreClient.changeMarkedStatus(
       selectedSession.value,
       file,
-      file.marked
+      file.marked,
     )
     await updateState()
   }
@@ -244,7 +248,7 @@ export const useWizardStore = defineStore('wizard', () => {
     if (selectedSession.value && sessionState.value) {
       await restoreClient.pushRestoreOptions(
         selectedSession.value,
-        sessionState.value?.restoreOptions ?? {}
+        sessionState.value?.restoreOptions ?? {},
       )
     }
   }
@@ -253,7 +257,7 @@ export const useWizardStore = defineStore('wizard', () => {
     () => sessionState.value?.restoreOptions,
     async () => {
       await pushRestoreOptions()
-    }
+    },
   )
 
   const configClients = ref<ConfigClient[]>([])

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import CatalogSelector from 'components/restore/CatalogSelector.vue'
-import JobSelector from 'components/restore/JobSelector.vue'
-import FilesBrowser from 'components/restore/FilesBrowser.vue'
-import SessionState from 'components/restore/SessionState.vue'
-import RunSession from 'components/restore/RunSession.vue'
-
 import { useWizardStore } from 'stores/wizardStore'
+
+import CatalogSelector from 'components/restore/CatalogSelector.vue'
+import FilesBrowser from 'components/restore/FilesBrowser.vue'
+import JobSelector from 'components/restore/JobSelector.vue'
 import MergeFilesetsSwitch from 'components/restore/MergeFilesetsSwitch.vue'
 import RestoreOptions from 'components/restore/RestoreOptions.vue'
+import RunSession from 'components/restore/RunSession.vue'
+import SessionState from 'components/restore/SessionState.vue'
+
 const wizard = useWizardStore()
 
 const executeStart = async () => {

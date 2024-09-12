@@ -33,5 +33,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 
+.vscode
+
 # local .env files
 .env.local*

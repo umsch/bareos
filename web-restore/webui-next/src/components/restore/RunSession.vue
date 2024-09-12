@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { matRocketLaunch } from '@quasar/extras/material-icons'
 
-import { useWizardStore } from 'stores/wizardStore'
 import { storeToRefs } from 'pinia'
+
+import { useWizardStore } from 'stores/wizardStore'
 
 const { sessionState } = storeToRefs(useWizardStore())
 </script>

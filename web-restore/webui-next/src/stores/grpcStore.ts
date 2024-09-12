@@ -1,17 +1,21 @@
-import { defineStore } from 'pinia'
-import { ref, shallowRef, watch } from 'vue'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
+import { ServerStreamingCall, UnaryCall } from '@protobuf-ts/runtime-rpc'
+import type { MethodInfo } from '@protobuf-ts/runtime-rpc/build/types/reflection-info'
+import {
+  NextServerStreamingFn,
+  NextUnaryFn,
+} from '@protobuf-ts/runtime-rpc/build/types/rpc-interceptor'
+import type { RpcOptions } from '@protobuf-ts/runtime-rpc/build/types/rpc-options'
+
+import { ref, shallowRef, watch } from 'vue'
+
+import { defineStore } from 'pinia'
+
+import { useQuasar } from 'quasar'
+
 import { ConfigClient, IConfigClient } from 'src/generated/config.client'
 import { DatabaseClient, IDatabaseClient } from 'src/generated/database.client'
 import { IRestoreClient, RestoreClient } from 'src/generated/restore.client'
-import { ServerStreamingCall, UnaryCall } from '@protobuf-ts/runtime-rpc'
-import type { MethodInfo } from '@protobuf-ts/runtime-rpc/build/types/reflection-info'
-import type { RpcOptions } from '@protobuf-ts/runtime-rpc/build/types/rpc-options'
-import {
-  NextUnaryFn,
-  NextServerStreamingFn,
-} from '@protobuf-ts/runtime-rpc/build/types/rpc-interceptor'
-import { useQuasar } from 'quasar'
 
 export const useGrpcStore = defineStore('transportStore', () => {
   // todo: make url configurable
@@ -27,7 +31,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
     next: NextServerStreamingFn,
     method: MethodInfo,
     input: object,
-    options: RpcOptions
+    options: RpcOptions,
   ): ServerStreamingCall => {
     console.debug(`📞 Calling Director: ${method.name}`, JSON.stringify(input))
     const call = next(method, input, options)
@@ -36,7 +40,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
     call.responses.onMessage((response) => {
       console.debug(
         `👂  🐜🐜🐜 Received response from Director ${method.name}:`,
-        JSON.stringify(response)
+        JSON.stringify(response),
       )
     })
 
@@ -44,7 +48,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
     call.responses.onError((error) => {
       console.error(
         `😳 Error in Director streaming call for ${method.name}:`,
-        error
+        error,
       )
       $q.notify({
         color: 'negative',
@@ -58,7 +62,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
     // Optionally handle completion of the stream
     call.responses.onComplete(() => {
       console.debug(
-        `💤💤💤 Completed Director streaming call for ${method.name}`
+        `💤💤💤 Completed Director streaming call for ${method.name}`,
       )
     })
 
@@ -69,7 +73,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
     next: NextUnaryFn,
     method: MethodInfo,
     input: object,
-    options: RpcOptions
+    options: RpcOptions,
   ): UnaryCall => {
     console.debug(`📞 Calling Director: ${method.name}`, JSON.stringify(input))
     const call: UnaryCall = next(method, input, options)
@@ -78,7 +82,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
       (result) => {
         console.debug(
           `👂 Received from Director (${method.name}) :`,
-          JSON.stringify(result)
+          JSON.stringify(result),
         )
       },
       (error) => {
@@ -90,7 +94,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
           message: `😳 Error from Director when calling ${method.name}:`,
           icon: 'report_problem',
         })
-      }
+      },
     )
 
     return call
@@ -115,7 +119,7 @@ export const useGrpcStore = defineStore('transportStore', () => {
       databaseClient.value = new DatabaseClient(transport.value)
       restoreClient.value = new RestoreClient(transport.value)
     },
-    { immediate: true }
+    { immediate: true },
   ) // immediate ensures the watch callback runs immediately, initializing transport and configClient
 
   return { baseUrl, configClient, databaseClient, restoreClient }

@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { useWizardStore } from 'src/stores/wizardStore'
-import { ref, watch } from 'vue'
-import { File, FileType } from 'src/generated/restore'
 import {
-  matQuestionMark,
-  matInsertDriveFile,
   matFolder,
+  matInsertDriveFile,
+  matQuestionMark,
 } from '@quasar/extras/material-icons'
+
+import { ref, watch } from 'vue'
+
 import { storeToRefs } from 'pinia'
+
+import { useWizardStore } from 'stores/wizardStore'
+
+import { File, FileType } from 'src/generated/restore'
 
 const wizardStore = useWizardStore()
 

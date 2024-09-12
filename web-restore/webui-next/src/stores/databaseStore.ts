@@ -1,7 +1,9 @@
 import { defineStore, storeToRefs } from 'pinia'
+
 import { useGrpcStore } from 'stores/grpcStore'
-import { Client, Job, JobType } from 'src/generated/database'
+
 import { Catalog, type CatalogId } from 'src/generated/config'
+import { Client, Job, JobType } from 'src/generated/database'
 
 const all = { offset: BigInt(0), limit: BigInt(100) }
 
@@ -19,7 +21,7 @@ export const useDatabaseStore = defineStore('databseStore', () => {
 
   const listJobs = async (
     catalog_id: CatalogId,
-    client: Client
+    client: Client,
   ): Promise<Job[]> => {
     console.debug(client)
     const response = await databaseClient.value?.listJobs({

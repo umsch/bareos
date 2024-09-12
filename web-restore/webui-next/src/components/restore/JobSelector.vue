@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { useWizardStore } from 'src/stores/wizardStore'
-import { QSelect } from 'quasar'
 import { storeToRefs } from 'pinia'
+
+import { QSelect } from 'quasar'
+
+import { useWizardStore } from 'src/stores/wizardStore'
 
 const wizardStore = useWizardStore()
 const { jobs, selectedJob, selectedCatalog, clients, selectedSourceClient } =

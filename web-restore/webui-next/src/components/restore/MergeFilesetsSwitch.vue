@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { useWizardStore } from 'stores/wizardStore'
 import { computed } from 'vue'
+
 import { storeToRefs } from 'pinia'
+
+import { useWizardStore } from 'stores/wizardStore'
 
 const wizardStore = useWizardStore()
 const { selectedCatalog, sessionState, mergeFilesets, findJobChain } =
   storeToRefs(wizardStore)
 
 const disabled = computed(
-  () => !selectedCatalog || !!sessionState.value?.restoreOptions
+  () => !selectedCatalog || !!sessionState.value?.restoreOptions,
 )
 </script>
 

@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { useWizardStore } from 'src/stores/wizardStore'
-import { QSelect } from 'quasar'
 import { storeToRefs } from 'pinia'
+
+import { QSelect } from 'quasar'
+
+import { useWizardStore } from 'stores/wizardStore'
+
 import { Catalog } from 'src/generated/config'
 
 const wizardStore = useWizardStore()

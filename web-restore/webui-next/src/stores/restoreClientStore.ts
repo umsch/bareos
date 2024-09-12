@@ -1,5 +1,9 @@
-import { defineStore, storeToRefs } from 'pinia'
 import { ref } from 'vue'
+
+import { defineStore, storeToRefs } from 'pinia'
+
+import { useGrpcStore } from 'stores/grpcStore'
+
 import type { Catalog } from 'src/generated/config'
 import {
   type File,
@@ -9,7 +13,6 @@ import {
   type RestoreSession,
   StartSelection,
 } from 'src/generated/restore'
-import { useGrpcStore } from 'stores/grpcStore'
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
   const { restoreClient } = storeToRefs(useGrpcStore())
@@ -82,7 +85,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   const changeMarkedStatus = async (
     session: RestoreSession,
     file: File,
-    mark: boolean
+    mark: boolean,
   ) => {
     await restoreClient.value?.changeMarkedStatus({
       session: session,
@@ -103,7 +106,7 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
 
   const pushRestoreOptions = async (
     session: RestoreSession,
-    newOptions: RestoreOptions
+    newOptions: RestoreOptions,
   ) => {
     return restoreClient.value?.updateState({ session, newOptions })
   }

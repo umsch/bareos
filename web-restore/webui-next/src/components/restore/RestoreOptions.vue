@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ReplaceType } from 'src/generated/restore'
-import { type Client } from 'src/generated/config'
+
 import { storeToRefs } from 'pinia'
-import { useWizardStore } from 'stores/wizardStore'
+
 import { QSelect } from 'quasar'
+
+import { useWizardStore } from 'stores/wizardStore'
+
+import { type Client } from 'src/generated/config'
+import { ReplaceType } from 'src/generated/restore'
 
 const wizard = useWizardStore()
 
 const { sessionState, configClients } = storeToRefs(wizard)
 
 const replaceType = ref(
-  sessionState.value?.restoreOptions?.replace ?? ReplaceType.NEVER
+  sessionState.value?.restoreOptions?.replace ?? ReplaceType.NEVER,
 )
 const replaceOptions = ref([
   { label: 'Immer', value: ReplaceType.ALWAYS },
@@ -36,7 +40,7 @@ watch(
   },
   {
     immediate: false,
-  }
+  },
 )
 
 watch(
@@ -51,7 +55,7 @@ watch(
   },
   {
     immediate: false,
-  }
+  },
 )
 
 watch(
@@ -59,7 +63,7 @@ watch(
   (ss) => {
     console.debug(
       'sessions state restore options',
-      sessionState.value?.restoreOptions
+      sessionState.value?.restoreOptions,
     )
 
     replaceType.value = ss?.restoreOptions?.replace ?? ReplaceType.NEVER
@@ -68,7 +72,7 @@ watch(
   },
   {
     immediate: false,
-  }
+  },
 )
 </script>
 

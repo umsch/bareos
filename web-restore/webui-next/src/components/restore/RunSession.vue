@@ -14,7 +14,8 @@ const { sessionState } = storeToRefs(useWizardStore())
     borderless
     dense
     :rules="[
-      (val) => val.filesMarkedCount > 0 || 'Dateien zum restore auswählen',
+      (val) =>
+        (!!val && val.filesMarkedCount > 0) || 'Dateien zum restore auswählen',
     ]"
   >
     <q-btn

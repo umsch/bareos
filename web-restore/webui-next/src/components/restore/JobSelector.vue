@@ -38,6 +38,7 @@ const { jobs, selectedJob, selectedCatalog, clients, selectedSourceClient } =
     <q-select
       class="col"
       filled
+      :disable="!selectedCatalog"
       v-model="selectedJob"
       clearable
       use-input

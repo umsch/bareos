@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+
+import { storeToRefs } from 'pinia'
+
+import { QForm } from 'quasar'
+
 import { useWizardStore } from 'stores/wizardStore'
 
 import CatalogSelector from 'components/restore/CatalogSelector.vue'
@@ -7,21 +13,33 @@ import JobSelector from 'components/restore/JobSelector.vue'
 import MergeFilesetsSwitch from 'components/restore/MergeFilesetsSwitch.vue'
 import RestoreOptions from 'components/restore/RestoreOptions.vue'
 import RunSession from 'components/restore/RunSession.vue'
-import SessionState from 'components/restore/SessionState.vue'
 
 const wizard = useWizardStore()
+const { selectedCatalog, selectedSourceClient, selectedJob, sessionState } =
+  storeToRefs(wizard)
 
 const executeStart = async () => {
   await wizard.runRestoreSession()
-  wizard.$reset()
+  // wizard.$reset()
 }
+
+const form = ref<QForm>()
+watch(
+  [selectedCatalog, selectedSourceClient, selectedJob, sessionState],
+  async () => {
+    await form.value!.validate()
+  },
+  {
+    flush: 'post',
+  },
+)
 </script>
 
 <template>
   <div class="q-pa-md row items-start q-gutter-x-md">
     <div class="q-gutter-y-md col-shrink">
       <q-card>
-        <q-form greedy @submit="executeStart">
+        <q-form greedy @submit="executeStart" ref="form">
           <q-card-section>
             <catalog-selector />
           </q-card-section>
@@ -38,12 +56,6 @@ const executeStart = async () => {
             <run-session />
           </q-card-section>
         </q-form>
-      </q-card>
-
-      <q-card>
-        <q-card-section>
-          <session-state />
-        </q-card-section>
       </q-card>
     </div>
     <q-card class="col-grow">

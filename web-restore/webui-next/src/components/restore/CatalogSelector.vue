@@ -18,7 +18,7 @@ const { catalogs, selectedCatalog } = storeToRefs(wizardStore)
     use-input
     hide-selected
     fill-input
-    input-debounce="0"
+    stack-label
     label="Catalog"
     :options="catalogs"
     option-label="name"

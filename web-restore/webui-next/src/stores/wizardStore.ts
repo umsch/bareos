@@ -326,6 +326,12 @@ export const useWizardStore = defineStore(
         serialize: serializeWithUint8ArrayAndBigInt,
         deserialize: deserializeWithUint8ArrayAndBigInt,
       },
+      pick: [
+        'selectedCatalog',
+        'selectedSourceClient',
+        'selectedJob',
+        'selectedSession',
+      ],
     },
   },
 )

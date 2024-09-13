@@ -1,10 +1,7 @@
-import { ref } from 'vue'
-
 import { defineStore, storeToRefs } from 'pinia'
 
 import { useGrpcStore } from 'stores/grpcStore'
 
-import type { Catalog } from 'src/generated/config'
 import {
   type File,
   FileType,
@@ -16,7 +13,6 @@ import {
 
 export const useRestoreClientStore = defineStore('restore-client', () => {
   const { restoreClient } = storeToRefs(useGrpcStore())
-  const catalogs = ref<Catalog[]>([])
 
   const fetchSessions = async () => {
     const response = await restoreClient.value?.listSessions({})
@@ -112,7 +108,6 @@ export const useRestoreClientStore = defineStore('restore-client', () => {
   }
 
   return {
-    catalogs,
     fetchSessions,
     createSession,
     deleteSession,

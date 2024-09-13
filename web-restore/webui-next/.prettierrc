@@ -3,6 +3,7 @@
   "semi": false,
   "tabWidth": 2,
   "trailingComma": "all",
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrder": [
     "<THIRD_PARTY_MODULES>",
     "^vue$",

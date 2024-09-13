@@ -4,10 +4,9 @@ import { onBeforeMount, ref, shallowRef, watch } from 'vue'
 
 import { defineStore } from 'pinia'
 
-import { useConfigStore } from 'stores/configStore'
-import { useDatabaseStore } from 'stores/databaseStore'
-import { useRestoreClientStore } from 'stores/restoreClientStore'
-
+import { Config } from 'src/director/config'
+import { Database } from 'src/director/database'
+import { Restore } from 'src/director/restore'
 import type { Catalog, Client as ConfigClient } from 'src/generated/config'
 import type { Client, Job } from 'src/generated/database'
 import type { File, RestoreSession, SessionState } from 'src/generated/restore'
@@ -15,9 +14,9 @@ import type { File, RestoreSession, SessionState } from 'src/generated/restore'
 export const useWizardStore = defineStore(
   'wizard',
   () => {
-    const restoreClient = shallowRef()
-    const configClient = shallowRef()
-    const databaseClient = shallowRef()
+    const restoreClient = shallowRef(new Restore())
+    const configClient = shallowRef(new Config())
+    const databaseClient = shallowRef(new Database())
 
     const selectCatalogFromState = (
       state: SessionState,
@@ -37,10 +36,6 @@ export const useWizardStore = defineStore(
     }
 
     onBeforeMount(async () => {
-      restoreClient.value = useRestoreClientStore()
-      configClient.value = useConfigStore()
-      databaseClient.value = useDatabaseStore()
-
       await updateSessions()
       await updateConfigClients()
       if (!selectedSession.value && sessions.value.length > 0) {

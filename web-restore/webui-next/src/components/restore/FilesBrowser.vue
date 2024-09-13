@@ -60,7 +60,7 @@ const updateMarkedStatus = async (value: boolean, file: File) => {
 <template>
   <q-breadcrumbs gutter="sm">
     <template v-for="(breadcrumb, index) in currentDirectory" :key="index">
-      <template v-if="breadcrumb.id?.value != 0n">
+      <template v-if="breadcrumb.id?.value != 0">
         <q-breadcrumbs-el
           to="#"
           :label="breadcrumb.name"

@@ -4,7 +4,7 @@ import { Catalog, type CatalogId } from 'src/generated/config'
 import { Client, Job, JobType } from 'src/generated/database'
 import { IDatabaseClient } from 'src/generated/database.client'
 
-const all = { offset: BigInt(0), limit: BigInt(100) }
+const all = { offset: 0, limit: 100 }
 
 export class Database {
   private readonly databaseClient: IDatabaseClient

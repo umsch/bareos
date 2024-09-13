@@ -11,7 +11,7 @@
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev",
     "build": "quasar build",
-    "grpc-gen": "protoc --ts_out ./src/generated/ --proto_path ../../core/src/dird/connection_plugin/grpc/ restore.proto database.proto config.proto --ts_opt generate_dependencies",
+    "grpc-gen": "protoc --ts_out ./src/generated/ --proto_path ../../core/src/dird/connection_plugin/grpc/ restore.proto database.proto config.proto --ts_opt generate_dependencies --ts_opt long_type_number",
     "grpc-server-up": "podman-compose -f ../../compose.yaml up -d",
     "grpc-server-down": "podman-compose -f ../../compose.yaml down"
   },

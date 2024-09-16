@@ -7,6 +7,8 @@ import { QSelect } from 'quasar'
 
 import { useWizardStore } from 'stores/wizardStore'
 
+import EmptyList from 'components/EmptyList.vue'
+
 import { type Client } from 'src/generated/config'
 import { ReplaceType } from 'src/generated/restore'
 
@@ -112,9 +114,7 @@ watch(
       :rules="[(value: Client) => !!value || 'Ziel Client auswählen']"
     >
       <template v-slot:no-option>
-        <q-item>
-          <q-item-section class="text-grey"> No results</q-item-section>
-        </q-item>
+        <empty-list />
       </template>
     </q-select>
     <q-input

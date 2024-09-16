@@ -11,10 +11,11 @@ import { Restore } from 'src/director/restore'
 import type { Catalog, Client as ConfigClient } from 'src/generated/config'
 import type { Client, Job } from 'src/generated/database'
 import type { File, RestoreSession, SessionState } from 'src/generated/restore'
-import {
-  deserializeWithUint8ArrayAndBigInt,
-  serializeWithUint8ArrayAndBigInt,
-} from 'src/helper/serializer'
+
+// import {
+//   deserializeWithUint8ArrayAndBigInt,
+//   serializeWithUint8ArrayAndBigInt,
+// } from 'src/helper/serializer'
 
 export const useWizardStore = defineStore(
   'wizard',
@@ -41,6 +42,8 @@ export const useWizardStore = defineStore(
     }
 
     onBeforeMount(async () => {
+      console.debug('initializing wizard store')
+
       await updateSessions()
       await updateConfigClients()
       if (!selectedSession.value && sessions.value.length > 0) {
@@ -74,6 +77,7 @@ export const useWizardStore = defineStore(
     const catalogs = ref<Catalog[]>([])
     const selectedCatalog = ref<Catalog | null>(null)
     const updateCatalogs = async () => {
+      console.debug('updating catalogs')
       catalogs.value = await configClient.value.getConfigCatalogs()
     }
 
@@ -81,6 +85,7 @@ export const useWizardStore = defineStore(
     const selectedJob = ref<Job | null>(null)
     const jobs = ref<Job[]>([])
     const updateJobs = async (catalog: Catalog, filter: Client | null) => {
+      console.debug('updating database jobs')
       const catalog_id = catalog.id
       if (catalog_id && filter) {
         jobs.value = await databaseClient.value.listJobs(catalog_id, filter!)
@@ -92,6 +97,7 @@ export const useWizardStore = defineStore(
     const sessions = ref<RestoreSession[]>([])
 
     const updateSessions = async () => {
+      console.debug('updating sessions')
       sessions.value = await restoreClient.value.fetchSessions()
     }
 
@@ -137,6 +143,7 @@ export const useWizardStore = defineStore(
         return
       }
 
+      await updateSessions()
       await cleanUpSessions()
       if (job) {
         await createRestoreSession()
@@ -248,6 +255,7 @@ export const useWizardStore = defineStore(
     const sessionState = ref<SessionState | null>(null)
 
     const updateState = async () => {
+      console.log('updating state')
       if (!selectedSession.value) {
         sessionState.value = null
         return
@@ -277,6 +285,7 @@ export const useWizardStore = defineStore(
     const configClients = ref<ConfigClient[]>([])
 
     const updateConfigClients = async () => {
+      console.debug('updating config clients')
       configClients.value = await configClient.value.getConfigClients()
     }
 
@@ -318,20 +327,20 @@ export const useWizardStore = defineStore(
     }
   },
   {
-    persist: {
-      debug: true,
-      storage: sessionStorage,
-
-      serializer: {
-        serialize: serializeWithUint8ArrayAndBigInt,
-        deserialize: deserializeWithUint8ArrayAndBigInt,
-      },
-      pick: [
-        'selectedCatalog',
-        'selectedSourceClient',
-        'selectedJob',
-        'selectedSession',
-      ],
-    },
+    // persist: {
+    //   debug: true,
+    //   storage: sessionStorage,
+    //
+    //   serializer: {
+    //     serialize: serializeWithUint8ArrayAndBigInt,
+    //     deserialize: deserializeWithUint8ArrayAndBigInt,
+    //   },
+    //   pick: [
+    //     'selectedCatalog',
+    //     'selectedSourceClient',
+    //     'selectedJob',
+    //     'selectedSession',
+    //   ],
+    // },
   },
 )

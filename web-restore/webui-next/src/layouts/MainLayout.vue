@@ -13,19 +13,15 @@
 
         <q-toolbar-title> Bareos - Restore Client </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <LocaleSwitcher />
       </q-toolbar>
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
-        <q-item-label header> Essential Links </q-item-label>
-
-        <EssentialLink
-          v-for="link in linksList"
-          :key="link.title"
-          v-bind="link"
-        />
+        <q-item v-for="link in linksList" :key="link.title">
+          <EssentialLink v-bind="link" />
+        </q-item>
       </q-list>
     </q-drawer>
 
@@ -39,6 +35,7 @@
 import { ref } from 'vue'
 
 import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue'
+import LocaleSwitcher from 'components/LocaleSwitcher.vue'
 
 defineOptions({
   name: 'MainLayout',
@@ -46,14 +43,14 @@ defineOptions({
 
 const linksList: EssentialLinkProps[] = [
   {
-    title: 'Start',
-    caption: '',
+    title: 'main_menu_title_start',
+    caption: 'main_menu_caption_start',
     icon: 'house',
     link: '/',
   },
   {
-    title: 'Restore',
-    caption: 'restore from job to client',
+    title: 'main_menu_title_restore',
+    caption: 'main_menu_caption_restore',
     icon: 'restore',
     link: '/restore',
   },

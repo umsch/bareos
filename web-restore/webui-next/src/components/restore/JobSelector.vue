@@ -3,6 +3,8 @@ import { storeToRefs } from 'pinia'
 
 import { QSelect } from 'quasar'
 
+import EmptyList from 'components/EmptyList.vue'
+
 import { useWizardStore } from 'src/stores/wizardStore'
 
 const wizardStore = useWizardStore()
@@ -29,9 +31,7 @@ const { jobs, selectedJob, selectedCatalog, clients, selectedSourceClient } =
       :rules="[(val) => !!val || 'Quell Client wählen um Job wählen zu können']"
     >
       <template v-slot:no-option>
-        <q-item>
-          <q-item-section class="text-grey"> No results</q-item-section>
-        </q-item>
+        <empty-list />
       </template>
     </q-select>
 
@@ -52,9 +52,7 @@ const { jobs, selectedJob, selectedCatalog, clients, selectedSourceClient } =
       :rules="[(val) => !!val || 'Job wählen']"
     >
       <template v-slot:no-option>
-        <q-item>
-          <q-item-section class="text-grey"> No results</q-item-section>
-        </q-item>
+        <empty-list />
       </template>
     </q-select>
   </div>

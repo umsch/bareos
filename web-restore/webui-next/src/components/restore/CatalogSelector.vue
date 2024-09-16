@@ -5,6 +5,8 @@ import { QSelect } from 'quasar'
 
 import { useWizardStore } from 'stores/wizardStore'
 
+import EmptyList from 'components/EmptyList.vue'
+
 import { Catalog } from 'src/generated/config'
 
 const wizardStore = useWizardStore()
@@ -25,9 +27,7 @@ const { catalogs, selectedCatalog } = storeToRefs(wizardStore)
     :rules="[(val: Catalog) => !!val]"
   >
     <template v-slot:no-option>
-      <q-item>
-        <q-item-section class="text-grey"> No results </q-item-section>
-      </q-item>
+      <empty-list />
     </template>
   </q-select>
 </template>

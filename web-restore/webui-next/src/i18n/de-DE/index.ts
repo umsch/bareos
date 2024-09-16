@@ -8,7 +8,7 @@ export default {
   main_menu_title_start: 'Start',
   main_menu_caption_start: '',
   main_menu_title_restore: 'Restore',
-  main_menu_caption_restore: 'restore from job to client',
+  main_menu_caption_restore: 'Rücksicherung von Job zu Client',
 
-  select_empty_list: 'No items available',
+  select_empty_list: 'keine Elemente verfügbar',
 }

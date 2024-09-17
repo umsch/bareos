@@ -1,10 +1,9 @@
-// This is just an example,
-// so you can safely delete all default props below
-
 export default {
   'de-DE': 'Deutsch',
   'en-US': 'English',
+
   common: {
+    appname: 'Bareos - Restore Client',
     no_items: 'No items available',
   },
 

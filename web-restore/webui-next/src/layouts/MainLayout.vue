@@ -11,7 +11,7 @@
           @click="toggleLeftDrawer"
         />
 
-        <q-toolbar-title> Bareos - Restore Client </q-toolbar-title>
+        <q-toolbar-title>{{ t('common.appname') }}</q-toolbar-title>
 
         <LocaleSwitcher />
       </q-toolbar>
@@ -32,6 +32,8 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 import { ref } from 'vue'
 
 import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue'
@@ -40,6 +42,8 @@ import LocaleSwitcher from 'components/LocaleSwitcher.vue'
 defineOptions({
   name: 'MainLayout',
 })
+
+const { t } = useI18n()
 
 const linksList: EssentialLinkProps[] = [
   {

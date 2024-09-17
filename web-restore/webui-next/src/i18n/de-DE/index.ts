@@ -5,10 +5,18 @@ export default {
   'de-DE': 'Deutsch',
   'en-US': 'English',
 
-  main_menu_title_start: 'Start',
-  main_menu_caption_start: '',
-  main_menu_title_restore: 'Restore',
-  main_menu_caption_restore: 'Rücksicherung von Job zu Client',
+  common: {
+    no_items: 'Keine Elemente verfügbar',
+  },
 
-  select_empty_list: 'keine Elemente verfügbar',
+  main_menu: {
+    start: {
+      title: 'Start',
+      caption: '',
+    },
+    restore: {
+      title: 'Restore',
+      caption: 'Rücksicherung von Job zu Client',
+    },
+  },
 }

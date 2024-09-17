@@ -4,11 +4,18 @@
 export default {
   'de-DE': 'Deutsch',
   'en-US': 'English',
+  common: {
+    no_items: 'No items available',
+  },
 
-  main_menu_title_start: 'Start',
-  main_menu_caption_start: '',
-  main_menu_title_restore: 'Restore',
-  main_menu_caption_restore: 'restore from job to client',
-
-  select_empty_list: 'No items available',
+  main_menu: {
+    start: {
+      title: 'Start',
+      caption: '',
+    },
+    restore: {
+      title: 'Restore',
+      caption: 'restore from job to client',
+    },
+  },
 }

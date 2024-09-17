@@ -43,14 +43,14 @@ defineOptions({
 
 const linksList: EssentialLinkProps[] = [
   {
-    title: 'main_menu_title_start',
-    caption: 'main_menu_caption_start',
+    title: 'main_menu.start.title',
+    caption: 'main_menu.start.caption',
     icon: 'house',
     link: '/',
   },
   {
-    title: 'main_menu_title_restore',
-    caption: 'main_menu_caption_restore',
+    title: 'main_menu.restore.title',
+    caption: 'main_menu.restore.caption',
     icon: 'restore',
     link: '/restore',
   },

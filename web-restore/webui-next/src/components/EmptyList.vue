@@ -7,7 +7,7 @@ const { t } = useI18n()
 <template>
   <q-item>
     <q-item-section class="text-grey">
-      {{ t('select_empty_list') }}
+      {{ t('common.no_items') }}
     </q-item-section>
   </q-item>
 </template>

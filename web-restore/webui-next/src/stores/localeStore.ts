@@ -9,7 +9,7 @@ export const useLocaleStore = defineStore(
   () => {
     const i18n = useI18n({ useScope: 'global' })
 
-    const locale = ref()
+    const locale = ref('en-US')
 
     watch(locale, (lang) => {
       i18n.locale.value = lang
